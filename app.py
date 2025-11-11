@@ -468,10 +468,13 @@ def sitemap():
     # Bible books and chapters
     try:
         bible_index = build_bible_index(BIBLE_DATA_DIR)
-        for testament in bible_index:
-            for book in bible_index[testament]:
-                book_name = book['name']
-                for chapter_num in range(1, book['chapters'] + 1):
+        # bible_index is a list of testament dicts
+        for testament_data in bible_index:
+            for book_data in testament_data['books']:
+                book_name = book_data['name']
+                # Use the actual chapters list from the index
+                for chapter_data in book_data['chapters']:
+                    chapter_num = chapter_data['number']
                     # URL encode book name
                     safe_book = book_name.replace(' ', '%20')
                     xml.append('  <url>')
@@ -481,7 +484,7 @@ def sitemap():
                     xml.append('    <priority>0.6</priority>')
                     xml.append('  </url>')
     except Exception as e:
-        print(f"Warning: Could not generate Bible URLs for sitemap: {e}")
+        print(f"Warning: Could not generate Bible URLs for sitemap: {e}", flush=True)
     
     xml.append('</urlset>')
     
