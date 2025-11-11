@@ -4,6 +4,7 @@ Main web server that connects the frontend to the RAG pipeline
 """
 
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+from waitress import serve
 from pathlib import Path
 import json
 from bible_utils import (
@@ -441,13 +442,13 @@ def main():
         print("Please run 'python build_embeddings.py' first to create the vector database.")
         print("=" * 60)
     
-    print("\n🚀 Starting server...")
+    print("\n🚀 Starting production server with Waitress...")
     print("📍 Open your browser to: http://localhost:5000")
     print("\nPress Ctrl+C to stop the server")
     print("=" * 60 + "\n")
     
-    # Run the Flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Run with Waitress production server
+    serve(app, host='0.0.0.0', port=5000, threads=4)
 
 
 if __name__ == '__main__':
