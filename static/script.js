@@ -351,12 +351,20 @@ document.addEventListener('DOMContentLoaded', function() {
     let activeTooltip = null;
     let tooltipTimeout = null;
     let currentRequest = null;
+    
+    // Mobile tap handling
+    let lastTapTime = 0;
+    let lastTappedLink = null;
+    const DOUBLE_TAP_DELAY = 300; // milliseconds
 
     function setupBibleRefHoverPreviews() {
         // Use event delegation on answerText container
         answerText.addEventListener('mouseenter', handleBibleRefHover, true);
         answerText.addEventListener('mouseleave', handleBibleRefLeave, true);
         answerText.addEventListener('click', handleBibleRefClick, true);
+        
+        // Add touch event listeners for mobile
+        answerText.addEventListener('touchstart', handleBibleRefTouchStart, true);
     }
 
     function handleBibleRefHover(e) {
@@ -386,13 +394,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     }
 
-    function handleBibleRefClick(e) {
+    function handleBibleRefTouchStart(e) {
         const link = e.target.closest('.bible-ref-link');
         if (!link) return;
 
         e.preventDefault();
         
-        // Build passage viewer URL
+        const currentTime = new Date().getTime();
+        const timeSinceLastTap = currentTime - lastTapTime;
+        
+        // Check if this is a double tap on the same link
+        if (timeSinceLastTap < DOUBLE_TAP_DELAY && lastTappedLink === link) {
+            // Double tap - navigate to the passage
+            handleBibleRefNavigate(link);
+            
+            // Reset tap tracking
+            lastTapTime = 0;
+            lastTappedLink = null;
+            hideTooltip();
+        } else {
+            // Single tap - show the tooltip
+            lastTapTime = currentTime;
+            lastTappedLink = link;
+            showBibleTooltip(link);
+        }
+    }
+
+    function handleBibleRefClick(e) {
+        const link = e.target.closest('.bible-ref-link');
+        if (!link) return;
+
+        // Only handle click for non-touch devices
+        // Touch devices use touchstart handler
+        if (e.pointerType === 'touch' || e.sourceCapabilities?.firesTouchEvents) {
+            e.preventDefault();
+            return;
+        }
+
+        e.preventDefault();
+        handleBibleRefNavigate(link);
+    }
+    
+    function handleBibleRefNavigate(link) {
+        // Build passage viewer URL and navigate
         const book = link.dataset.book;
         const chapter = link.dataset.chapter;
         const verseStart = link.dataset.verseStart;

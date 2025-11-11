@@ -29,9 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('nightMode', isNightMode);
     });
 
-    if (!path) {
+    const hasPath = Boolean(path);
+    const hasReference = Boolean(fallbackBook && fallbackChapter);
+
+    if (!hasPath && !hasReference) {
         loadingEl.hidden = true;
-        showError('Missing passage path.', errorEl);
+        showError('Missing passage path or reference.', errorEl);
         return;
     }
 
@@ -42,11 +45,22 @@ document.addEventListener('DOMContentLoaded', () => {
         subtitleEl.textContent = fallbackReference;
     }
 
-    fetchPassage(path, start, end);
+    fetchPassage({
+        path,
+        book: fallbackBook,
+        chapter: fallbackChapter,
+        start,
+        end
+    });
 
-    async function fetchPassage(relativePath, startVerse, endVerse) {
+    async function fetchPassage({ path: relativePath, book, chapter, start: startVerse, end: endVerse }) {
         const url = new URL('/api/bible-passage', window.location.origin);
-        url.searchParams.set('path', relativePath);
+        if (relativePath) {
+            url.searchParams.set('path', relativePath);
+        } else {
+            if (book) url.searchParams.set('book', book);
+            if (chapter) url.searchParams.set('chapter', chapter);
+        }
         if (startVerse) url.searchParams.set('start', startVerse);
         if (endVerse) url.searchParams.set('end', endVerse);
 
