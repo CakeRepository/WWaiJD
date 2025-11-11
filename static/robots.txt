@@ -1,4 +1,4 @@
-# robots.txt for What Would AI Jesus Do (wwaijd.com)
+# robots.txt for What Would AI Jesus Do (wwaijd.org)
 # Bible study and spiritual guidance application
 
 User-agent: *
@@ -12,7 +12,7 @@ Allow: /static/bible.html
 Allow: /static/passage.html
 
 # Sitemap location
-Sitemap: https://wwaijd.com/sitemap.xml
+Sitemap: https://wwaijd.org/sitemap.xml
 
 # Crawl delay to be respectful
 Crawl-delay: 1

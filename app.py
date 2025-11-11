@@ -443,7 +443,7 @@ def sitemap():
     Generate dynamic XML sitemap for SEO.
     Includes main pages and all Bible books/chapters.
     """
-    base_url = 'https://wwaijd.com'
+    base_url = 'https://wwaijd.org'
     today = datetime.now().strftime('%Y-%m-%d')
     
     # Start XML

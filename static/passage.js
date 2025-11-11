@@ -152,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dynamicDescription').setAttribute('content', description);
         
         // Update canonical URL
-        const canonicalUrl = `https://wwaijd.com/static/passage.html?book=${encodeURIComponent(book)}&chapter=${chapter}`;
+        const canonicalUrl = `https://wwaijd.org/static/passage.html?book=${encodeURIComponent(book)}&chapter=${chapter}`;
         document.getElementById('dynamicCanonical').setAttribute('href', canonicalUrl);
         
         // Update Open Graph tags
