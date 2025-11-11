@@ -1,0 +1,4 @@
+[submodule "bible-data"]
+	path = bible-data
+	url = https://github.com/awerkamp/markdown-king-james-version-holy-bible.git
+	shallow = true
