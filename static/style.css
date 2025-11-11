@@ -656,9 +656,20 @@ footer {
     transition: all 0.2s ease;
     position: relative;
     /* Keep inline by default for desktop - looks cleaner */
-    display: inline;
-    padding: 0;
-    margin: 0;
+    display: inline !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: inherit;
+}
+
+/* Override for mobile only */
+@media (max-width: 768px) {
+    .bible-ref-link {
+        display: inline-block !important;
+        padding: 2px 4px !important;
+        margin: 0 2px !important;
+        line-height: 1.6;
+    }
 }
 
 .bible-ref-link:hover {
@@ -820,14 +831,6 @@ footer {
         right: 16px;
         width: auto;
         font-size: 0.95em;
-    }
-    
-    .bible-ref-link {
-        /* Add some padding around links for easier tapping */
-        padding: 2px 4px;
-        margin: 0 2px;
-        display: inline-block;
-        line-height: 1.6;
     }
     
     .tooltip-hint {
