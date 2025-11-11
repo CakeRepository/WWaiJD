@@ -343,6 +343,19 @@ main {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    opacity: 0;
+    animation: fadeInSlide 0.5s ease-out forwards;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .passage-item {
@@ -642,6 +655,10 @@ footer {
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    /* Keep inline by default for desktop - looks cleaner */
+    display: inline;
+    padding: 0;
+    margin: 0;
 }
 
 .bible-ref-link:hover {

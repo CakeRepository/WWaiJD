@@ -91,8 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = JSON.parse(jsonData);
                 
                 if (eventType === 'passages') {
-                    // Store passages to display later
+                    // Display passages immediately when found
                     passages = data.passages;
+                    displayPassages(passages);
+                    
+                    // Scroll to show the passages
+                    setTimeout(() => {
+                        passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 100);
                 } else if (eventType === 'chunk') {
                     // Append text chunk
                     accumulatedAnswer += data.text;
@@ -103,8 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     answerText.innerHTML = renderMarkdown(accumulatedAnswer);
                     setupBibleRefHoverPreviews();
                     
-                    // Display passages
-                    displayPassages(passages);
+                    // Passages already displayed when received, no need to display again
                 } else if (eventType === 'error') {
                     throw new Error(data.error);
                 }
@@ -115,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayPassages(passages) {
         // Display Bible passages in the UI
         passagesContainer.innerHTML = '';
+        
+        // Reset animation by removing and re-adding the class
+        passagesContainer.style.animation = 'none';
+        setTimeout(() => {
+            passagesContainer.style.animation = '';
+        }, 10);
+        
         if (passages && passages.length > 0) {
             passages.forEach(passage => {
                 const passageDiv = document.createElement('div');
