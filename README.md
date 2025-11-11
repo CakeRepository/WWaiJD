@@ -1,4 +1,4 @@
-# What Would AI Jesus Do (WWAIJD) ✝️
+o# What Would AI Jesus Do (WWAIJD) ✝️
 
 An AI-powered application that provides moral and spiritual guidance based on the King James Bible using advanced RAG (Retrieval Augmented Generation) technology. Ask any question and receive compassionate, biblically-grounded wisdom with relevant scripture references.
 
@@ -174,7 +174,7 @@ This project demonstrates how AI can be used to make ancient wisdom more accessi
 
 If you find this project helpful, consider supporting its development:
 
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/justintrantham)
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](buymeacoffee.com/wwaijd)
 
 ## 📄 License
 
