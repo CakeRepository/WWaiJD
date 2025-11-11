@@ -300,6 +300,11 @@ main {
     animation: slideUp 0.5s ease-out;
 }
 
+.response-section {
+    grid-template-columns: 1fr;
+    gap: 24px;
+}
+
 .response-card,
 .passages-card,
 .error-card {
@@ -315,6 +320,11 @@ main {
 .error-card h3 {
     margin-bottom: 20px;
     color: var(--primary-color);
+}
+
+.passages-card {
+    display: flex;
+    flex-direction: column;
 }
 
 .answer-text {
@@ -342,6 +352,7 @@ main {
 .passages-container {
     display: flex;
     flex-direction: column;
+    flex: 1;
     gap: 15px;
     opacity: 0;
     animation: fadeInSlide 0.5s ease-out forwards;
@@ -583,6 +594,30 @@ footer {
 @media (prefers-reduced-motion: reduce) {
     body::before {
         transition: none;
+    }
+}
+
+@media (min-width: 1024px) {
+    #responseSection {
+        align-items: flex-start;
+        grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    }
+
+    #responseSection .response-card,
+    #responseSection .passages-card {
+        margin-bottom: 0;
+    }
+
+    #responseSection .passages-card {
+        position: sticky;
+        top: 24px;
+        align-self: start;
+    }
+
+    #responseSection .passages-container {
+        max-height: calc(100vh - 240px);
+        overflow-y: auto;
+        padding-right: 4px;
     }
 }
 

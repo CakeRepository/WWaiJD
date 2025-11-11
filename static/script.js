@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show response section immediately
         answerText.innerHTML = '<span class="typing-cursor"></span>';
-        responseSection.style.display = 'block';
+        responseSection.style.display = 'grid';
         hideLoading();
 
         // Scroll to response
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        responseSection.style.display = 'block';
+        responseSection.style.display = 'grid';
         
         // Smooth scroll to response
         setTimeout(() => {
