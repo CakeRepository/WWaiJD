@@ -174,7 +174,7 @@ This project demonstrates how AI can be used to make ancient wisdom more accessi
 
 If you find this project helpful, consider supporting its development:
 
-[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](buymeacoffee.com/wwaijd)
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png)](https://buymeacoffee.com/wwaijd)
 
 ## 📄 License
 
