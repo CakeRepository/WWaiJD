@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Would AI Jesus Do?</title>
+    <meta name="description" content="Seek wisdom from the King James Bible. Ask questions and receive guidance with relevant Bible passages from AI Jesus.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wwaijd.com/">
+    <meta property="og:title" content="What Would AI Jesus Do?">
+    <meta property="og:description" content="Seek wisdom from the King James Bible. Ask questions and receive guidance with relevant Bible passages.">
+    <meta property="og:image" content="/img/wwaijd-metaimage.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wwaijd.com/">
+    <meta name="twitter:title" content="What Would AI Jesus Do?">
+    <meta name="twitter:description" content="Seek wisdom from the King James Bible. Ask questions and receive guidance with relevant Bible passages.">
+    <meta name="twitter:image" content="/img/wwaijd-metaimage.png">
+    
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1>✝️ What Would AI Jesus Do?</h1>
+                <a class="outline-button" href="/static/bible.html">Read the Bible</a>
+            </div>
+            <p class="subtitle">Seek wisdom from the King James Bible</p>
+        </header>
+
+        <main>
+            <div class="search-section">
+                <form id="questionForm">
+                    <div class="search-box">
+                        <input 
+                            type="text" 
+                            id="questionInput" 
+                            placeholder="Ask your question... (e.g., What should I do when someone wrongs me?)"
+                            required
+                            autocomplete="off"
+                        >
+                        <button type="submit" id="askButton">
+                            <span id="buttonText">Ask</span>
+                            <span id="buttonSpinner" class="spinner" style="display: none;">⏳</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="responseSection" class="response-section" style="display: none;">
+                <div class="response-card">
+                    <h2>🙏 Answer</h2>
+                    <div id="answerText" class="answer-text"></div>
+                </div>
+
+                <div class="passages-card">
+                    <h3>📖 Biblical References</h3>
+                    <div id="passagesContainer" class="passages-container"></div>
+                </div>
+            </div>
+
+            <div id="errorSection" class="error-section" style="display: none;">
+                <div class="error-card">
+                    <h3>⚠️ Error</h3>
+                    <p id="errorText"></p>
+                </div>
+            </div>
+
+            <div id="loadingSection" class="loading-section" style="display: none;">
+                <div class="loading-spinner">⏳</div>
+                <p>Seeking wisdom from the Scriptures...</p>
+            </div>
+        </main>
+
+        <footer>
+            <div class="support-section">
+                <div class="support-story">
+                    <p class="support-quote">
+                        💬 <em>"How do you hide something from a Catholic? You put it in the Bible."</em>
+                    </p>
+                    <p class="support-thought">
+                        When I heard that joke from my pastor, I thought: <strong>"Hey, I can fix that with RAG!"</strong>
+                    </p>
+                </div>
+                <a href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer" class="coffee-button">
+                    <span class="coffee-icon">☕</span>
+                    <span class="coffee-text">
+                        <strong>Buy Me a Coffee</strong>
+                        <small>Help us upgrade our GPU to keep this free, local, and ad-free!</small>
+                    </span>
+                </a>
+                <p class="support-info">
+                    All donations go toward purchasing a better graphics card to keep AI Jesus running locally, 
+                    without ads, and without requiring a login. Your support keeps this ministry free for everyone! 🙏
+                </p>
+            </div>
+            
+            <p class="footer-tech">Powered by the King James Bible, Ollama (Gemma3:4b, GemmaEmbedding), and ChromaDB</p>
+            
+            <p class="footer-disclaimer">
+                ⚠️ <strong>Disclaimer:</strong> This is an AI-powered tool created purely for entertainment and educational purposes. 
+                All responses are generated by artificial intelligence and should not be considered as religious guidance, 
+                theological advice, or a substitute for consultation with qualified religious leaders or scholars. 
+                Please use discernment and consult appropriate spiritual authorities for serious religious questions.
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
