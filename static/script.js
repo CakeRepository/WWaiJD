@@ -306,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const prevChar = offset > 0 ? fullString[offset - 1] : '';
             const priorSix = offset >= 6 ? fullString.slice(offset - 6, offset) : '';
             const hasNbspEntity = priorSix === '&nbsp;';
-            const needsSpace = !hasNbspEntity && prevChar && !/\s|\(|>/.test(prevChar));
+            const needsSpace = !hasNbspEntity && prevChar && !/\s|\(|>/.test(prevChar);
             const prefix = needsSpace ? ' ' : '';
             return `${prefix}<a href="#" class="bible-ref-link" ${dataAttrs} title="${reference}">${reference}</a>`;
         });
