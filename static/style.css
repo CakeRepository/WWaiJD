@@ -301,8 +301,13 @@ main {
 }
 
 .response-section {
+    display: grid;
     grid-template-columns: 1fr;
     gap: 24px;
+}
+
+.response-section.is-hidden {
+    display: none;
 }
 
 .response-card,

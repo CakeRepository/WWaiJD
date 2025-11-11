@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Show response section immediately
         answerText.innerHTML = '<span class="typing-cursor"></span>';
-        responseSection.style.display = 'grid';
+        responseSection.classList.remove('is-hidden');
         hideLoading();
 
         // Scroll to response
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        responseSection.style.display = 'grid';
+        responseSection.classList.remove('is-hidden');
         
         // Smooth scroll to response
         setTimeout(() => {
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function hideResponse() {
-        responseSection.style.display = 'none';
+        responseSection.classList.add('is-hidden');
     }
 
     function displayError(message) {
