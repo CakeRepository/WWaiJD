@@ -298,12 +298,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function linkifyBibleReferences(html) {
         // Pattern to match Bible references like "Proverbs 4:27" or "Matthew 5:3-10"
         // Matches: Book name (1-3 words) + Chapter:Verse or Chapter:Verse-Verse
-        const bibleRefPattern = /(\d?\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(\d+):(\d+)(?:-(\d+))?/g;
+        const bibleRefPattern = /\b((?:[1-3]\s*)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(\d+):(\d+)(?:-(\d+))?/g;
         
-        return html.replace(bibleRefPattern, (match, book, chapter, verseStart, verseEnd) => {
+        return html.replace(bibleRefPattern, (match, book, chapter, verseStart, verseEnd, offset, fullString) => {
             const reference = `${book.trim()} ${chapter}:${verseStart}${verseEnd ? '-' + verseEnd : ''}`;
             const dataAttrs = `data-book="${book.trim()}" data-chapter="${chapter}" data-verse-start="${verseStart}" data-verse-end="${verseEnd || verseStart}"`;
-            return `<a href="#" class="bible-ref-link" ${dataAttrs} title="${reference}">${reference}</a>`;
+            const prevChar = offset > 0 ? fullString[offset - 1] : '';
+            const priorSix = offset >= 6 ? fullString.slice(offset - 6, offset) : '';
+            const hasNbspEntity = priorSix === '&nbsp;';
+            const needsSpace = !hasNbspEntity && prevChar && !/\s|\(|>/.test(prevChar));
+            const prefix = needsSpace ? ' ' : '';
+            return `${prefix}<a href="#" class="bible-ref-link" ${dataAttrs} title="${reference}">${reference}</a>`;
         });
     }
 
