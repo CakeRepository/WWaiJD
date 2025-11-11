@@ -795,4 +795,25 @@ footer {
     .support-quote {
         font-size: 1em;
     }
+    
+    /* Mobile-specific tooltip styling */
+    .bible-tooltip {
+        max-width: calc(100vw - 32px);
+        left: 16px !important;
+        right: 16px;
+        width: auto;
+        font-size: 0.95em;
+    }
+    
+    .bible-ref-link {
+        /* Add some padding around links for easier tapping */
+        padding: 2px 4px;
+        margin: 0 2px;
+        display: inline-block;
+        line-height: 1.6;
+    }
+    
+    .tooltip-hint {
+        font-size: 0.8em;
+    }
 }

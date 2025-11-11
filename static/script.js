@@ -355,6 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile tap handling
     let lastTapTime = 0;
     let lastTappedLink = null;
+    let touchHandled = false;
     const DOUBLE_TAP_DELAY = 300; // milliseconds
 
     function setupBibleRefHoverPreviews() {
@@ -365,6 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add touch event listeners for mobile
         answerText.addEventListener('touchstart', handleBibleRefTouchStart, true);
+        answerText.addEventListener('touchend', handleBibleRefTouchEnd, true);
     }
 
     function handleBibleRefHover(e) {
@@ -399,6 +401,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!link) return;
 
         e.preventDefault();
+        e.stopPropagation();
+        
+        touchHandled = true;
         
         const currentTime = new Date().getTime();
         const timeSinceLastTap = currentTime - lastTapTime;
@@ -419,19 +424,28 @@ document.addEventListener('DOMContentLoaded', function() {
             showBibleTooltip(link);
         }
     }
+    
+    function handleBibleRefTouchEnd(e) {
+        // Reset touch flag after a delay to prevent click event
+        setTimeout(() => {
+            touchHandled = false;
+        }, 400);
+    }
 
     function handleBibleRefClick(e) {
         const link = e.target.closest('.bible-ref-link');
         if (!link) return;
 
-        // Only handle click for non-touch devices
-        // Touch devices use touchstart handler
-        if (e.pointerType === 'touch' || e.sourceCapabilities?.firesTouchEvents) {
+        // Ignore click events that came from touch interactions
+        if (touchHandled) {
             e.preventDefault();
+            e.stopPropagation();
             return;
         }
 
         e.preventDefault();
+        
+        // For mouse clicks, navigate immediately
         handleBibleRefNavigate(link);
     }
     
@@ -509,10 +523,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Update tooltip content
             const reference = `${book} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
+            const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const hintText = isMobile ? 'Double tap to view full chapter' : 'Click to view full chapter';
+            
             activeTooltip.innerHTML = `
                 <div class="tooltip-reference">${reference}</div>
                 <div class="tooltip-text">${data.text}</div>
-                <div class="tooltip-hint">Click to view full chapter</div>
+                <div class="tooltip-hint">${hintText}</div>
             `;
 
             // Adjust position if tooltip goes off-screen
