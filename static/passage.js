@@ -88,6 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
         titleEl.textContent = `${data.book} ${data.chapter}`;
         subtitleEl.textContent = buildSubtitle(data, highlightStart, highlightEnd);
 
+        // Update dynamic SEO meta tags
+        updateMetaTags(data, highlightStart, highlightEnd);
+
         bodyEl.innerHTML = '';
         if (!data.verses || data.verses.length === 0) {
             bodyEl.innerHTML = '<p>We could not parse this chapter.</p>';
@@ -116,6 +119,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         bodyEl.hidden = false;
+    }
+
+    function updateMetaTags(data, start, end) {
+        const book = data.book;
+        const chapter = data.chapter;
+        const testament = data.testament || '';
+        
+        // Build verse range text
+        let verseRange = '';
+        if (start && end && start !== end) {
+            verseRange = `:${start}-${end}`;
+        } else if (start) {
+            verseRange = `:${start}`;
+        }
+        
+        // Get first verse text for description
+        let firstVerseText = '';
+        if (data.verses && data.verses.length > 0) {
+            firstVerseText = data.verses[0].text.substring(0, 150) + '...';
+        }
+        
+        // Update title
+        const pageTitle = `${book} ${chapter}${verseRange} - King James Bible | WWAIJD`;
+        document.title = pageTitle;
+        document.getElementById('dynamicTitle').textContent = pageTitle;
+        
+        // Update description
+        const description = firstVerseText 
+            ? `Read ${book} Chapter ${chapter}${verseRange} from the King James Bible. "${firstVerseText}" Free online Bible study.`
+            : `Read ${book} Chapter ${chapter} from the King James Bible. ${testament}. Free online Bible study.`;
+        document.getElementById('dynamicDescription').setAttribute('content', description);
+        
+        // Update canonical URL
+        const canonicalUrl = `https://wwaijd.com/static/passage.html?book=${encodeURIComponent(book)}&chapter=${chapter}`;
+        document.getElementById('dynamicCanonical').setAttribute('href', canonicalUrl);
+        
+        // Update Open Graph tags
+        document.getElementById('dynamicOgUrl').setAttribute('content', canonicalUrl);
+        document.getElementById('dynamicOgTitle').setAttribute('content', `${book} ${chapter}${verseRange} - King James Bible`);
+        document.getElementById('dynamicOgDescription').setAttribute('content', description);
+        
+        // Update Twitter tags
+        document.getElementById('dynamicTwitterUrl').setAttribute('content', canonicalUrl);
+        document.getElementById('dynamicTwitterTitle').setAttribute('content', `${book} ${chapter}${verseRange} - KJV`);
+        document.getElementById('dynamicTwitterDescription').setAttribute('content', description);
+        
+        // Update structured data
+        const schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": `${book} ${chapter}${verseRange}`,
+            "description": description,
+            "inLanguage": "en",
+            "isPartOf": {
+                "@type": "Book",
+                "name": "The Holy Bible",
+                "bookEdition": "King James Version"
+            },
+            "about": {
+                "@type": "Thing",
+                "name": book,
+                "description": `${book} from the ${testament}`
+            }
+        };
+        
+        document.getElementById('passageSchema').textContent = JSON.stringify(schema, null, 2);
     }
 });
 

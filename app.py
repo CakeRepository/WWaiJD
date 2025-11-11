@@ -14,6 +14,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, stream
 from waitress import serve
 from pathlib import Path
 import json
+from datetime import datetime
 from bible_utils import (
     build_bible_index,
     extract_book_name,
@@ -74,6 +75,12 @@ def index():
 def serve_static(path):
     """Serve static files."""
     return send_from_directory('static', path)
+
+
+@app.route('/robots.txt')
+def robots():
+    """Serve robots.txt for search engine crawlers."""
+    return send_from_directory('static', 'robots.txt')
 
 
 @app.route('/img/<path:path>')
@@ -428,6 +435,57 @@ def _find_chapter_markdown(book: str, chapter: int):
                     return absolute_path, relative_path, book_name, testament
     
     raise FileNotFoundError(f'Chapter not found: {book} {chapter}')
+
+
+@app.route('/sitemap.xml')
+def sitemap():
+    """
+    Generate dynamic XML sitemap for SEO.
+    Includes main pages and all Bible books/chapters.
+    """
+    base_url = 'https://wwaijd.com'
+    today = datetime.now().strftime('%Y-%m-%d')
+    
+    # Start XML
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    
+    # Main pages
+    main_pages = [
+        {'loc': '/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'loc': '/static/bible.html', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'loc': '/static/passage.html', 'priority': '0.7', 'changefreq': 'monthly'},
+    ]
+    
+    for page in main_pages:
+        xml.append('  <url>')
+        xml.append(f'    <loc>{base_url}{page["loc"]}</loc>')
+        xml.append(f'    <lastmod>{today}</lastmod>')
+        xml.append(f'    <changefreq>{page["changefreq"]}</changefreq>')
+        xml.append(f'    <priority>{page["priority"]}</priority>')
+        xml.append('  </url>')
+    
+    # Bible books and chapters
+    try:
+        bible_index = build_bible_index(BIBLE_DATA_DIR)
+        for testament in bible_index:
+            for book in bible_index[testament]:
+                book_name = book['name']
+                for chapter_num in range(1, book['chapters'] + 1):
+                    # URL encode book name
+                    safe_book = book_name.replace(' ', '%20')
+                    xml.append('  <url>')
+                    xml.append(f'    <loc>{base_url}/static/passage.html?book={safe_book}&amp;chapter={chapter_num}</loc>')
+                    xml.append(f'    <lastmod>{today}</lastmod>')
+                    xml.append('    <changefreq>yearly</changefreq>')
+                    xml.append('    <priority>0.6</priority>')
+                    xml.append('  </url>')
+    except Exception as e:
+        print(f"Warning: Could not generate Bible URLs for sitemap: {e}")
+    
+    xml.append('</urlset>')
+    
+    return Response('\n'.join(xml), mimetype='application/xml')
 
 
 def main():
