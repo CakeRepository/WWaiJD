@@ -563,7 +563,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 return; // Request was cancelled
             }
             console.error('Error fetching verse preview:', error);
-            activeTooltip.innerHTML = '<div class="tooltip-error">Failed to load verse</div>';
+            
+            // Show more helpful error message
+            const reference = `${book} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
+            const errorMessage = error.message.includes('not found') 
+                ? `Verse ${reference} does not exist in this chapter.`
+                : 'Failed to load verse preview.';
+            
+            activeTooltip.innerHTML = `
+                <div class="tooltip-reference">${reference}</div>
+                <div class="tooltip-error">${errorMessage}</div>
+                <div class="tooltip-hint">Click to view the full chapter</div>
+            `;
         } finally {
             currentRequest = null;
         }
