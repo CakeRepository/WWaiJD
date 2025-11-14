@@ -117,13 +117,6 @@
         "@type": "Offer",
         "price": "0",
         "priceCurrency": "USD"
-      },
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "ratingCount": "127",
-        "bestRating": "5",
-        "worstRating": "1"
       }
     }
     </script>
@@ -144,132 +137,119 @@
       }]
     }
     </script>
-    
-    <div class="container">
-        <header>
-            <div class="header-top">
-                <h1>✝️ What Would AI Jesus Do?</h1>
-                <a class="outline-button" href="/static/bible.html">Read the Bible</a>
-            </div>
-            <p class="subtitle">Seek wisdom from the King James Bible</p>
-        </header>
 
-        <main>
-            <div class="search-section">
-                <form id="questionForm">
-                    <div class="search-box">
-                        <input 
-                            type="text" 
-                            id="questionInput" 
-                            placeholder="Ask your question... (e.g., What should I do when someone wrongs me?)"
-                            required
-                            autocomplete="off"
-                        >
-                        <button type="submit" id="askButton">
-                            <span id="buttonText">Ask</span>
-                            <span id="buttonSpinner" class="spinner" style="display: none;">⏳</span>
-                        </button>
+<div class="container page-shell">
+    <header class="primary-hero">
+        <p class="hero-eyebrow">Simple Bible answers</p>
+        <h1>🙏 What Would AI Jesus Do?</h1>
+        <p class="subtitle hero-subtitle">Type what is on your heart, and AI Jesus responds with verses from the King James Bible.</p>
+        <div class="hero-highlights">
+            <span>Ask anything you're wrestling with</span>
+            <span>Answers cite the KJV so you can keep reading</span>
+            <span>Always free, private, and ad-free</span>
+        </div>
+        <div class="hero-kjv-callout">
+            <a class="soft-link hero-kjv-link" href="/static/bible.html">
+                <span class="cta-icon" aria-hidden="true">📖</span>
+                <span class="coffee-copy">
+                    <strong>Open the KJV reader</strong>
+                    <small>Every book. Every verse.</small>
+                </span>
+            </a>
+            <p class="hero-kjv-note">Read the complete King James Bible here for free—no login, no friction.</p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="search-focus" id="study-cta" aria-label="Ask AI Jesus">
+            <div class="search-card">
+                <h2>Ask your Bible question</h2>
+                <p>This single input is the whole product. Share your situation and receive scripture-backed encouragement.</p>
+                <div class="search-section">
+                    <form id="questionForm">
+                        <div class="search-box">
+                            <input 
+                                type="text" 
+                                id="questionInput" 
+                                placeholder="Ask your question... (e.g., What should I do when someone wrongs me?)"
+                                required
+                                autocomplete="off"
+                            >
+                            <button type="submit" id="askButton">
+                                <span id="buttonText">Ask</span>
+                                <span id="buttonSpinner" class="spinner" style="display: none;">⏳</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <p class="form-hint">No login · No ads · Just Bible-based answers</p>
+                <p class="prompt-label">Need inspiration? Tap a prompt:</p>
+                <div class="question-pills">
+                    <button type="button" class="question-pill" data-question="What does the Bible say about forgiveness?">What does the Bible say about forgiveness?</button>
+                    <button type="button" class="question-pill" data-question="How should I handle difficult relationships?">How should I handle difficult relationships?</button>
+                    <button type="button" class="question-pill" data-question="What is God's plan for my life?">What is God's plan for my life?</button>
+                    <button type="button" class="question-pill" data-question="How can I find peace during hard times?">How can I find peace during hard times?</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="answer-lab" aria-live="polite">
+            <div class="response-wrapper">
+                <div id="responseSection" class="response-section is-hidden">
+                    <div class="response-card">
+                        <h2>🕊️ Answer</h2>
+                        <div id="answerText" class="answer-text"></div>
                     </div>
-                </form>
-            </div>
 
-            <div id="responseSection" class="response-section is-hidden">
-                <div class="response-card">
-                    <h2>🙏 Answer</h2>
-                    <div id="answerText" class="answer-text"></div>
+                    <div class="passages-card">
+                        <h3>📖 Biblical References</h3>
+                        <div id="passagesContainer" class="passages-container"></div>
+                    </div>
                 </div>
 
-                <div class="passages-card">
-                    <h3>📖 Biblical References</h3>
-                    <div id="passagesContainer" class="passages-container"></div>
+                <div id="loadingSection" class="loading-section" style="display: none;">
+                    <div class="loading-spinner">🙏</div>
+                    <p>Seeking wisdom from the Scriptures...</p>
+                </div>
+
+                <div id="errorSection" class="error-section" style="display: none;">
+                    <div class="error-card">
+                        <h3>⚠️ Error</h3>
+                        <p id="errorText"></p>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div id="errorSection" class="error-section" style="display: none;">
-                <div class="error-card">
-                    <h3>⚠️ Error</h3>
-                    <p id="errorText"></p>
+            <section class="simple-about" id="about">
+                <h2>Why WWAIJD exists</h2>
+                <div class="simple-donate">
+                    <a class="soft-link" href="/static/bible.html">
+                        <span class="cta-icon" aria-hidden="true">📖</span>
+                        <span class="coffee-copy">
+                            <strong>Open the KJV reader</strong>
+                            <small>Read every chapter right now</small>
+                        </span>
+                    </a>
+                    <a class="coffee-inline" href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer">
+                        <span class="cta-icon" aria-hidden="true">☕</span>
+                        <span class="coffee-copy">
+                            <strong>Buy us a coffee</strong>
+                            <small>Help me keep WWAIJD running</small>
+                        </span>
+                    </a>
                 </div>
-            </div>
-
-            <div id="loadingSection" class="loading-section" style="display: none;">
-                <div class="loading-spinner">⏳</div>
-                <p>Seeking wisdom from the Scriptures...</p>
-            </div>
+                <p>What Would AI Jesus Do started as a quiet corner to ask a question and sit with how the King James Bible responds. No feeds, no noise, just Scripture beside a gentle explanation.</p>
+                <p>Everything runs on your device, so your prompts stay private and you can return to the Word whenever you like. Use the button below to open the full KJV reader for free, and if you want to help me keep tuning it up you can still share a coffee or <a href="https://amzn.to/4nVyMZq" target="_blank" rel="noopener noreferrer">pick up a printed King James Bible</a> to give away.</p>
+            </section>
         </main>
 
-        <footer>
-            <div class="support-section">
-                <div class="support-story">
-                    <p class="support-quote">
-                        💬 <em>"How do you hide something from a Catholic? You put it in the Bible."</em>
-                    </p>
-                    <p class="support-thought">
-                        When I heard that joke from my pastor, I thought: <strong>"Hey, I can fix that with RAG!"</strong>
-                    </p>
-                </div>
-                <a href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer" class="coffee-button">
-                    <span class="coffee-icon">☕</span>
-                    <span class="coffee-text">
-                        <strong>Buy Me a Coffee</strong>
-                        <small>Help us upgrade our GPU to keep this free, local, and ad-free!</small>
-                    </span>
-                </a>
-                <p class="support-info">
-                    All donations go toward purchasing a better graphics card to keep AI Jesus running locally, 
-                    without ads, and without requiring a login. Your support keeps this ministry free for everyone! 🙏
-                </p>
-            </div>
-            
-            <!-- SEO Content Section -->
-            <section style="margin-top: 3rem; padding: 2rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; max-width: 800px; margin-left: auto; margin-right: auto;">
-                <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">🕊️ Your Free AI-Powered Bible Study Companion</h2>
-                
-                <article style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">Ask Bible Questions, Get Scripture-Based Answers</h3>
-                    <p>What Would AI Jesus Do (WWAIJD) combines cutting-edge artificial intelligence with the timeless wisdom of the King James Bible. Whether you're seeking spiritual guidance, studying scripture, or exploring biblical teachings, our AI assistant helps you discover relevant passages and gain deeper insights into God's Word.</p>
-                </article>
-                
-                <article style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">📚 Complete King James Bible Access</h3>
-                    <p>Access all 66 books of the Holy Bible, from Genesis to Revelation. Our platform includes the complete Old Testament (39 books) and New Testament (27 books), covering all 1,189 chapters and 31,102 verses. Read, search, and study scripture easily with our intuitive interface.</p>
-                </article>
-                
-                <article style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">🎯 How It Works</h3>
-                    <p>Simply type your question into the search box above. Our AI searches through the entire Bible to find the most relevant verses and passages that address your question. You'll receive thoughtful answers grounded in scripture, complete with direct Biblical references so you can read the full context.</p>
-                </article>
-                
-                <article style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">💡 Popular Questions</h3>
-                    <ul style="margin-left: 1.5rem; line-height: 1.8;">
-                        <li>What does the Bible say about forgiveness?</li>
-                        <li>How should I handle difficult relationships?</li>
-                        <li>What is God's plan for my life?</li>
-                        <li>How can I find peace during hard times?</li>
-                        <li>What does the Bible teach about love?</li>
-                        <li>How do I grow in my faith?</li>
-                    </ul>
-                </article>
-                
-                <article>
-                    <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem;">✨ Features</h3>
-                    <ul style="margin-left: 1.5rem; line-height: 1.8;">
-                        <li><strong>100% Free:</strong> No subscription, no login, no ads</li>
-                        <li><strong>Instant Answers:</strong> Get responses in seconds</li>
-                        <li><strong>Scripture References:</strong> Every answer includes Biblical passages</li>
-                        <li><strong>Complete Bible Reader:</strong> Browse and read the entire KJV</li>
-                        <li><strong>Privacy Focused:</strong> Runs locally, your questions stay private</li>
-                        <li><strong>Mobile Friendly:</strong> Study on any device</li>
-                    </ul>
-                </article>
-            </section>
-            
+        <footer class="site-footer">
             <p class="footer-tech">Powered by the King James Bible, Ollama (Gemma3:4b, GemmaEmbedding), and ChromaDB</p>
             
             <p class="footer-disclaimer">
                 ⚠️ <strong>Disclaimer:</strong> This is an AI-powered tool created purely for entertainment and educational purposes. 
-                All responses are generated by artificial intelligence and should not be considered as religious guidance, 
+                All responses are generated by artificial intelligence and should not be considered as religious guidance,
                 theological advice, or a substitute for consultation with qualified religious leaders or scholars. 
                 Please use discernment and consult appropriate spiritual authorities for serious religious questions.
             </p>
@@ -280,4 +260,5 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
     <script src="/static/script.js"></script>
 </body>
+
 </html>

@@ -14,6 +14,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorText = document.getElementById('errorText');
     
     const loadingSection = document.getElementById('loadingSection');
+    const questionPills = document.querySelectorAll('.question-pill');
+
+    questionPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+            const preset = (pill.dataset.question || pill.textContent || '').trim();
+            if (!preset) {
+                return;
+            }
+            input.value = preset;
+            input.focus();
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
 
     form.addEventListener('submit', async function(e) {
         e.preventDefault();

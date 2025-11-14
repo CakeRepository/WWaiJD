@@ -10,11 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const chapterNav = document.getElementById('chapterNav');
     const prevChapter = document.getElementById('prevChapter');
     const nextChapter = document.getElementById('nextChapter');
+    const coffeeMargin = document.getElementById('coffeeMargin');
+    const coffeeVerse = document.getElementById('coffeeVerse');
+    const coffeeSubtext = document.getElementById('coffeeSubtext');
 
     let activeButton = null;
     let currentPassageMeta = null;
     let isNightMode = localStorage.getItem('nightMode') === 'true';
     let bibleIndex = null; // Store the full Bible index for navigation
+    const coffeeMarginNotes = [
+        {
+            reference: 'Proverbs 11:25',
+            text: 'The liberal soul shall be made fat; he that watereth shall be watered also himself.'
+        },
+        {
+            reference: 'Hebrews 13:16',
+            text: 'But to do good and to communicate forget not: for with such sacrifices God is well pleased.'
+        },
+        {
+            reference: 'Luke 6:38',
+            text: 'Give, and it shall be given unto you; good measure, pressed down, and shaken together.'
+        },
+        {
+            reference: 'Romans 12:13',
+            text: 'Distributing to the necessity of saints; given to hospitality.'
+        }
+    ];
+    let lastCoffeeNoteIndex = -1;
 
     // Initialize night mode
     if (isNightMode) {
@@ -35,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nextChapter.addEventListener('click', () => navigateChapter(1));
 
     fetchLibrary();
+    refreshCoffeeMargin(null);
 
     async function fetchLibrary() {
         try {
@@ -181,11 +204,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
         toggleStandalone(data, true);
         updateNavigationButtons();
+        refreshCoffeeMargin(currentPassageMeta);
     }
 
     function showChapterError(message) {
         chapterError.textContent = message;
         chapterError.hidden = false;
+    }
+
+    function refreshCoffeeMargin(meta) {
+        if (!coffeeMargin || !coffeeVerse || !coffeeMarginNotes.length) {
+            return;
+        }
+
+        let noteIndex = Math.floor(Math.random() * coffeeMarginNotes.length);
+        if (coffeeMarginNotes.length > 1 && noteIndex === lastCoffeeNoteIndex) {
+            noteIndex = (noteIndex + 1) % coffeeMarginNotes.length;
+        }
+        lastCoffeeNoteIndex = noteIndex;
+
+        const note = coffeeMarginNotes[noteIndex];
+        coffeeVerse.innerHTML = `<strong>${note.reference}</strong> ${note.text}`;
+
+        if (coffeeSubtext) {
+            if (meta && meta.book) {
+                coffeeSubtext.textContent = `If today's time in ${meta.book} ${meta.chapter} refreshed you, pass the cup to keep this Bible free for everyone.`;
+            } else {
+                coffeeSubtext.textContent = 'If these readings steady you, pass the cup to help keep this Bible free for everyone.';
+            }
+        }
+
+        coffeeMargin.hidden = false;
     }
 
     function toggleStandalone(data, enable) {

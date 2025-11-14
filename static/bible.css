@@ -394,6 +394,66 @@ body::before {
     background: rgba(139, 90, 60, 0.05);
 }
 
+.coffee-margin {
+    margin-top: 28px;
+    padding: 20px 24px;
+    border-radius: 14px;
+    border: 1px dashed var(--border);
+    background: var(--verse-bg);
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    box-shadow: 0 12px 30px var(--shadow);
+}
+
+.coffee-margin-text {
+    flex: 1;
+}
+
+.coffee-margin-label {
+    margin: 0 0 6px;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.coffee-margin-verse {
+    margin: 0;
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-dark);
+}
+
+.coffee-margin-verse strong {
+    display: inline-block;
+    margin-right: 6px;
+    font-style: normal;
+    color: var(--accent);
+}
+
+.coffee-margin-subtext {
+    margin: 10px 0 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.coffee-margin-button {
+    text-decoration: none;
+    background: linear-gradient(135deg, #ffd86f, #fc6262);
+    color: #1a1a1a;
+    padding: 12px 22px;
+    border-radius: 999px;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(252, 98, 98, 0.35);
+    transition: transform 0.2s ease;
+    white-space: nowrap;
+}
+
+.coffee-margin-button:hover {
+    transform: translateY(-2px);
+}
+
 /* Beautiful scrollbar */
 .chapter-body::-webkit-scrollbar {
     width: 10px;
@@ -530,6 +590,17 @@ body::before {
 
     .nav-button {
         width: 100%;
+    }
+
+    .coffee-margin {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .coffee-margin-button {
+        width: 100%;
+        text-align: center;
     }
 }
 
