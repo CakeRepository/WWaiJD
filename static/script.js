@@ -1,18 +1,18 @@
 // Main application logic
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('questionForm');
     const input = document.getElementById('questionInput');
     const askButton = document.getElementById('askButton');
     const buttonText = document.getElementById('buttonText');
     const buttonSpinner = document.getElementById('buttonSpinner');
-    
+
     const responseSection = document.getElementById('responseSection');
     const answerText = document.getElementById('answerText');
     const passagesContainer = document.getElementById('passagesContainer');
-    
+
     const errorSection = document.getElementById('errorSection');
     const errorText = document.getElementById('errorText');
-    
+
     const loadingSection = document.getElementById('loadingSection');
     const questionPills = document.querySelectorAll('.question-pill');
     const modeButtons = document.querySelectorAll('.mode-button');
@@ -27,6 +27,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveNotesButton = document.getElementById('saveNotesButton');
     const notesStatus = document.getElementById('notesStatus');
 
+    // Tool Switcher Elements
+    const toolButtons = document.querySelectorAll('.tool-button');
+    const searchHeading = document.getElementById('searchHeading');
+    let currentTool = 'ask';
+
+    const TOOL_CONFIG = {
+        ask: {
+            heading: 'Ask your Bible question',
+            placeholder: 'Ask your question... (e.g., What should I do when someone wrongs me?)',
+            buttonText: 'Ask',
+            endpoint: '/api/ask-stream'
+        },
+        study: {
+            heading: 'Generate a Bible Study',
+            placeholder: 'Enter a topic... (e.g., Forgiveness, Patience, The Holy Spirit)',
+            buttonText: 'Create Study',
+            endpoint: '/api/study'
+        },
+        prayer: {
+            heading: 'Generate a Prayer',
+            placeholder: 'What do you need prayer for? (e.g., Strength for a job interview)',
+            buttonText: 'Pray',
+            endpoint: '/api/prayer'
+        }
+    };
+
     const MODE_COPY = {
         balanced: 'Balanced tone with gentle guidance.',
         comfort: 'Softer encouragement with reminders of God\'s nearness.',
@@ -34,12 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
         challenge: 'Loving conviction that calls for change.',
         blessing: 'Brief encouragement with a closing blessing.'
     };
-    let currentMode = 'balanced';
-    const RECENT_KEY = 'wwaijd.recents.v1';
-    const NOTES_KEY = 'wwaijd.notes.v1';
-    
+
     questionPills.forEach((pill) => {
         pill.addEventListener('click', () => {
+            // If not in ask mode, switch to it
+            if (currentTool !== 'ask') {
+                switchTool('ask');
+            }
+
             const preset = (pill.dataset.question || pill.textContent || '').trim();
             if (!preset) {
                 return;
@@ -59,11 +87,46 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    form.addEventListener('submit', async function(e) {
+    // Tool Switcher Logic
+    toolButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tool = button.dataset.tool;
+            if (tool && TOOL_CONFIG[tool]) {
+                switchTool(tool);
+            }
+        });
+    });
+
+    function switchTool(tool) {
+        currentTool = tool;
+        const config = TOOL_CONFIG[tool];
+
+        // Update buttons
+        toolButtons.forEach(btn => {
+            const isActive = btn.dataset.tool === tool;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-selected', isActive);
+        });
+
+        // Update UI
+        if (searchHeading) searchHeading.textContent = config.heading;
+        input.placeholder = config.placeholder;
+        buttonText.textContent = config.buttonText;
+
+        // Clear input and focus
+        input.value = '';
+        input.focus();
+
+        // Hide previous results
+        hideResponse();
+        hideError();
+    }
+
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        
-        const question = input.value.trim();
-        if (!question) return;
+
+        const value = input.value.trim();
+        if (!value) return;
 
         // Show loading state
         showLoading();
@@ -71,10 +134,16 @@ document.addEventListener('DOMContentLoaded', function() {
         hideError();
 
         try {
-            persistRecentQuestion(question);
-            persistNotes(); // autosave any notes before streaming
-            // Use streaming endpoint
-            await askQuestionStream(question);
+            if (currentTool === 'ask') {
+                persistRecentQuestion(value);
+                persistNotes(); // autosave any notes before streaming
+                // Use streaming endpoint
+                await askQuestionStream(value);
+            } else if (currentTool === 'study') {
+                await generateStudy(value);
+            } else if (currentTool === 'prayer') {
+                await generatePrayer(value);
+            }
 
         } catch (error) {
             console.error('Error:', error);
@@ -117,32 +186,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
         while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) break;
-            
+
             buffer += decoder.decode(value, { stream: true });
-            
-        // Process complete SSE messages
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop(); // Keep incomplete message in buffer
-        
-        for (const line of lines) {
-            if (!line.trim()) continue;
-                
+
+            // Process complete SSE messages
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); // Keep incomplete message in buffer
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+
                 // Parse SSE format: "event: eventname\ndata: jsondata"
-            const eventMatch = line.match(/event: (\w+)\ndata: (.+)/s);
-            if (!eventMatch) continue;
-            
-            const [, eventType, jsonData] = eventMatch;
-            const data = JSON.parse(jsonData);
-            const modeFromStream = data.mode || currentMode;
-            updateModeUI(modeFromStream);
-            
-            if (eventType === 'passages') {
-                // Display passages immediately when found
-                passages = data.passages;
-                displayPassages(passages);
-                    
+                const eventMatch = line.match(/event: (\w+)\ndata: (.+)/s);
+                if (!eventMatch) continue;
+
+                const [, eventType, jsonData] = eventMatch;
+                const data = JSON.parse(jsonData);
+                const modeFromStream = data.mode || currentMode;
+                updateModeUI(modeFromStream);
+
+                if (eventType === 'passages') {
+                    // Display passages immediately when found
+                    passages = data.passages;
+                    displayPassages(passages);
+
                     // Scroll to show the passages
                     setTimeout(() => {
                         passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -156,13 +225,53 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Remove typing cursor
                     answerText.innerHTML = renderMarkdown(accumulatedAnswer);
                     setupBibleRefHoverPreviews();
-                    
+
                     // Passages already displayed when received, no need to display again
                 } else if (eventType === 'error') {
                     throw new Error(data.error);
                 }
             }
         }
+    }
+
+    async function generateStudy(topic) {
+        const response = await fetch('/api/study', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate study');
+        }
+
+        displayResponse({
+            answer: `## 📚 Bible Study: ${topic}\n\n${data.study}`,
+            passages: data.passages
+        });
+        hideLoading();
+    }
+
+    async function generatePrayer(request) {
+        const response = await fetch('/api/prayer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to generate prayer');
+        }
+
+        displayResponse({
+            answer: `## 🙏 Prayer\n\n${data.prayer}`,
+            passages: data.passages
+        });
+        hideLoading();
     }
 
     function setMode(mode) {
@@ -189,18 +298,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayPassages(passages) {
         // Display Bible passages in the UI
         passagesContainer.innerHTML = '';
-        
+
         // Reset animation by removing and re-adding the class
         passagesContainer.style.animation = 'none';
         setTimeout(() => {
             passagesContainer.style.animation = '';
         }, 10);
-        
+
         if (passages && passages.length > 0) {
             passages.forEach(passage => {
                 const passageDiv = document.createElement('div');
                 passageDiv.className = 'passage-item';
-                
+
                 const reference = document.createElement('div');
                 reference.className = 'passage-reference';
                 reference.textContent = passage.reference || buildFallbackReference(passage);
@@ -222,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     relevanceBadge.textContent = `${Math.round(passage.relevance)}% match`;
                     meta.appendChild(relevanceBadge);
                 }
-                
+
                 const text = document.createElement('div');
                 text.className = 'passage-text';
                 text.textContent = passage.text;
@@ -244,7 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 copyRefButton.textContent = 'Copy Reference';
                 copyRefButton.addEventListener('click', () => copyToClipboard(reference.textContent));
                 actions.appendChild(copyRefButton);
-                
+
                 passageDiv.appendChild(reference);
                 if (metaParts.length || typeof passage.relevance === 'number') {
                     passageDiv.appendChild(meta);
@@ -283,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data.passages.forEach(passage => {
                 const passageDiv = document.createElement('div');
                 passageDiv.className = 'passage-item';
-                
+
                 const reference = document.createElement('div');
                 reference.className = 'passage-reference';
                 reference.textContent = passage.reference || buildFallbackReference(passage);
@@ -305,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     relevanceBadge.textContent = `${Math.round(passage.relevance)}% match`;
                     meta.appendChild(relevanceBadge);
                 }
-                
+
                 const text = document.createElement('div');
                 text.className = 'passage-text';
                 text.textContent = passage.text;
@@ -327,7 +436,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 copyRefButton.textContent = 'Copy Reference';
                 copyRefButton.addEventListener('click', () => copyToClipboard(reference.textContent));
                 actions.appendChild(copyRefButton);
-                
+
                 passageDiv.appendChild(reference);
                 if (metaParts.length || typeof passage.relevance === 'number') {
                     passageDiv.appendChild(meta);
@@ -339,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         responseSection.classList.remove('is-hidden');
-        
+
         // Smooth scroll to response
         setTimeout(() => {
             responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -353,7 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayError(message) {
         errorText.textContent = message;
         errorSection.style.display = 'block';
-        
+
         setTimeout(() => {
             errorSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
@@ -378,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
                 .replace(/\n{2,}/g, '<br><br>');
         }
-        
+
         // Add Bible reference links with hover preview
         html = linkifyBibleReferences(html);
         return html;
@@ -388,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Pattern to match Bible references like "Proverbs 4:27" or "Matthew 5:3-10"
         // Matches: Book name (1-3 words) + Chapter:Verse or Chapter:Verse-Verse
         const bibleRefPattern = /\b((?:[1-3]\s*)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(\d+):(\d+)(?:-(\d+))?/g;
-        
+
         return html.replace(bibleRefPattern, (match, book, chapter, verseStart, verseEnd, offset, fullString) => {
             const reference = `${book.trim()} ${chapter}:${verseStart}${verseEnd ? '-' + verseEnd : ''}`;
             const dataAttrs = `data-book="${book.trim()}" data-chapter="${chapter}" data-verse-start="${verseStart}" data-verse-end="${verseEnd || verseStart}"`;
@@ -575,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
 
     // Add click handler for example questions (if you want to add them to UI later)
-    window.askExample = function(question) {
+    window.askExample = function (question) {
         input.value = question;
         form.dispatchEvent(new Event('submit'));
     };
@@ -585,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let tooltipTimeout = null;
     let currentRequest = null;
     let previewListenersAttached = false;
-    
+
     // Mobile tap handling
     let lastTapTime = 0;
     let lastTappedLink = null;
@@ -598,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
         answerText.addEventListener('mouseenter', handleBibleRefHover, true);
         answerText.addEventListener('mouseleave', handleBibleRefLeave, true);
         answerText.addEventListener('click', handleBibleRefClick, true);
-        
+
         // Add touch event listeners for mobile
         answerText.addEventListener('touchstart', handleBibleRefTouchStart, true);
         answerText.addEventListener('touchend', handleBibleRefTouchEnd, true);
@@ -610,10 +719,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!link) return;
 
         e.preventDefault();
-        
+
         // Clear any existing timeout
         clearTimeout(tooltipTimeout);
-        
+
         // Delay showing tooltip slightly to avoid flashing on quick mouse movements
         tooltipTimeout = setTimeout(() => {
             showBibleTooltip(link);
@@ -625,7 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!link) return;
 
         clearTimeout(tooltipTimeout);
-        
+
         // Delay hiding to allow moving mouse to tooltip
         tooltipTimeout = setTimeout(() => {
             hideTooltip();
@@ -638,17 +747,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         e.preventDefault();
         e.stopPropagation();
-        
+
         touchHandled = true;
-        
+
         const currentTime = new Date().getTime();
         const timeSinceLastTap = currentTime - lastTapTime;
-        
+
         // Check if this is a double tap on the same link
         if (timeSinceLastTap < DOUBLE_TAP_DELAY && lastTappedLink === link) {
             // Double tap - navigate to the passage
             handleBibleRefNavigate(link);
-            
+
             // Reset tap tracking
             lastTapTime = 0;
             lastTappedLink = null;
@@ -660,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showBibleTooltip(link);
         }
     }
-    
+
     function handleBibleRefTouchEnd(e) {
         // Reset touch flag after a delay to prevent click event
         setTimeout(() => {
@@ -680,24 +789,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         e.preventDefault();
-        
+
         // For mouse clicks, navigate immediately
         handleBibleRefNavigate(link);
     }
-    
+
     function handleBibleRefNavigate(link) {
         // Build passage viewer URL and navigate
         const book = link.dataset.book;
         const chapter = link.dataset.chapter;
         const verseStart = link.dataset.verseStart;
         const verseEnd = link.dataset.verseEnd;
-        
+
         const url = new URL('/static/passage.html', window.location.origin);
         url.searchParams.set('book', book);
         url.searchParams.set('chapter', chapter);
         url.searchParams.set('start', verseStart);
         url.searchParams.set('end', verseEnd);
-        
+
         window.open(url.toString(), '_blank', 'noopener,noreferrer');
     }
 
@@ -706,18 +815,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const chapter = link.dataset.chapter;
         const verseStart = link.dataset.verseStart;
         const verseEnd = link.dataset.verseEnd;
-        
+
         // Create or reuse tooltip
         if (!activeTooltip) {
             activeTooltip = document.createElement('div');
             activeTooltip.className = 'bible-tooltip';
             document.body.appendChild(activeTooltip);
-            
+
             // Keep tooltip visible when hovering over it
             activeTooltip.addEventListener('mouseenter', () => {
                 clearTimeout(tooltipTimeout);
             });
-            
+
             activeTooltip.addEventListener('mouseleave', () => {
                 tooltipTimeout = setTimeout(() => {
                     hideTooltip();
@@ -729,7 +838,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const rect = link.getBoundingClientRect();
         activeTooltip.style.left = `${rect.left}px`;
         activeTooltip.style.top = `${rect.bottom + 8}px`;
-        
+
         // Show loading state
         activeTooltip.innerHTML = '<div class="tooltip-loading">Loading verse...</div>';
         activeTooltip.classList.add('visible');
@@ -761,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const reference = `${book} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
             const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             const hintText = isMobile ? 'Double tap to view full chapter' : 'Click to view full chapter';
-            
+
             activeTooltip.innerHTML = `
                 <div class="tooltip-reference">${reference}</div>
                 <div class="tooltip-text">${data.text}</div>
@@ -782,13 +891,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return; // Request was cancelled
             }
             console.error('Error fetching verse preview:', error);
-            
+
             // Show more helpful error message
             const reference = `${book} ${chapter}:${verseStart}${verseEnd !== verseStart ? '-' + verseEnd : ''}`;
-            const errorMessage = error.message.includes('not found') 
+            const errorMessage = error.message.includes('not found')
                 ? `Verse ${reference} does not exist in this chapter.`
                 : 'Failed to load verse preview.';
-            
+
             activeTooltip.innerHTML = `
                 <div class="tooltip-reference">${reference}</div>
                 <div class="tooltip-error">${errorMessage}</div>
@@ -879,15 +988,24 @@ document.addEventListener('DOMContentLoaded', function() {
             overlay.className = 'trinity-overlay';
             overlay.setAttribute('aria-hidden', 'true');
             overlay.innerHTML = `
-                <div class="trinity-cluster">
-                    <div class="trinity-glow"></div>
-                    <div class="trinity-ring"></div>
-                    <div class="trinity-orb orb-father">Father</div>
-                    <div class="trinity-orb orb-son">Son</div>
-                    <div class="trinity-orb orb-spirit">Spirit</div>
-                    <div class="trinity-cross"></div>
+                <div class="divine-geometry">
+                    <svg class="triangle-path" viewBox="0 0 600 600">
+                        <polygon points="300,60 100,480 500,480" />
+                    </svg>
+                    <div class="vertex vertex-top">
+                        <div class="vertex-glow"></div>
+                        <div class="vertex-label">Father</div>
+                    </div>
+                    <div class="vertex vertex-right">
+                        <div class="vertex-glow"></div>
+                        <div class="vertex-label">Son</div>
+                    </div>
+                    <div class="vertex vertex-left">
+                        <div class="vertex-glow"></div>
+                        <div class="vertex-label">Spirit</div>
+                    </div>
+                    <div class="center-light"></div>
                 </div>
-                <p class="trinity-whisper">Father • Son • Holy Spirit</p>
             `;
             document.body.appendChild(overlay);
             state.overlay = overlay;
@@ -897,6 +1015,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initInteractiveBackground() {
         const root = document.documentElement;
+        const container = document.querySelector('.container');
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         let rafId = null;
         let pointerX = 50;
@@ -906,6 +1025,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const commitPointer = () => {
             root.style.setProperty('--pointer-x', `${pointerX}%`);
             root.style.setProperty('--pointer-y', `${pointerY}%`);
+
+            if (container) {
+                const rotateY = (pointerX - 50) * 0.02; // Max +/- 1 deg
+                const rotateX = (50 - pointerY) * 0.02; // Max +/- 1 deg
+                container.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            }
+
             rafId = null;
         };
 

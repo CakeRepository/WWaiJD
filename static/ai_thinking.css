@@ -1,0 +1,112 @@
+/* AI Thinking Animation */
+.ai-thinking-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+}
+
+.neural-halo {
+    width: 120px;
+    height: 120px;
+    filter: url(#glow-effect);
+}
+
+.halo-ring {
+    fill: none;
+    stroke: var(--secondary-color);
+    stroke-width: 2;
+    transform-origin: center;
+}
+
+.halo-ring.outer {
+    stroke-dasharray: 100 200;
+    animation: rotate-cw 8s linear infinite;
+    stroke: rgba(255, 255, 255, 0.3);
+}
+
+.halo-ring.middle {
+    stroke-dasharray: 20 40;
+    animation: rotate-ccw 12s linear infinite;
+    stroke: rgba(100, 149, 237, 0.6);
+}
+
+.halo-ring.inner {
+    stroke-dasharray: 50 100;
+    animation: rotate-cw 6s linear infinite;
+    stroke: rgba(255, 215, 0, 0.5);
+}
+
+.divine-core {
+    stroke: white;
+    stroke-width: 4;
+    stroke-linecap: round;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 10px white);
+    animation: pulse-core 2s ease-in-out infinite;
+}
+
+.neural-node {
+    fill: white;
+    filter: drop-shadow(0 0 5px white);
+    animation: orbit-node 4s linear infinite;
+    transform-origin: 100px 100px;
+}
+
+@keyframes rotate-cw {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate-ccw {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes pulse-core {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        stroke-width: 3;
+    }
+
+    50% {
+        opacity: 1;
+        stroke-width: 5;
+    }
+}
+
+@keyframes orbit-node {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.thinking-text {
+    font-family: 'Times New Roman', serif;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}

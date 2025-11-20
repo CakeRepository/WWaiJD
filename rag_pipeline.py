@@ -244,38 +244,93 @@ Response:"""
             }
             
         except Exception as e:
-            print(f"Error generating streaming response: {e}")
+            print(f"Error in streaming response: {e}")
             yield {
-                'chunk': f"I encountered an error while generating a response. Please make sure the gemma3:4b model is installed (run: ollama pull gemma3:4b)",
-                'passages': passages,
-                'error': True,
+                'error': str(e),
                 'done': True,
                 'mode': selected_mode
             }
-    
-    def ask(self, query: str, mode: Optional[str] = None) -> Dict:
+
+    def generate_study(self, topic: str) -> Dict:
         """
-        Main method to ask a question and get an AI Jesus response.
+        Generate a thematic Bible study based on a topic.
+        """
+        passages = self.retrieve_passages(topic)
         
-        Args:
-            query: User's question
+        if not passages:
+            return {
+                'study': "I couldn't find relevant passages for this topic. Please try a different one.",
+                'passages': [],
+                'error': True
+            }
             
-        Returns:
-            Dict with answer, source passages, and metadata
+        context = "Here are relevant passages:\n\n"
+        for i, passage in enumerate(passages, 1):
+            context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+            
+        prompt = f"""You are AI Jesus, a wise teacher. Create a short Bible study on the topic: "{topic}".
+        
+{context}
+
+Structure the study as follows:
+1. **Introduction**: Briefly introduce the topic.
+2. **Key Verses**: Discuss 2-3 of the provided verses and their meaning.
+3. **Reflection**: Ask 2-3 questions to help the reader apply this to their life.
+4. **Prayer**: A short closing prayer.
+
+Keep the tone encouraging and insightful.
+"""
+        try:
+            response = ollama.generate(
+                model='gemma3:4b',
+                prompt=prompt,
+                options={'temperature': 0.7}
+            )
+            return {
+                'study': response['response'].strip(),
+                'passages': passages,
+                'error': False
+            }
+        except Exception as e:
+            print(f"Error generating study: {e}")
+            return {'study': "Error generating study.", 'error': True}
+
+    def generate_prayer(self, request: str) -> Dict:
         """
-        print(f"\n🙏 Question: {query}")
+        Generate a personalized prayer based on a request.
+        """
+        passages = self.retrieve_passages(request)
         
-        # Retrieve relevant passages
-        print("📖 Retrieving relevant Bible passages...")
-        passages = self.retrieve_passages(query)
-        print(f"✅ Found {len(passages)} relevant passages")
+        context = ""
+        if passages:
+            context = "Here are some relevant verses to inspire the prayer:\n\n"
+            for i, passage in enumerate(passages[:3], 1):
+                context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
         
-        # Generate response
-        print("🤖 Generating AI Jesus response...")
-        result = self.generate_response(query, passages, mode=mode)
-        print("✅ Response generated")
+        prompt = f"""You are AI Jesus. A user has asked for prayer: "{request}".
         
-        return result
+{context}
+
+Write a heartfelt, comforting prayer for them. 
+- Address their specific situation.
+- Weave in the themes from the verses if applicable.
+- Keep it under 150 words.
+- End with "Amen."
+"""
+        try:
+            response = ollama.generate(
+                model='gemma3:4b',
+                prompt=prompt,
+                options={'temperature': 0.8}
+            )
+            return {
+                'prayer': response['response'].strip(),
+                'passages': passages,
+                'error': False
+            }
+        except Exception as e:
+            print(f"Error generating prayer: {e}")
+            return {'prayer': "Error generating prayer.", 'error': True}
 
 
 def main():

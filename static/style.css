@@ -24,11 +24,8 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background:
-        radial-gradient(120% 120% at 50% 0%, rgba(255, 255, 255, 0.07), transparent 70%),
-        linear-gradient(160deg, var(--bg-base) 0%, var(--bg-iris) 55%, #070b1c 100%);
-    background-attachment: fixed;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #050505;
     min-height: 100vh;
     color: var(--text-color);
     padding: 20px;
@@ -36,33 +33,33 @@ body {
     overflow-x: hidden;
 }
 
-body::before,
+/* Dynamic Background System */
+body::before {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at var(--pointer-x) var(--pointer-y), rgba(100, 149, 237, 0.15), transparent 25%),
+        radial-gradient(circle at calc(100% - var(--pointer-x)) calc(100% - var(--pointer-y)), rgba(147, 112, 219, 0.15), transparent 25%);
+    filter: blur(60px);
+    z-index: -2;
+    pointer-events: none;
+    transform: translate3d(0, 0, 0);
+    /* Hardware acceleration */
+    transition: opacity 0.5s ease;
+}
+
 body::after {
     content: "";
     position: fixed;
-    inset: -10%;
-    pointer-events: none;
-}
-
-body::before {
-    z-index: 0;
-    background:
-        radial-gradient(35% 40% at var(--pointer-x) var(--pointer-y), rgba(255, 255, 255, 0.25), transparent 65%),
-        radial-gradient(35% 45% at calc(100% - var(--pointer-x)) calc(100% - var(--pointer-y)), var(--glow-secondary), transparent 70%),
-        radial-gradient(65% 65% at 50% 15%, var(--glow-primary), transparent 80%);
-    filter: blur(35px);
-    opacity: 0.9;
-    transition: opacity 0.4s ease;
-}
-
-body::after {
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    opacity: 0.4;
     z-index: -1;
-    background-image:
-        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 45%),
-        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04), transparent 45%),
-        radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.04), transparent 45%);
-    opacity: 0.35;
-    mix-blend-mode: screen;
+    pointer-events: none;
+    mix-blend-mode: overlay;
 }
 
 .container {
@@ -70,121 +67,185 @@ body::after {
     margin: 0 auto;
     position: relative;
     z-index: 1;
+    transition: transform 0.1s ease-out;
+    transform-style: preserve-3d;
 }
 
 body.holy-trinity-active .container {
     filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.25));
 }
 
+/* Trinity Easter Egg - Divine Geometry */
 .trinity-overlay {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
+    background: rgba(5, 5, 10, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 1000;
     opacity: 0;
-    transform: scale(0.96);
-    transition: opacity 0.5s ease, transform 0.7s ease;
-    mix-blend-mode: screen;
-    z-index: 2;
-    padding: 20px;
+    pointer-events: none;
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .trinity-overlay.visible {
     opacity: 1;
-    transform: scale(1);
+    pointer-events: auto;
 }
 
-.trinity-cluster {
+.divine-geometry {
     position: relative;
-    width: min(70vw, 420px);
-    height: min(70vw, 420px);
-}
-
-.trinity-glow {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.25), transparent 70%);
-    filter: blur(40px);
-    animation: trinityGlow 6s ease-in-out infinite;
-}
-
-.trinity-ring {
-    position: absolute;
-    inset: 15%;
-    border: 1.5px dashed rgba(255, 255, 255, 0.35);
-    border-radius: 50%;
-    animation: trinityOrbit 12s linear infinite;
-}
-
-.trinity-orb {
-    position: absolute;
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.05));
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.45);
-    animation: trinityPulse 4s ease-in-out infinite;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 0.7rem;
+    width: 600px;
+    height: 600px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding-bottom: 6px;
-    color: rgba(8, 10, 25, 0.75);
 }
 
-.orb-father {
-    top: -20px;
+.triangle-path {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    stroke: rgba(255, 255, 255, 0.3);
+    stroke-width: 1;
+    fill: none;
+    stroke-dasharray: 1500;
+    stroke-dashoffset: 1500;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+.trinity-overlay.visible .triangle-path {
+    animation: drawTriangle 2.5s ease-out forwards;
+}
+
+.vertex {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.vertex-top {
+    top: 10%;
     left: 50%;
-    transform: translate(-50%, -30%);
+    transform: translate(-50%, 0) scale(0.8);
 }
 
-.orb-son {
-    bottom: 5%;
+.vertex-left {
+    bottom: 20%;
     left: 15%;
-    transform: translate(-30%, 20%);
+    transform: translate(0, 0) scale(0.8);
 }
 
-.orb-spirit {
-    bottom: 5%;
+.vertex-right {
+    bottom: 20%;
     right: 15%;
-    transform: translate(30%, 20%);
+    transform: translate(0, 0) scale(0.8);
 }
 
-.trinity-cross {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 12px;
-    height: 180px;
-    transform: translate(-50%, -50%);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+.trinity-overlay.visible .vertex {
+    animation: revealVertex 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-.trinity-cross::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 110px;
-    height: 12px;
-    transform: translate(-50%, -50%);
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0));
+.trinity-overlay.visible .vertex-top {
+    animation-delay: 0.5s;
 }
 
-.trinity-whisper {
-    margin-top: 25px;
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.95rem;
-    letter-spacing: 3px;
+.trinity-overlay.visible .vertex-right {
+    animation-delay: 1.0s;
+}
+
+.trinity-overlay.visible .vertex-left {
+    animation-delay: 1.5s;
+}
+
+.vertex-glow {
+    width: 15px;
+    height: 15px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.6);
+    margin-bottom: 15px;
+}
+
+.vertex-label {
+    color: white;
+    font-family: 'Times New Roman', serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    text-align: center;
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
-    animation: fadeIn 1.2s ease;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.center-light {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    box-shadow:
+        0 0 60px 30px rgba(255, 255, 255, 0.2),
+        0 0 100px 60px rgba(100, 149, 237, 0.1);
+    opacity: 0;
+    transform: scale(0);
+}
+
+.trinity-overlay.visible .center-light {
+    animation: expandLight 3s ease-out forwards 2s;
+}
+
+@keyframes drawTriangle {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes revealVertex {
+    to {
+        opacity: 1;
+        transform: translate(var(--tx, 0), var(--ty, 0)) scale(1);
+    }
+}
+
+/* Custom transforms for vertices to keep them in place during animation */
+.vertex-top {
+    --tx: -50%;
+    --ty: 0;
+}
+
+.vertex-left {
+    --tx: 0;
+    --ty: 0;
+}
+
+.vertex-right {
+    --tx: 0;
+    --ty: 0;
+}
+
+@keyframes expandLight {
+    0% {
+        opacity: 0;
+        transform: scale(0);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.5);
+    }
+
+    100% {
+        opacity: 0.8;
+        transform: scale(1);
+        box-shadow: 0 0 80px 40px rgba(255, 255, 255, 0.3);
+    }
 }
 
 .page-shell {
@@ -333,7 +394,7 @@ body.holy-trinity-active .container {
     margin-bottom: 12px;
 }
 
-.simple-about p + p {
+.simple-about p+p {
     margin-top: 12px;
 }
 
@@ -420,10 +481,13 @@ body.holy-trinity-active .container {
 }
 
 @keyframes coffeePulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 10px 25px rgba(252, 98, 98, 0.35);
         transform: translateY(0);
     }
+
     50% {
         box-shadow: 0 12px 30px rgba(255, 216, 111, 0.45);
         transform: translateY(-2px);
@@ -680,6 +744,7 @@ main {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1101,6 +1166,7 @@ footer {
         opacity: 0;
         transform: translateY(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1112,6 +1178,7 @@ footer {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1122,6 +1189,7 @@ footer {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -1131,16 +1199,20 @@ footer {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
 }
 
 @keyframes trinityPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(0.95);
         opacity: 0.8;
     }
+
     50% {
         transform: scale(1.05);
         opacity: 1;
@@ -1148,9 +1220,12 @@ footer {
 }
 
 @keyframes trinityGlow {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 0.6;
     }
+
     50% {
         opacity: 0.9;
     }
@@ -1198,10 +1273,14 @@ footer {
 }
 
 @keyframes blink {
-    0%, 49% {
+
+    0%,
+    49% {
         opacity: 1;
     }
-    50%, 100% {
+
+    50%,
+    100% {
         opacity: 0;
     }
 }
@@ -1214,7 +1293,7 @@ footer {
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
-                0 0 0 1px rgba(255, 255, 255, 0.1);
+        0 0 0 1px rgba(255, 255, 255, 0.1);
     z-index: 10000;
     opacity: 0;
     transform: translateY(-5px);
@@ -1355,7 +1434,7 @@ footer {
     .error-card {
         padding: 20px;
     }
-    
+
     /* Mobile-specific tooltip styling */
     .bible-tooltip {
         max-width: calc(100vw - 32px);
@@ -1364,8 +1443,119 @@ footer {
         width: auto;
         font-size: 0.95em;
     }
-    
+
     .tooltip-hint {
         font-size: 0.8em;
+    }
+}/* AI Thinking Animation */
+.ai-thinking-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+}
+
+.neural-halo {
+    width: 120px;
+    height: 120px;
+    filter: url(#glow-effect);
+}
+
+.halo-ring {
+    fill: none;
+    stroke: var(--secondary-color);
+    stroke-width: 2;
+    transform-origin: center;
+}
+
+.halo-ring.outer {
+    stroke-dasharray: 100 200;
+    animation: rotate-cw 8s linear infinite;
+    stroke: rgba(255, 255, 255, 0.3);
+}
+
+.halo-ring.middle {
+    stroke-dasharray: 20 40;
+    animation: rotate-ccw 12s linear infinite;
+    stroke: rgba(100, 149, 237, 0.6);
+}
+
+.halo-ring.inner {
+    stroke-dasharray: 50 100;
+    animation: rotate-cw 6s linear infinite;
+    stroke: rgba(255, 215, 0, 0.5);
+}
+
+.divine-core {
+    stroke: white;
+    stroke-width: 4;
+    stroke-linecap: round;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 10px white);
+    animation: pulse-core 2s ease-in-out infinite;
+}
+
+.neural-node {
+    fill: white;
+    filter: drop-shadow(0 0 5px white);
+    animation: orbit-node 4s linear infinite;
+    transform-origin: 100px 100px;
+}
+
+@keyframes rotate-cw {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rotate-ccw {
+    to {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes pulse-core {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        stroke-width: 3;
+    }
+
+    50% {
+        opacity: 1;
+        stroke-width: 5;
+    }
+}
+
+@keyframes orbit-node {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.thinking-text {
+    font-family: 'Times New Roman', serif;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
     }
 }

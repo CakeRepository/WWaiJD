@@ -236,6 +236,264 @@ def ask_question_stream():
         }), 500
 
 
+@app.route('/api/study', methods=['POST'])
+def generate_study():
+    """
+    API endpoint to generate a thematic Bible study.
+    
+    Request body:
+        {
+            "topic": "Topic string"
+        }
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        topic = data.get('topic', '').strip()
+        
+        if not topic:
+            return jsonify({
+                'error': 'Topic is required'
+            }), 400
+        
+        result = rag.generate_study(topic)
+        
+        if result.get('error'):
+            return jsonify({
+                'error': result['study']
+            }), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error generating study: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
+@app.route('/api/prayer', methods=['POST'])
+def generate_prayer():
+    """
+    API endpoint to generate a personalized prayer.
+    
+    Request body:
+        {
+            "request": "Prayer request"
+        }
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        req_text = data.get('request', '').strip()
+        
+        if not req_text:
+            return jsonify({
+                'error': 'Prayer request is required'
+            }), 400
+        
+        result = rag.generate_prayer(req_text)
+        
+        if result.get('error'):
+            return jsonify({
+                'error': result['prayer']
+            }), 500
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        print(f"Error generating prayer: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
+@app.route('/api/study-stream', methods=['POST'])
+def generate_study_stream():
+    """
+    API endpoint to generate a thematic Bible study with streaming.
+    Uses Server-Sent Events (SSE) to stream the response.
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        topic = data.get('topic', '').strip()
+        
+        if not topic:
+            return jsonify({
+                'error': 'Topic is required'
+            }), 400
+        
+        def generate():
+            """Generator function for SSE streaming."""
+            try:
+                # Retrieve relevant passages first
+                print(f"\n📚 Bible Study Topic: {topic}")
+                print("📖 Retrieving relevant passages...")
+                passages = rag.retrieve_passages(topic)
+                print(f"✅ Found {len(passages)} relevant passages")
+                
+                if not passages:
+                    yield f"event: error\ndata: {json.dumps({'error': 'Could not find relevant passages'})}\n\n"
+                    return
+                
+                # Send passages first
+                yield f"event: passages\ndata: {json.dumps({'passages': passages})}\n\n"
+                
+                # Build the study prompt
+                context = "Here are relevant passages:\n\n"
+                for i, passage in enumerate(passages, 1):
+                    context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+                    
+                prompt = f"""You are AI Jesus, a wise teacher. Create a short Bible study on the topic: "{topic}".
+        
+{context}
+
+Structure the study as follows:
+1. **Introduction**: Briefly introduce the topic.
+2. **Key Verses**: Discuss 2-3 of the provided verses and their meaning.
+3. **Reflection**: Ask 2-3 questions to help the reader apply this to their life.
+4. **Prayer**: A short closing prayer.
+
+Keep the tone encouraging and insightful.
+"""
+                
+                # Stream the response
+                print("🤖 Generating Bible study (streaming)...")
+                stream = ollama.generate(
+                    model='gemma3:4b',
+                    prompt=prompt,
+                    stream=True,
+                    options={'temperature': 0.7}
+                )
+                
+                for chunk in stream:
+                    if chunk.get('response'):
+                        yield f"event: chunk\ndata: {json.dumps({'text': chunk['response']})}\n\n"
+                    if chunk.get('done'):
+                        yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                        print("✅ Bible study generated")
+                        break
+                        
+            except Exception as e:
+                print(f"Error in streaming study: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error processing streaming study: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
+@app.route('/api/prayer-stream', methods=['POST'])
+def generate_prayer_stream():
+    """
+    API endpoint to generate a personalized prayer with streaming.
+    Uses Server-Sent Events (SSE) to stream the response.
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        req_text = data.get('request', '').strip()
+        
+        if not req_text:
+            return jsonify({
+                'error': 'Prayer request is required'
+            }), 400
+        
+        def generate():
+            """Generator function for SSE streaming."""
+            try:
+                # Retrieve relevant passages first
+                print(f"\n🙏 Prayer Request: {req_text}")
+                print("📖 Retrieving relevant passages...")
+                passages = rag.retrieve_passages(req_text)
+                print(f"✅ Found {len(passages)} relevant passages")
+                
+                # Send passages (even if empty)
+                yield f"event: passages\ndata: {json.dumps({'passages': passages[:3]})}\n\n"
+                
+                # Build the prayer prompt
+                context = ""
+                if passages:
+                    context = "Here are some relevant verses to inspire the prayer:\n\n"
+                    for i, passage in enumerate(passages[:3], 1):
+                        context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+                
+                prompt = f"""You are AI Jesus. A user has asked for prayer: "{req_text}".
+        
+{context}
+
+Write a heartfelt, comforting prayer for them. 
+- Address their specific situation.
+- Weave in the themes from the verses if applicable.
+- Keep it under 150 words.
+- End with "Amen."
+"""
+                
+                # Stream the response
+                print("🤖 Generating prayer (streaming)...")
+                stream = ollama.generate(
+                    model='gemma3:4b',
+                    prompt=prompt,
+                    stream=True,
+                    options={'temperature': 0.8}
+                )
+                
+                for chunk in stream:
+                    if chunk.get('response'):
+                        yield f"event: chunk\ndata: {json.dumps({'text': chunk['response']})}\n\n"
+                    if chunk.get('done'):
+                        yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                        print("✅ Prayer generated")
+                        break
+                        
+            except Exception as e:
+                print(f"Error in streaming prayer: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+        
+    except Exception as e:
+        print(f"Error processing streaming prayer: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
 @app.route('/api/bible-index', methods=['GET'])
 def get_bible_index():
     """Return the structure of the Bible library."""
