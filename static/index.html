@@ -193,12 +193,43 @@
             </div>
         </section>
 
+        <section class="focus-row" aria-label="Customize how answers are written">
+            <div class="focus-card">
+                <div class="focus-header">
+                    <div>
+                        <p class="eyebrow">Answer focus</p>
+                        <h3>Choose the tone for AI Jesus</h3>
+                    </div>
+                    <p class="focus-description" id="modeDescription">Balanced tone with gentle guidance.</p>
+                </div>
+                <div class="mode-buttons" role="group" aria-label="Answer focus options">
+                    <button type="button" class="mode-button is-active" data-mode="balanced">Balanced</button>
+                    <button type="button" class="mode-button" data-mode="comfort">Comfort</button>
+                    <button type="button" class="mode-button" data-mode="clarity">Clarity</button>
+                    <button type="button" class="mode-button" data-mode="challenge">Challenge</button>
+                    <button type="button" class="mode-button" data-mode="blessing">Blessing</button>
+                </div>
+            </div>
+            <div class="status-card" id="healthCard" aria-live="polite">
+                <div class="status-label">System status</div>
+                <div class="status-value" id="healthBadge">Checking...</div>
+                <p class="status-note" id="healthDetail">Verifying Bible database and models.</p>
+            </div>
+        </section>
+
         <section class="answer-lab" aria-live="polite">
             <div class="response-wrapper">
                 <div id="responseSection" class="response-section is-hidden">
                     <div class="response-card">
-                        <h2>🕊️ Answer</h2>
+                        <div class="response-heading">
+                            <h2>🕊️ Answer</h2>
+                            <span class="mode-pill" id="activeModePill" aria-live="polite">Balanced focus</span>
+                        </div>
                         <div id="answerText" class="answer-text"></div>
+                        <div class="answer-actions">
+                            <button type="button" id="copyAnswerButton" class="ghost-button">Copy answer</button>
+                            <span class="answer-hint">Switch focus above to reshape the tone.</span>
+                        </div>
                     </div>
 
                     <div class="passages-card">
@@ -217,6 +248,26 @@
                         <h3>⚠️ Error</h3>
                         <p id="errorText"></p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="study-tools" aria-label="Study tools">
+            <div class="recents-card">
+                <div class="card-header">
+                    <h3>Recent questions</h3>
+                    <button type="button" id="clearRecentsButton" class="ghost-button">Clear</button>
+                </div>
+                <ul id="recentQuestions" class="recent-list"></ul>
+                <p class="small-hint">Saved only in this browser so you can revisit ideas.</p>
+            </div>
+            <div class="session-card">
+                <h3>Session notes</h3>
+                <p>Capture thoughts while you read. Nothing leaves this page.</p>
+                <textarea id="sessionNotes" placeholder="Write what stood out or how you want to respond." rows="5"></textarea>
+                <div class="session-actions">
+                    <button type="button" id="saveNotesButton">Save notes locally</button>
+                    <span class="small-hint" id="notesStatus">Unsaved</span>
                 </div>
             </div>
         </section>

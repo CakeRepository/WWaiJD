@@ -15,7 +15,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const loadingSection = document.getElementById('loadingSection');
     const questionPills = document.querySelectorAll('.question-pill');
+    const modeButtons = document.querySelectorAll('.mode-button');
+    const modeDescription = document.getElementById('modeDescription');
+    const activeModePill = document.getElementById('activeModePill');
+    const healthBadge = document.getElementById('healthBadge');
+    const healthDetail = document.getElementById('healthDetail');
+    const copyAnswerButton = document.getElementById('copyAnswerButton');
+    const recentList = document.getElementById('recentQuestions');
+    const clearRecentsButton = document.getElementById('clearRecentsButton');
+    const sessionNotes = document.getElementById('sessionNotes');
+    const saveNotesButton = document.getElementById('saveNotesButton');
+    const notesStatus = document.getElementById('notesStatus');
 
+    const MODE_COPY = {
+        balanced: 'Balanced tone with gentle guidance.',
+        comfort: 'Softer encouragement with reminders of God\'s nearness.',
+        clarity: 'Direct, practical next steps.',
+        challenge: 'Loving conviction that calls for change.',
+        blessing: 'Brief encouragement with a closing blessing.'
+    };
+    let currentMode = 'balanced';
+    const RECENT_KEY = 'wwaijd.recents.v1';
+    const NOTES_KEY = 'wwaijd.notes.v1';
+    
     questionPills.forEach((pill) => {
         pill.addEventListener('click', () => {
             const preset = (pill.dataset.question || pill.textContent || '').trim();
@@ -25,6 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = preset;
             input.focus();
             input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    });
+
+    modeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const mode = button.dataset.mode;
+            if (mode) {
+                setMode(mode);
+            }
         });
     });
 
@@ -40,6 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hideError();
 
         try {
+            persistRecentQuestion(question);
+            persistNotes(); // autosave any notes before streaming
             // Use streaming endpoint
             await askQuestionStream(question);
 
@@ -57,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ question: question })
+            body: JSON.stringify({ question: question, mode: currentMode })
         });
 
         if (!response.ok) {
@@ -89,24 +122,26 @@ document.addEventListener('DOMContentLoaded', function() {
             
             buffer += decoder.decode(value, { stream: true });
             
-            // Process complete SSE messages
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop(); // Keep incomplete message in buffer
-            
-            for (const line of lines) {
-                if (!line.trim()) continue;
+        // Process complete SSE messages
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); // Keep incomplete message in buffer
+        
+        for (const line of lines) {
+            if (!line.trim()) continue;
                 
                 // Parse SSE format: "event: eventname\ndata: jsondata"
-                const eventMatch = line.match(/event: (\w+)\ndata: (.+)/s);
-                if (!eventMatch) continue;
-                
-                const [, eventType, jsonData] = eventMatch;
-                const data = JSON.parse(jsonData);
-                
-                if (eventType === 'passages') {
-                    // Display passages immediately when found
-                    passages = data.passages;
-                    displayPassages(passages);
+            const eventMatch = line.match(/event: (\w+)\ndata: (.+)/s);
+            if (!eventMatch) continue;
+            
+            const [, eventType, jsonData] = eventMatch;
+            const data = JSON.parse(jsonData);
+            const modeFromStream = data.mode || currentMode;
+            updateModeUI(modeFromStream);
+            
+            if (eventType === 'passages') {
+                // Display passages immediately when found
+                passages = data.passages;
+                displayPassages(passages);
                     
                     // Scroll to show the passages
                     setTimeout(() => {
@@ -127,6 +162,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error(data.error);
                 }
             }
+        }
+    }
+
+    function setMode(mode) {
+        currentMode = MODE_COPY[mode] ? mode : 'balanced';
+        updateModeUI(currentMode);
+    }
+
+    function updateModeUI(modeOverride) {
+        const mode = modeOverride || currentMode;
+        currentMode = mode;
+        modeButtons.forEach((button) => {
+            const isActive = button.dataset.mode === mode;
+            button.classList.toggle('is-active', isActive);
+        });
+        if (modeDescription && MODE_COPY[mode]) {
+            modeDescription.textContent = MODE_COPY[mode];
+        }
+        if (activeModePill) {
+            const label = mode.charAt(0).toUpperCase() + mode.slice(1);
+            activeModePill.textContent = `${label} focus`;
         }
     }
 
@@ -155,7 +211,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (passage.book) metaParts.push(passage.book);
                 if (passage.chapter) metaParts.push(`Chapter ${passage.chapter}`);
                 if (passage.testament) metaParts.push(passage.testament);
-                meta.textContent = metaParts.join(' • ');
+                if (metaParts.length) {
+                    const metaText = document.createElement('span');
+                    metaText.textContent = metaParts.join(' • ');
+                    meta.appendChild(metaText);
+                }
+                if (typeof passage.relevance === 'number') {
+                    const relevanceBadge = document.createElement('span');
+                    relevanceBadge.className = 'relevance-badge';
+                    relevanceBadge.textContent = `${Math.round(passage.relevance)}% match`;
+                    meta.appendChild(relevanceBadge);
+                }
                 
                 const text = document.createElement('div');
                 text.className = 'passage-text';
@@ -180,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 actions.appendChild(copyRefButton);
                 
                 passageDiv.appendChild(reference);
-                if (metaParts.length) {
+                if (metaParts.length || typeof passage.relevance === 'number') {
                     passageDiv.appendChild(meta);
                 }
                 passageDiv.appendChild(text);
@@ -228,7 +294,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (passage.book) metaParts.push(passage.book);
                 if (passage.chapter) metaParts.push(`Chapter ${passage.chapter}`);
                 if (passage.testament) metaParts.push(passage.testament);
-                meta.textContent = metaParts.join(' • ');
+                if (metaParts.length) {
+                    const metaText = document.createElement('span');
+                    metaText.textContent = metaParts.join(' • ');
+                    meta.appendChild(metaText);
+                }
+                if (typeof passage.relevance === 'number') {
+                    const relevanceBadge = document.createElement('span');
+                    relevanceBadge.className = 'relevance-badge';
+                    relevanceBadge.textContent = `${Math.round(passage.relevance)}% match`;
+                    meta.appendChild(relevanceBadge);
+                }
                 
                 const text = document.createElement('div');
                 text.className = 'passage-text';
@@ -253,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 actions.appendChild(copyRefButton);
                 
                 passageDiv.appendChild(reference);
-                if (metaParts.length) {
+                if (metaParts.length || typeof passage.relevance === 'number') {
                     passageDiv.appendChild(meta);
                 }
                 passageDiv.appendChild(text);
@@ -362,6 +438,133 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function loadRecents() {
+        try {
+            const stored = localStorage.getItem(RECENT_KEY);
+            return stored ? JSON.parse(stored) : [];
+        } catch (err) {
+            console.warn('Unable to load recents', err);
+            return [];
+        }
+    }
+
+    function persistRecentQuestion(question) {
+        if (!question) return;
+        const recents = loadRecents().filter(item => item.question !== question);
+        recents.unshift({ question, ts: Date.now() });
+        const trimmed = recents.slice(0, 8);
+        try {
+            localStorage.setItem(RECENT_KEY, JSON.stringify(trimmed));
+            renderRecents(trimmed);
+        } catch (err) {
+            console.warn('Unable to save recents', err);
+        }
+    }
+
+    function renderRecents(recents) {
+        if (!recentList) return;
+        recentList.innerHTML = '';
+        if (!recents || recents.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'recent-empty';
+            empty.textContent = 'Ask something and we will keep it here for you.';
+            recentList.appendChild(empty);
+            return;
+        }
+
+        recents.forEach((item) => {
+            const li = document.createElement('li');
+            li.className = 'recent-item';
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'recent-question';
+            button.textContent = item.question;
+            button.addEventListener('click', () => {
+                input.value = item.question;
+                form.dispatchEvent(new Event('submit'));
+            });
+
+            const meta = document.createElement('span');
+            meta.className = 'recent-meta';
+            const date = new Date(item.ts || Date.now());
+            meta.textContent = date.toLocaleString(undefined, { month: 'short', day: 'numeric' });
+
+            li.appendChild(button);
+            li.appendChild(meta);
+            recentList.appendChild(li);
+        });
+    }
+
+    function loadNotes() {
+        if (!sessionNotes) return;
+        try {
+            const stored = localStorage.getItem(NOTES_KEY);
+            if (stored !== null) {
+                sessionNotes.value = stored;
+                if (notesStatus) {
+                    notesStatus.textContent = 'Saved locally';
+                }
+            }
+        } catch (err) {
+            console.warn('Unable to load notes', err);
+        }
+    }
+
+    function persistNotes() {
+        if (!sessionNotes) return;
+        try {
+            localStorage.setItem(NOTES_KEY, sessionNotes.value);
+            if (notesStatus) {
+                notesStatus.textContent = 'Saved just now';
+            }
+        } catch (err) {
+            console.warn('Unable to save notes', err);
+            if (notesStatus) {
+                notesStatus.textContent = 'Could not save';
+            }
+        }
+    }
+
+    function copyAnswer() {
+        if (!answerText) return;
+        const plain = answerText.innerText.trim();
+        if (!plain) return;
+        copyToClipboard(plain);
+        if (copyAnswerButton) {
+            const original = copyAnswerButton.textContent;
+            copyAnswerButton.textContent = 'Copied';
+            setTimeout(() => {
+                copyAnswerButton.textContent = original || 'Copy answer';
+            }, 1800);
+        }
+    }
+
+    async function refreshHealth() {
+        if (!healthBadge || !healthDetail) {
+            return;
+        }
+        try {
+            const response = await fetch('/api/health');
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error('Health check failed');
+            }
+            const ready = data.status === 'healthy' && data.rag_initialized;
+            healthBadge.textContent = ready ? 'Ready' : 'Setup needed';
+            healthBadge.classList.toggle('is-healthy', ready);
+            healthBadge.classList.toggle('is-warning', !ready);
+            const passagesCount = typeof data.passages_count === 'number' ? data.passages_count : 'unknown';
+            healthDetail.textContent = ready
+                ? `Vector database online • ${passagesCount} passages indexed`
+                : 'Run build_embeddings.py and restart to initialize study data.';
+        } catch (err) {
+            healthBadge.textContent = 'Offline';
+            healthBadge.classList.add('is-warning');
+            healthDetail.textContent = 'Could not reach the server. Is it running on port 5000?';
+        }
+    }
+
     // Example questions for demonstration (optional)
     const exampleQuestions = [
         "What should I do when someone wrongs me?",
@@ -381,6 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let activeTooltip = null;
     let tooltipTimeout = null;
     let currentRequest = null;
+    let previewListenersAttached = false;
     
     // Mobile tap handling
     let lastTapTime = 0;
@@ -390,6 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function setupBibleRefHoverPreviews() {
         // Use event delegation on answerText container
+        if (previewListenersAttached) return;
         answerText.addEventListener('mouseenter', handleBibleRefHover, true);
         answerText.addEventListener('mouseleave', handleBibleRefLeave, true);
         answerText.addEventListener('click', handleBibleRefClick, true);
@@ -397,6 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add touch event listeners for mobile
         answerText.addEventListener('touchstart', handleBibleRefTouchStart, true);
         answerText.addEventListener('touchend', handleBibleRefTouchEnd, true);
+        previewListenersAttached = true;
     }
 
     function handleBibleRefHover(e) {
@@ -598,6 +804,31 @@ document.addEventListener('DOMContentLoaded', function() {
             activeTooltip.classList.remove('visible');
         }
     }
+
+    if (copyAnswerButton) {
+        copyAnswerButton.addEventListener('click', copyAnswer);
+    }
+    if (clearRecentsButton) {
+        clearRecentsButton.addEventListener('click', () => {
+            localStorage.removeItem(RECENT_KEY);
+            renderRecents([]);
+        });
+    }
+    if (sessionNotes) {
+        sessionNotes.addEventListener('input', () => {
+            if (notesStatus) {
+                notesStatus.textContent = 'Unsaved';
+            }
+        });
+    }
+    if (saveNotesButton) {
+        saveNotesButton.addEventListener('click', persistNotes);
+    }
+
+    renderRecents(loadRecents());
+    loadNotes();
+    refreshHealth();
+    updateModeUI();
 
     initHolyTrinityEasterEgg();
     initInteractiveBackground();

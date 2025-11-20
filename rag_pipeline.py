@@ -5,7 +5,17 @@ Retrieves relevant Bible passages and generates responses using Gemma3:4b
 
 import chromadb
 import ollama
-from typing import List, Dict
+from typing import List, Dict, Optional
+
+# Focus modes allow the caller to steer tone and structure without changing the UX copy.
+MODE_INSTRUCTIONS = {
+    'balanced': 'Respond with a balanced mix of empathy and clear guidance. Keep the tone warm and concise.',
+    'comfort': 'Respond with extra gentleness and reassurance. Emphasize God\'s nearness and peace.',
+    'clarity': 'Respond with direct, practical steps and short sentences. Provide a concise roadmap.',
+    'challenge': 'Respond with loving conviction, calling the reader toward obedience and change.',
+    'blessing': 'Respond briefly with encouragement plus a short closing prayer rooted in the cited verses.'
+}
+DEFAULT_MODE = 'balanced'
 
 
 class BibleRAG:
@@ -53,6 +63,8 @@ class BibleRAG:
             query_embeddings=[query_embedding],
             n_results=self.top_k
         )
+        distances = results['distances'][0] if results and 'distances' in results else []
+        normalized_scores = self._normalize_relevance(distances)
         
         # Format results
         passages = []
@@ -66,49 +78,87 @@ class BibleRAG:
                     'chapter': results['metadatas'][0][i].get('chapter'),
                     'verses': results['metadatas'][0][i].get('verses'),
                     'source_path': results['metadatas'][0][i].get('source_path'),
-                    'distance': results['distances'][0][i] if 'distances' in results else 0
+                    'distance': results['distances'][0][i] if 'distances' in results else 0,
+                    'relevance': normalized_scores[i] if normalized_scores else None
                 })
         
         return passages
     
-    def generate_response(self, query: str, passages: List[Dict]) -> Dict:
+    def _normalize_relevance(self, distances: List[float]) -> List[float]:
+        """
+        Convert raw vector distances into a relative 0-100 relevance score
+        so the UI can surface confidence without leaking raw distances.
+        """
+        if not distances:
+            return []
+        try:
+            min_distance = min(distances)
+            max_distance = max(distances)
+            if max_distance == min_distance:
+                return [100.0 for _ in distances]
+            scores = []
+            for value in distances:
+                normalized = 1 - ((value - min_distance) / (max_distance - min_distance))
+                scores.append(round(max(0.0, min(1.0, normalized)) * 100, 1))
+            return scores
+        except Exception:
+            return []
+    
+    def _normalize_mode(self, mode: Optional[str]) -> str:
+        """Map provided mode to a supported key."""
+        if not mode:
+            return DEFAULT_MODE
+        mode_key = mode.strip().lower()
+        return mode_key if mode_key in MODE_INSTRUCTIONS else DEFAULT_MODE
+    
+    def _build_prompt(self, query: str, passages: List[Dict], mode: str) -> str:
+        """Construct the chat prompt with passages and the requested tone."""
+        tone_instruction = MODE_INSTRUCTIONS.get(mode, MODE_INSTRUCTIONS[DEFAULT_MODE])
+        
+        context = "Here are relevant passages from the King James Bible:\n\n"
+        for i, passage in enumerate(passages, 1):
+            context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+        
+        return f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the King James Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
+
+Question: {query}
+
+{context}
+
+Guidance: {tone_instruction}
+
+Based on these Biblical passages, provide a thoughtful response in the voice of Jesus. Please:
+- Reference the specific Bible passages that inform your answer (e.g., cite book and verse inline).
+- Stay grounded in the provided passages; avoid inventing references.
+- Offer practical guidance that can be acted on today.
+- Keep the answer under about 180 words unless brevity would harm clarity.
+- If passages seem weakly related, briefly acknowledge that and invite the reader to explore the cited verses.
+
+Response:"""
+    
+    def generate_response(self, query: str, passages: List[Dict], mode: Optional[str] = None) -> Dict:
         """
         Generate a response using Gemma3:4b based on retrieved passages.
         
         Args:
             query: User's question
             passages: Retrieved Bible passages
+            mode: Optional focus mode for tone/structure
             
         Returns:
             Dict with response and source passages
         """
+        selected_mode = self._normalize_mode(mode)
+
         if not passages:
             return {
                 'answer': "I couldn't find relevant passages to answer your question. Please try rephrasing it.",
                 'passages': [],
-                'error': True
+                'error': True,
+                'mode': selected_mode
             }
         
-        # Build context from passages
-        context = "Here are relevant passages from the King James Bible:\n\n"
-        for i, passage in enumerate(passages, 1):
-            context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
-        
-        # Create prompt for the model
-        prompt = f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the King James Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
-
-Question: {query}
-
-{context}
-
-Based on these Biblical passages, provide a thoughtful, compassionate response in the voice of Jesus. Your response should:
-1. Directly address the question with wisdom and love
-2. Reference the specific Bible passages that inform your answer
-3. Offer practical guidance while staying true to Biblical teachings
-4. Be encouraging and supportive
-5. Speak in first person as Jesus would
-
-Response:"""
+        prompt = self._build_prompt(query, passages, selected_mode)
         
         try:
             # Generate response using Gemma3:4b
@@ -124,17 +174,19 @@ Response:"""
             return {
                 'answer': response['response'].strip(),
                 'passages': passages,
-                'error': False
+                'error': False,
+                'mode': selected_mode
             }
         except Exception as e:
             print(f"Error generating response: {e}")
             return {
                 'answer': f"I encountered an error while generating a response. Please make sure the gemma3:4b model is installed (run: ollama pull gemma3:4b)",
                 'passages': passages,
-                'error': True
+                'error': True,
+                'mode': selected_mode
             }
     
-    def generate_response_stream(self, query: str, passages: List[Dict]):
+    def generate_response_stream(self, query: str, passages: List[Dict], mode: Optional[str] = None):
         """
         Generate a streaming response using Gemma3:4b based on retrieved passages.
         Yields response chunks as they are generated.
@@ -142,39 +194,24 @@ Response:"""
         Args:
             query: User's question
             passages: Retrieved Bible passages
+            mode: Optional focus mode for tone/structure
             
         Yields:
             Dict chunks with response text
         """
+        selected_mode = self._normalize_mode(mode)
+
         if not passages:
             yield {
                 'answer': "I couldn't find relevant passages to answer your question. Please try rephrasing it.",
                 'passages': [],
                 'error': True,
-                'done': True
+                'done': True,
+                'mode': selected_mode
             }
             return
         
-        # Build context from passages
-        context = "Here are relevant passages from the King James Bible:\n\n"
-        for i, passage in enumerate(passages, 1):
-            context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
-        
-        # Create prompt for the model
-        prompt = f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the King James Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
-
-Question: {query}
-
-{context}
-
-Based on these Biblical passages, provide a thoughtful, compassionate response in the voice of Jesus. Your response should:
-1. Directly address the question with wisdom and love
-2. Reference the specific Bible passages that inform your answer
-3. Offer practical guidance while staying true to Biblical teachings
-4. Be encouraging and supportive
-5. Speak in first person as Jesus would
-
-Response:"""
+        prompt = self._build_prompt(query, passages, selected_mode)
         
         try:
             # Generate streaming response using Gemma3:4b
@@ -194,14 +231,16 @@ Response:"""
                     yield {
                         'chunk': chunk['response'],
                         'done': chunk.get('done', False),
-                        'error': False
+                        'error': False,
+                        'mode': selected_mode
                     }
             
             # Send passages at the end
             yield {
                 'passages': passages,
                 'done': True,
-                'error': False
+                'error': False,
+                'mode': selected_mode
             }
             
         except Exception as e:
@@ -210,10 +249,11 @@ Response:"""
                 'chunk': f"I encountered an error while generating a response. Please make sure the gemma3:4b model is installed (run: ollama pull gemma3:4b)",
                 'passages': passages,
                 'error': True,
-                'done': True
+                'done': True,
+                'mode': selected_mode
             }
     
-    def ask(self, query: str) -> Dict:
+    def ask(self, query: str, mode: Optional[str] = None) -> Dict:
         """
         Main method to ask a question and get an AI Jesus response.
         
@@ -232,7 +272,7 @@ Response:"""
         
         # Generate response
         print("🤖 Generating AI Jesus response...")
-        result = self.generate_response(query, passages)
+        result = self.generate_response(query, passages, mode=mode)
         print("✅ Response generated")
         
         return result

@@ -22,7 +22,7 @@ from bible_utils import (
     parse_verses,
     resolve_bible_path,
 )
-from rag_pipeline import BibleRAG
+from rag_pipeline import BibleRAG, MODE_INSTRUCTIONS, DEFAULT_MODE
 
 app = Flask(__name__, static_folder='static')
 BIBLE_DATA_DIR = (Path(__file__).parent / 'bible-data').resolve()
@@ -54,6 +54,13 @@ def normalize_book_name(book_name):
     """Normalize book names to handle common variations."""
     normalized = book_name.lower().strip()
     return BOOK_NAME_VARIATIONS.get(normalized, normalized)
+
+def normalize_mode(mode_raw):
+    """Ensure mode matches a supported focus option."""
+    if not mode_raw:
+        return DEFAULT_MODE
+    mode_key = str(mode_raw).strip().lower()
+    return mode_key if mode_key in MODE_INSTRUCTIONS else DEFAULT_MODE
 
 # Initialize RAG pipeline
 try:
@@ -119,8 +126,9 @@ def ask_question():
     
     try:
         # Get question from request
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         question = data.get('question', '').strip()
+        mode = normalize_mode(data.get('mode'))
         
         if not question:
             return jsonify({
@@ -128,7 +136,7 @@ def ask_question():
             }), 400
         
         # Get response from RAG pipeline
-        result = rag.ask(question)
+        result = rag.ask(question, mode=mode)
         
         if result.get('error'):
             return jsonify({
@@ -137,7 +145,8 @@ def ask_question():
         
         return jsonify({
             'answer': result['answer'],
-            'passages': result['passages']
+            'passages': result['passages'],
+            'mode': mode
         })
         
     except Exception as e:
@@ -171,8 +180,9 @@ def ask_question_stream():
     
     try:
         # Get question from request
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         question = data.get('question', '').strip()
+        mode = normalize_mode(data.get('mode'))
         
         if not question:
             return jsonify({
@@ -189,11 +199,11 @@ def ask_question_stream():
                 print(f"✅ Found {len(passages)} relevant passages")
                 
                 # Send passages first so UI can display them
-                yield f"event: passages\ndata: {json.dumps({'passages': passages})}\n\n"
+                yield f"event: passages\ndata: {json.dumps({'passages': passages, 'mode': mode})}\n\n"
                 
                 # Stream the response
                 print("🤖 Generating AI Jesus response (streaming)...")
-                for chunk_data in rag.generate_response_stream(question, passages):
+                for chunk_data in rag.generate_response_stream(question, passages, mode=mode):
                     if chunk_data.get('error'):
                         yield f"event: error\ndata: {json.dumps({'error': chunk_data.get('chunk', 'Error occurred')})}\n\n"
                         break
@@ -202,7 +212,7 @@ def ask_question_stream():
                         yield f"event: chunk\ndata: {json.dumps({'text': chunk_data['chunk']})}\n\n"
                     
                     if chunk_data.get('done'):
-                        yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                        yield f"event: done\ndata: {json.dumps({'done': True, 'mode': mode})}\n\n"
                         print("✅ Response generated")
                         break
                         
