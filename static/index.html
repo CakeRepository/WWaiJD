@@ -126,7 +126,6 @@
     }
     </script>
 
-    <link rel="stylesheet" href="/static/tool_switcher.css">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 
@@ -147,30 +146,52 @@
 
     <div class="container page-shell">
         <header class="primary-hero">
-            <p class="hero-eyebrow">Simple Bible answers</p>
-            <h1>🙏 What Would AI Jesus Do?</h1>
-            <p class="subtitle hero-subtitle">Type what is on your heart, and AI Jesus responds with verses from the
+            <p class="hero-eyebrow">Built for real-time answers</p>
+            <h1>What Would AI Jesus Do?</h1>
+            <p class="subtitle hero-subtitle">Share what is on your heart, stream an answer, and keep reading in the
                 King James Bible.</p>
             <div class="hero-highlights">
-                <span>Ask anything you're wrestling with</span>
-                <span>Answers cite the KJV so you can keep reading</span>
+                <span>Streaming responses with cited verses</span>
+                <span>Recent prompts & notes kept in your browser</span>
                 <span>Always free, private, and ad-free</span>
             </div>
             <div class="hero-kjv-callout">
                 <a class="soft-link hero-kjv-link" href="/static/bible.html">
-                    <span class="cta-icon" aria-hidden="true">📖</span>
+                    <span class="cta-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" class="bible-icon">
+                            <path d="M9 6h12a2 2 0 0 1 2 2v16H11a3 3 0 0 0-3 3V9a3 3 0 0 1 3-3z" />
+                            <path d="M11 6v16" />
+                            <path d="M13 14h6" />
+                            <path d="M16 10v8" />
+                        </svg>
+                    </span>
                     <span class="coffee-copy">
                         <strong>Open the KJV reader</strong>
                         <small>Every book. Every verse.</small>
                     </span>
                 </a>
-                <p class="hero-kjv-note">Read the complete King James Bible here for free—no login, no friction.</p>
+                <p class="hero-kjv-note">Read the complete King James Bible here for free-no login, no friction.</p>
             </div>
         </header>
 
         <main class="main-content">
             <section class="search-focus" id="study-cta" aria-label="Ask AI Jesus">
                 <div class="search-card">
+                    <div class="search-visual" aria-hidden="true">
+                        <svg class="search-orbit" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="52" class="orbit orbit-one"></circle>
+                            <circle cx="100" cy="100" r="78" class="orbit orbit-two"></circle>
+                            <circle cx="100" cy="100" r="95" class="orbit orbit-three"></circle>
+                            <path class="orbit-path" d="M40 120 C90 50, 140 50, 160 120"></path>
+                            <circle cx="72" cy="76" r="4" class="orbit-node"></circle>
+                            <circle cx="126" cy="64" r="3" class="orbit-node"></circle>
+                            <circle cx="150" cy="118" r="5" class="orbit-node bright"></circle>
+                        </svg>
+                        <svg class="search-grid" viewBox="0 0 240 80">
+                            <polyline points="0,60 40,20 100,45 150,25 200,50 240,30" class="grid-line"></polyline>
+                            <polyline points="0,55 35,35 90,60 140,38 185,55 240,40" class="grid-line delayed"></polyline>
+                        </svg>
+                    </div>
                     <div class="tool-switcher" role="tablist" aria-label="Select a tool">
                         <button type="button" class="tool-button is-active" role="tab" aria-selected="true"
                             data-tool="ask">Ask Question</button>
@@ -180,8 +201,14 @@
                             data-tool="prayer">Prayer Request</button>
                     </div>
                     <h2 id="searchHeading">Ask your Bible question</h2>
-                    <p>This single input is the whole product. Share your situation and receive scripture-backed
-                        encouragement.</p>
+                    <p>This single input is the whole product. Stream thoughtful answers with anchored references.</p>
+                    <div class="stream-meter" id="streamMeter">
+                        <div class="stream-dot"></div>
+                        <div class="stream-copy">
+                            <strong>Streaming mode</strong>
+                            <small id="streamStatusText">Responses stream in real time.</small>
+                        </div>
+                    </div>
                     <div class="search-section">
                         <form id="questionForm">
                             <div class="search-box">
@@ -190,12 +217,12 @@
                                     required autocomplete="off">
                                 <button type="submit" id="askButton">
                                     <span id="buttonText">Ask</span>
-                                    <span id="buttonSpinner" class="spinner" style="display: none;">⏳</span>
+                                    <span id="buttonSpinner" class="spinner" style="display: none;">...</span>
                                 </button>
                             </div>
                         </form>
                     </div>
-                    <p class="form-hint">No login · No ads · Just Bible-based answers</p>
+                    <p class="form-hint">No login - No ads - Just Bible-based answers</p>
                     <p class="prompt-label">Need inspiration? Tap a prompt:</p>
                     <div class="question-pills">
                         <button type="button" class="question-pill"
@@ -242,7 +269,7 @@
                     <div id="responseSection" class="response-section is-hidden">
                         <div class="response-card">
                             <div class="response-heading">
-                                <h2>🕊️ Answer</h2>
+                                <h2>Answer</h2>
                                 <span class="mode-pill" id="activeModePill" aria-live="polite">Balanced focus</span>
                             </div>
                             <div id="answerText" class="answer-text"></div>
@@ -253,7 +280,7 @@
                         </div>
 
                         <div class="passages-card">
-                            <h3>📖 Biblical References</h3>
+                            <h3>KJV Biblical References</h3>
                             <div id="passagesContainer" class="passages-container"></div>
                         </div>
                     </div>
@@ -282,7 +309,7 @@
 
                     <div id="errorSection" class="error-section" style="display: none;">
                         <div class="error-card">
-                            <h3>⚠️ Error</h3>
+                            <h3>Error</h3>
                             <p id="errorText"></p>
                         </div>
                     </div>
@@ -314,16 +341,32 @@
                 <h2>Why WWAIJD exists</h2>
                 <div class="simple-donate">
                     <a class="soft-link" href="/static/bible.html">
-                        <span class="cta-icon" aria-hidden="true">📖</span>
+                        <span class="cta-icon" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" class="bible-icon">
+                            <path d="M9 6h12a2 2 0 0 1 2 2v16H11a3 3 0 0 0-3 3V9a3 3 0 0 1 3-3z" />
+                            <path d="M11 6v16" />
+                            <path d="M13 14h6" />
+                            <path d="M16 10v8" />
+                        </svg>
+                    </span>
                         <span class="coffee-copy">
                             <strong>Open the KJV reader</strong>
                             <small>Read every chapter right now</small>
                         </span>
                     </a>
-                    <a class="coffee-inline" href="https://buymeacoffee.com/wwaijd" target="_blank"
-                        rel="noopener noreferrer">
-                        <span class="cta-icon" aria-hidden="true">☕</span>
+                    <a class="coffee-inline" href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer">
+                        <span class="cta-icon" aria-hidden="true">
+                            <svg viewBox="0 0 32 32" class="coffee-steam">
+                                <path d="M10 7c0-2 1-3 1-4" />
+                                <path d="M15 7c0-2 1-3 1-4" />
+                                <path d="M20 7c0-2 1-3 1-4" />
+                                <path d="M7 10h18l-2 12H9L7 10Z" />
+                                <path d="M23 12h2.5a3.5 3.5 0 0 1 0 7H23" />
+                                <path d="M9 22c0 2 2 4 7 4s7-2 7-4" />
+                            </svg>
+                        </span>
                         <span class="coffee-copy">
+                            <span class="coffee-tag">Support the project</span>
                             <strong>Buy us a coffee</strong>
                             <small>Help me keep WWAIJD running</small>
                         </span>
@@ -342,7 +385,7 @@
             <p class="footer-tech">Powered by the King James Bible, Ollama (Gemma3:4b, GemmaEmbedding), and ChromaDB</p>
 
             <p class="footer-disclaimer">
-                ⚠️ <strong>Disclaimer:</strong> This is an AI-powered tool created purely for entertainment and
+                <strong>Disclaimer:</strong> This is an AI-powered tool created purely for entertainment and
                 educational purposes.
                 All responses are generated by artificial intelligence and should not be considered as religious
                 guidance,

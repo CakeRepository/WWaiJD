@@ -14,6 +14,7 @@ from flask import Flask, request, jsonify, send_from_directory, Response, stream
 from waitress import serve
 from pathlib import Path
 import json
+import ollama
 from datetime import datetime
 from bible_utils import (
     build_bible_index,

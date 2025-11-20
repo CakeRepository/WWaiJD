@@ -26,11 +26,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionNotes = document.getElementById('sessionNotes');
     const saveNotesButton = document.getElementById('saveNotesButton');
     const notesStatus = document.getElementById('notesStatus');
+    const searchCard = document.querySelector('.search-card');
+    const streamStatusText = document.getElementById('streamStatusText');
+    const streamMeter = document.getElementById('streamMeter');
 
     // Tool Switcher Elements
     const toolButtons = document.querySelectorAll('.tool-button');
     const searchHeading = document.getElementById('searchHeading');
     let currentTool = 'ask';
+    let currentMode = 'balanced';
+
+    const RECENT_KEY = 'wwaijd:recent-questions';
+    const NOTES_KEY = 'wwaijd:session-notes';
 
     const TOOL_CONFIG = {
         ask: {
@@ -85,6 +92,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 setMode(mode);
             }
         });
+    });
+
+    input.addEventListener('focus', () => {
+        if (searchCard) searchCard.classList.add('is-focused');
+    });
+    input.addEventListener('blur', () => {
+        if (searchCard) searchCard.classList.remove('is-focused');
     });
 
     // Tool Switcher Logic
@@ -154,124 +168,151 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function askQuestionStream(question) {
         // Handle streaming response from the server
-        const response = await fetch('/api/ask-stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ question: question, mode: currentMode })
-        });
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/ask-stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ question: question, mode: currentMode })
+            });
 
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to get response');
-        }
-
-        // Set up EventSource-like handling for SSE
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let accumulatedAnswer = '';
-        let passages = [];
-
-        // Show response section immediately
-        answerText.innerHTML = '<span class="typing-cursor"></span>';
-        responseSection.classList.remove('is-hidden');
-        hideLoading();
-
-        // Scroll to response
-        setTimeout(() => {
-            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-
-        while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-
-            // Process complete SSE messages
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop(); // Keep incomplete message in buffer
-
-            for (const line of lines) {
-                if (!line.trim()) continue;
-
-                // Parse SSE format: "event: eventname\ndata: jsondata"
-                const eventMatch = line.match(/event: (\w+)\ndata: (.+)/s);
-                if (!eventMatch) continue;
-
-                const [, eventType, jsonData] = eventMatch;
-                const data = JSON.parse(jsonData);
-                const modeFromStream = data.mode || currentMode;
-                updateModeUI(modeFromStream);
-
-                if (eventType === 'passages') {
-                    // Display passages immediately when found
-                    passages = data.passages;
-                    displayPassages(passages);
-
-                    // Scroll to show the passages
-                    setTimeout(() => {
-                        passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 100);
-                } else if (eventType === 'chunk') {
-                    // Append text chunk
-                    accumulatedAnswer += data.text;
-                    answerText.innerHTML = renderMarkdown(accumulatedAnswer) + '<span class="typing-cursor"></span>';
-                    setupBibleRefHoverPreviews();
-                } else if (eventType === 'done') {
-                    // Remove typing cursor
-                    answerText.innerHTML = renderMarkdown(accumulatedAnswer);
-                    setupBibleRefHoverPreviews();
-
-                    // Passages already displayed when received, no need to display again
-                } else if (eventType === 'error') {
-                    throw new Error(data.error);
-                }
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to get response');
             }
+
+            await streamResponse(response, { mode: currentMode });
+        } finally {
+            setStreamingState(false);
         }
     }
 
     async function generateStudy(topic) {
-        const response = await fetch('/api/study', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic })
-        });
+        // Use streaming endpoint for faster responses
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/study-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
 
-        const data = await response.json();
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to generate study');
+            }
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to generate study');
+            await streamResponse(response, { mode: 'study' });
+        } finally {
+            setStreamingState(false);
         }
-
-        displayResponse({
-            answer: `## 📚 Bible Study: ${topic}\n\n${data.study}`,
-            passages: data.passages
-        });
-        hideLoading();
     }
 
     async function generatePrayer(request) {
-        const response = await fetch('/api/prayer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ request })
-        });
-
-        const data = await response.json();
+        // Use streaming endpoint for faster responses
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/prayer-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ request })
+            });
 
         if (!response.ok) {
+            const data = await response.json();
             throw new Error(data.error || 'Failed to generate prayer');
         }
 
-        displayResponse({
-            answer: `## 🙏 Prayer\n\n${data.prayer}`,
-            passages: data.passages
-        });
+        await streamResponse(response, { mode: 'prayer' });
+    } finally {
+        setStreamingState(false);
+    }
+    }
+
+    async function streamResponse(response, context = {}) {
+        // Unified SSE handler for all streaming endpoints
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error('Streaming is not supported in this browser.');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let accumulatedAnswer = '';
+        let passages = [];
+        let finished = false;
+
+        answerText.innerHTML = '<span class="typing-cursor"></span>';
+        responseSection.classList.remove('is-hidden');
+        hideError();
         hideLoading();
+        setStreamingState(true);
+
+        setTimeout(() => {
+            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 80);
+
+        while (!finished) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const messages = buffer.split('\n\n');
+            buffer = messages.pop();
+
+            for (const message of messages) {
+                if (!message.trim()) continue;
+                const eventMatch = message.match(/event: ([\w-]+)\s+data: (.+)/s);
+                if (!eventMatch) continue;
+
+                const [, eventType, jsonData] = eventMatch;
+                const data = JSON.parse(jsonData);
+
+                if (data.mode) {
+                    updateModeUI(data.mode);
+                } else if (context.mode) {
+                    updateModeUI(context.mode);
+                }
+
+                if (eventType === 'passages') {
+                    passages = data.passages || [];
+                    displayPassages(passages);
+                    setTimeout(() => {
+                        passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 80);
+                } else if (eventType === 'chunk') {
+                    accumulatedAnswer += data.text || '';
+                    answerText.innerHTML = renderMarkdown(accumulatedAnswer) + '<span class="typing-cursor"></span>';
+                    setupBibleRefHoverPreviews();
+                } else if (eventType === 'done') {
+                    finished = true;
+                    break;
+                } else if (eventType === 'error') {
+                    throw new Error(data.error || 'Streaming failed');
+                }
+            }
+        }
+
+        // Finalize output
+        answerText.innerHTML = renderMarkdown(accumulatedAnswer);
+        setupBibleRefHoverPreviews();
+        setStreamingState(false);
+    }
+
+    function setStreamingState(isActive) {
+        if (searchCard) {
+            searchCard.classList.toggle('is-streaming', isActive);
+        }
+        if (streamMeter) {
+            streamMeter.classList.toggle('is-live', isActive);
+        }
+        if (streamStatusText) {
+            streamStatusText.textContent = isActive
+                ? 'Responding live...'
+                : 'Responses stream in real time.';
+        }
     }
 
     function setMode(mode) {
@@ -322,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (passage.testament) metaParts.push(passage.testament);
                 if (metaParts.length) {
                     const metaText = document.createElement('span');
-                    metaText.textContent = metaParts.join(' • ');
+                    metaText.textContent = metaParts.join(' | ');
                     meta.appendChild(metaText);
                 }
                 if (typeof passage.relevance === 'number') {
@@ -405,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (passage.testament) metaParts.push(passage.testament);
                 if (metaParts.length) {
                     const metaText = document.createElement('span');
-                    metaText.textContent = metaParts.join(' • ');
+                    metaText.textContent = metaParts.join(' | ');
                     meta.appendChild(metaText);
                 }
                 if (typeof passage.relevance === 'number') {
@@ -665,7 +706,7 @@ document.addEventListener('DOMContentLoaded', function () {
             healthBadge.classList.toggle('is-warning', !ready);
             const passagesCount = typeof data.passages_count === 'number' ? data.passages_count : 'unknown';
             healthDetail.textContent = ready
-                ? `Vector database online • ${passagesCount} passages indexed`
+                ? `Vector database online | ${passagesCount} passages indexed`
                 : 'Run build_embeddings.py and restart to initialize study data.';
         } catch (err) {
             healthBadge.textContent = 'Offline';
@@ -1014,83 +1055,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initInteractiveBackground() {
-        const root = document.documentElement;
-        const container = document.querySelector('.container');
-        const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        let rafId = null;
-        let pointerX = 50;
-        let pointerY = 40;
-        let motionEnabled = false;
-
-        const commitPointer = () => {
-            root.style.setProperty('--pointer-x', `${pointerX}%`);
-            root.style.setProperty('--pointer-y', `${pointerY}%`);
-
-            if (container) {
-                const rotateY = (pointerX - 50) * 0.02; // Max +/- 1 deg
-                const rotateX = (50 - pointerY) * 0.02; // Max +/- 1 deg
-                container.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-            }
-
-            rafId = null;
-        };
-
-        const scheduleCommit = () => {
-            if (rafId === null) {
-                rafId = requestAnimationFrame(commitPointer);
-            }
-        };
-
-        const clamp = (value) => Math.min(100, Math.max(0, value));
-
-        const handlePointerMove = (event) => {
-            pointerX = clamp((event.clientX / window.innerWidth) * 100);
-            pointerY = clamp((event.clientY / window.innerHeight) * 100);
-            scheduleCommit();
-        };
-
-        const handlePointerLeave = () => {
-            pointerX = 50;
-            pointerY = 40;
-            scheduleCommit();
-        };
-
-        const enableMotion = () => {
-            if (motionEnabled) return;
-            motionEnabled = true;
-            scheduleCommit();
-            document.addEventListener('pointermove', handlePointerMove);
-            document.addEventListener('pointerleave', handlePointerLeave);
-        };
-
-        const disableMotion = () => {
-            if (!motionEnabled) return;
-            motionEnabled = false;
-            document.removeEventListener('pointermove', handlePointerMove);
-            document.removeEventListener('pointerleave', handlePointerLeave);
-            handlePointerLeave();
-        };
-
-        const motionChangeHandler = (event) => {
-            if (event.matches) {
-                disableMotion();
-            } else {
-                enableMotion();
-            }
-        };
-
-        scheduleCommit();
-
-        if (motionQuery.matches) {
-            disableMotion();
-        } else {
-            enableMotion();
-        }
-
-        if (typeof motionQuery.addEventListener === 'function') {
-            motionQuery.addEventListener('change', motionChangeHandler);
-        } else if (typeof motionQuery.addListener === 'function') {
-            motionQuery.addListener(motionChangeHandler);
-        }
+        // Disabled custom cursor for now - using normal cursor
     }
 });
