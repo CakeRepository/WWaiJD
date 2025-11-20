@@ -3,6 +3,7 @@ RAG Pipeline for What Would AI Jesus Do
 Retrieves relevant Bible passages and generates responses using Gemma3:4b
 """
 
+import os
 import chromadb
 import ollama
 from typing import List, Dict, Optional
@@ -16,28 +17,52 @@ MODE_INSTRUCTIONS = {
     'blessing': 'Respond briefly with encouragement plus a short closing prayer rooted in the cited verses.'
 }
 DEFAULT_MODE = 'balanced'
+DEFAULT_EMBED_MODEL = 'embeddinggemma'
+DEFAULT_LLM_MODEL = 'gemma3:4b'
+DEFAULT_EMBED_KEEP_ALIVE = os.getenv('WWAIJD_EMBED_KEEP_ALIVE', '0s')
+DEFAULT_LLM_KEEP_ALIVE = os.getenv('WWAIJD_LLM_KEEP_ALIVE', '120s')
 
 
 class BibleRAG:
     """RAG pipeline for Bible-based question answering."""
     
-    def __init__(self, db_path="chroma_db", top_k=5):
+    def __init__(
+        self,
+        db_path="chroma_db",
+        top_k=5,
+        embedding_model: str = DEFAULT_EMBED_MODEL,
+        llm_model: str = DEFAULT_LLM_MODEL,
+        embed_keep_alive: Optional[str | float] = None,
+        llm_keep_alive: Optional[str | float] = None,
+    ):
         """
         Initialize the RAG pipeline.
         
         Args:
             db_path: Path to the ChromaDB database
             top_k: Number of relevant passages to retrieve
+            embedding_model: Ollama embedding model name
+            llm_model: Ollama generation model name
+            embed_keep_alive: How long to keep the embedding model in VRAM (string or seconds). Defaults to '0s' so it unloads immediately.
+            llm_keep_alive: How long to keep the LLM in VRAM (string or seconds). Defaults to 2 minutes.
         """
         self.db_path = db_path
         self.top_k = top_k
+        self.embedding_model = embedding_model or DEFAULT_EMBED_MODEL
+        self.llm_model = llm_model or DEFAULT_LLM_MODEL
+        self.embed_keep_alive = DEFAULT_EMBED_KEEP_ALIVE if embed_keep_alive is None else embed_keep_alive
+        self.llm_keep_alive = DEFAULT_LLM_KEEP_ALIVE if llm_keep_alive is None else llm_keep_alive
         self.client = chromadb.PersistentClient(path=db_path)
         self.collection = self.client.get_collection(name="bible_kjv")
         
     def generate_query_embedding(self, query: str):
         """Generate embedding for the user's query."""
         try:
-            response = ollama.embeddings(model='embeddinggemma', prompt=query)
+            response = ollama.embeddings(
+                model=self.embedding_model,
+                prompt=query,
+                keep_alive=self.embed_keep_alive
+            )
             return response['embedding']
         except Exception as e:
             print(f"Error generating query embedding: {e}")
@@ -163,12 +188,13 @@ Response:"""
         try:
             # Generate response using Gemma3:4b
             response = ollama.generate(
-                model='gemma3:4b',
+                model=self.llm_model,
                 prompt=prompt,
                 options={
                     'temperature': 0.7,
                     'top_p': 0.9,
-                }
+                },
+                keep_alive=self.llm_keep_alive
             )
             
             return {
@@ -180,11 +206,18 @@ Response:"""
         except Exception as e:
             print(f"Error generating response: {e}")
             return {
-                'answer': f"I encountered an error while generating a response. Please make sure the gemma3:4b model is installed (run: ollama pull gemma3:4b)",
+                'answer': f"I encountered an error while generating a response. Please make sure the {self.llm_model} model is installed (run: ollama pull {self.llm_model})",
                 'passages': passages,
                 'error': True,
                 'mode': selected_mode
             }
+
+    def ask(self, query: str, mode: Optional[str] = None) -> Dict:
+        """
+        Convenience wrapper that retrieves passages then generates a response.
+        """
+        passages = self.retrieve_passages(query)
+        return self.generate_response(query, passages, mode=mode)
     
     def generate_response_stream(self, query: str, passages: List[Dict], mode: Optional[str] = None):
         """
@@ -216,13 +249,14 @@ Response:"""
         try:
             # Generate streaming response using Gemma3:4b
             stream = ollama.generate(
-                model='gemma3:4b',
+                model=self.llm_model,
                 prompt=prompt,
                 stream=True,
                 options={
                     'temperature': 0.7,
                     'top_p': 0.9,
-                }
+                },
+                keep_alive=self.llm_keep_alive
             )
             
             # Stream response chunks
@@ -282,9 +316,10 @@ Keep the tone encouraging and insightful.
 """
         try:
             response = ollama.generate(
-                model='gemma3:4b',
+                model=self.llm_model,
                 prompt=prompt,
-                options={'temperature': 0.7}
+                options={'temperature': 0.7},
+                keep_alive=self.llm_keep_alive
             )
             return {
                 'study': response['response'].strip(),
@@ -319,9 +354,10 @@ Write a heartfelt, comforting prayer for them.
 """
         try:
             response = ollama.generate(
-                model='gemma3:4b',
+                model=self.llm_model,
                 prompt=prompt,
-                options={'temperature': 0.8}
+                options={'temperature': 0.8},
+                keep_alive=self.llm_keep_alive
             )
             return {
                 'prayer': response['response'].strip(),

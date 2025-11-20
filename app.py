@@ -27,6 +27,8 @@ from rag_pipeline import BibleRAG, MODE_INSTRUCTIONS, DEFAULT_MODE
 
 app = Flask(__name__, static_folder='static')
 BIBLE_DATA_DIR = (Path(__file__).parent / 'bible-data').resolve()
+OLLAMA_LLM_KEEP_ALIVE = os.getenv('WWAIJD_LLM_KEEP_ALIVE', '120s')
+OLLAMA_EMBED_KEEP_ALIVE = os.getenv('WWAIJD_EMBED_KEEP_ALIVE', '0s')
 
 # Book name variations mapping
 BOOK_NAME_VARIATIONS = {
@@ -65,7 +67,10 @@ def normalize_mode(mode_raw):
 
 # Initialize RAG pipeline
 try:
-    rag = BibleRAG()
+    rag = BibleRAG(
+        embed_keep_alive=OLLAMA_EMBED_KEEP_ALIVE,
+        llm_keep_alive=OLLAMA_LLM_KEEP_ALIVE
+    )
     print("✅ RAG pipeline initialized successfully", flush=True)
 except Exception as e:
     print(f"⚠️  Warning: Could not initialize RAG pipeline: {e}", flush=True)
@@ -374,10 +379,11 @@ Keep the tone encouraging and insightful.
                 # Stream the response
                 print("🤖 Generating Bible study (streaming)...")
                 stream = ollama.generate(
-                    model='gemma3:4b',
+                    model=rag.llm_model if rag else 'gemma3:4b',
                     prompt=prompt,
                     stream=True,
-                    options={'temperature': 0.7}
+                    options={'temperature': 0.7},
+                    keep_alive=OLLAMA_LLM_KEEP_ALIVE
                 )
                 
                 for chunk in stream:
@@ -461,10 +467,11 @@ Write a heartfelt, comforting prayer for them.
                 # Stream the response
                 print("🤖 Generating prayer (streaming)...")
                 stream = ollama.generate(
-                    model='gemma3:4b',
+                    model=rag.llm_model if rag else 'gemma3:4b',
                     prompt=prompt,
                     stream=True,
-                    options={'temperature': 0.8}
+                    options={'temperature': 0.8},
+                    keep_alive=OLLAMA_LLM_KEEP_ALIVE
                 )
                 
                 for chunk in stream:
