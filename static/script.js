@@ -101,27 +101,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (searchCard) searchCard.classList.remove('is-focused');
     });
 
-    // Auto-expand textarea
-    input.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-        if (this.value === '') {
-             this.style.height = ''; // Reset if empty
+    // Auto-resize textarea
+    function autoResizeInput() {
+        input.style.height = 'auto';
+        input.rows = 1;
+        
+        if (input.value) {
+            input.style.height = input.scrollHeight + 'px';
+        } else {
+            // Measure placeholder height
+            const v = input.value;
+            input.value = input.placeholder;
+            const h = input.scrollHeight;
+            input.value = v;
+            input.style.height = h + 'px';
         }
-    });
+    }
 
-    // Handle Enter key to submit
-    input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            // Trigger form submit
-            if (form.requestSubmit) {
-                form.requestSubmit();
-            } else {
-                form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
-            }
-        }
-    });
+    input.addEventListener('input', autoResizeInput);
 
     // Tool Switcher Logic
     toolButtons.forEach(button => {
@@ -151,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Clear input and focus
         input.value = '';
+        autoResizeInput();
         input.focus();
 
         // Hide previous results
@@ -1001,6 +999,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadNotes();
     refreshHealth();
     updateModeUI();
+    autoResizeInput();
 
     // Mobile Navigation Logic
     const navItems = document.querySelectorAll('.nav-item');
