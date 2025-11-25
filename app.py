@@ -1000,6 +1000,59 @@ def shared_page(share_id):
         print(f"Error rendering shared page: {e}")
         abort(404)
 
+@app.route('/api/search', methods=['POST'])
+def search_bible():
+    """
+    API endpoint to search for Bible passages without generating an LLM response.
+    
+    Request body:
+        {
+            "query": "Search query"
+        }
+    
+    Response:
+        {
+            "passages": [
+                {
+                    "text": "Bible verse text",
+                    "reference": "Book Chapter:Verses",
+                    "book": "Book name",
+                    "testament": "Old/New Testament"
+                }
+            ],
+            "count": "Number of passages found"
+        }
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        query = data.get('query', '').strip()
+        
+        if not query:
+            return jsonify({
+                'error': 'Search query is required'
+            }), 400
+            
+        print(f"\n🔍 Searching Bible for: {query}")
+        passages = rag.retrieve_passages(query)
+        print(f"✅ Found {len(passages)} relevant passages")
+        
+        return jsonify({
+            'passages': passages,
+            'count': len(passages)
+        })
+        
+    except Exception as e:
+        print(f"Error searching Bible: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
 def main():
     """Run the Flask application."""
     print("=" * 60, flush=True)
@@ -1022,3 +1075,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

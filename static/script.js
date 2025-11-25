@@ -59,6 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: 'What do you need prayer for? (e.g., Strength for a job interview)',
             buttonText: 'Pray',
             endpoint: '/api/prayer'
+        },
+        search: {
+            heading: 'Search the Bible',
+            placeholder: 'Search for passages... (e.g., love your neighbor)',
+            buttonText: 'Search',
+            endpoint: '/api/search'
         }
     };
 
@@ -179,6 +185,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 await generateStudy(value);
             } else if (currentTool === 'prayer') {
                 await generatePrayer(value);
+            } else if (currentTool === 'search') {
+                await performSearch(value);
             }
 
         } catch (error) {
@@ -251,6 +259,41 @@ document.addEventListener('DOMContentLoaded', function () {
     } finally {
         setStreamingState(false);
     }
+    }
+
+    async function performSearch(query) {
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to search');
+            }
+
+            const data = await response.json();
+            
+            // Display results
+            responseSection.classList.remove('is-hidden');
+            hideError();
+            hideLoading();
+            
+            // Update answer text to show summary
+            answerText.innerHTML = `<p>Found <strong>${data.count}</strong> relevant passages for: <em>${query}</em></p>`;
+            
+            displayPassages(data.passages);
+            
+            setTimeout(() => {
+                responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 80);
+
+        } finally {
+            setStreamingState(false);
+        }
     }
 
     async function streamResponse(response, context = {}) {
