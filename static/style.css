@@ -1241,3 +1241,67 @@ h1, h2, h3, h4 {
         padding: 0 16px;
     }
 }
+
+/* Site Footer */
+.site-footer {
+    margin-top: auto;
+    padding: 0 0 2rem 0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+    opacity: 0.8;
+}
+
+.footer-link:hover {
+    color: var(--accent);
+    opacity: 1;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.separator {
+    color: var(--border);
+    font-size: 0.8rem;
+}
+
+.copyright {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+@media (max-width: 640px) {
+    .site-footer {
+        padding-bottom: 3rem;
+        gap: 1.5rem;
+    }
+    
+    .footer-links {
+        gap: 1rem;
+        flex-direction: column;
+    }
+    
+    .separator {
+        display: none;
+    }
+}
