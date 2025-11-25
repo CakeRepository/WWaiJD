@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Mobile & Utility -->
+    <meta name="theme-color" content="#050c1f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="rating" content="General">
+
+    <meta name="robots" content="index, follow">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <meta name="keywords" content="bible passage, bible verse, scripture, KJV, King James Bible, bible reading, biblical text, holy scripture, {{ book }}, {{ book }} {{ chapter }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ og_url }}">
+    <meta property="og:title" content="{{ og_title }}">
+    <meta property="og:description" content="{{ og_description }}">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    <meta property="og:image:secure_url" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{ og_title }}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ twitter_url }}">
+    <meta name="twitter:title" content="{{ twitter_title }}">
+    <meta name="twitter:description" content="{{ twitter_description }}">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {{ schema_json | safe }}
+    </script>
+    
+    <link rel="stylesheet" href="/static/passage.css">
+</head>
+<body>
+    <div class="passage-wrapper">
+        <header class="passage-header">
+            <div class="header-top">
+                <a href="/" class="home-icon" title="Home">🏠</a>
+                <button id="nightModeToggle" class="night-toggle" type="button" title="Toggle reading mode">
+                    ☀️
+                </button>
+            </div>
+            <h1>{{ passage_title }}</h1>
+            <p class="passage-subtitle">{{ passage_subtitle }}</p>
+        </header>
+
+        <main class="passage-card">
+            <div class="passage-body">
+                {{ passage_content | safe }}
+            </div>
+            
+            <div class="chapter-nav">
+                {% if prev_chapter_url %}
+                <a href="{{ prev_chapter_url }}" class="nav-btn prev-btn">← Previous Chapter</a>
+                {% endif %}
+                
+                <a href="/static/bible.html" class="nav-btn index-btn">Bible Index</a>
+                
+                {% if next_chapter_url %}
+                <a href="{{ next_chapter_url }}" class="nav-btn next-btn">Next Chapter →</a>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="passage-footer">
+            <a href="/" class="back-link">← Return to What Would AI Jesus Do?</a>
+        </footer>
+    </div>
+
+    <script>
+        // Simple night mode toggle (reused from original)
+        const toggle = document.getElementById('nightModeToggle');
+        const html = document.documentElement;
+        
+        // Check local storage
+        if (localStorage.getItem('wwaijd-theme') === 'light') {
+            html.classList.add('light-mode');
+            toggle.textContent = '🌙';
+        }
+
+        toggle.addEventListener('click', () => {
+            html.classList.toggle('light-mode');
+            const isLight = html.classList.contains('light-mode');
+            localStorage.setItem('wwaijd-theme', isLight ? 'light' : 'dark');
+            toggle.textContent = isLight ? '🌙' : '☀️';
+        });
+    </script>
+</body>
+</html>

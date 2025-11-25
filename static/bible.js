@@ -247,11 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const meta = currentPassageMeta || {};
         openStandalone.disabled = false;
         openStandalone.onclick = () => {
-            const readerUrl = new URL('/static/passage.html', window.location.origin);
-            readerUrl.searchParams.set('path', meta.path || data.path);
-            readerUrl.searchParams.set('book', meta.book || data.book);
-            readerUrl.searchParams.set('chapter', meta.chapter || data.chapter);
-            readerUrl.searchParams.set('reference', `${meta.book || data.book} ${meta.chapter || data.chapter}`);
+            const book = meta.book || data.book;
+            const chapter = meta.chapter || data.chapter;
+            // Use new SSR route
+            const readerUrl = new URL(`/bible/${encodeURIComponent(book)}/${chapter}`, window.location.origin);
             window.open(readerUrl.toString(), '_blank', 'noopener');
         };
     }

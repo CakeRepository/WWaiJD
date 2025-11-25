@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const healthBadge = document.getElementById('healthBadge');
     const healthDetail = document.getElementById('healthDetail');
     const copyAnswerButton = document.getElementById('copyAnswerButton');
+    const shareAnswerButton = document.getElementById('shareAnswerButton');
     const recentList = document.getElementById('recentQuestions');
     const clearRecentsButton = document.getElementById('clearRecentsButton');
     const sessionNotes = document.getElementById('sessionNotes');
@@ -35,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchHeading = document.getElementById('searchHeading');
     let currentTool = 'ask';
     let currentMode = 'balanced';
+    let lastResponseData = null;
 
     const RECENT_KEY = 'wwaijd:recent-questions';
     const NOTES_KEY = 'wwaijd:session-notes';
@@ -203,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(data.error || 'Failed to get response');
             }
 
-            await streamResponse(response, { mode: currentMode });
+            await streamResponse(response, { mode: currentMode, question: question });
         } finally {
             setStreamingState(false);
         }
@@ -224,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(data.error || 'Failed to generate study');
             }
 
-            await streamResponse(response, { mode: 'study' });
+            await streamResponse(response, { mode: 'study', question: `Bible Study: ${topic}` });
         } finally {
             setStreamingState(false);
         }
@@ -245,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
             throw new Error(data.error || 'Failed to generate prayer');
         }
 
-        await streamResponse(response, { mode: 'prayer' });
+        await streamResponse(response, { mode: 'prayer', question: `Prayer for: ${request}` });
     } finally {
         setStreamingState(false);
     }
@@ -319,6 +321,19 @@ document.addEventListener('DOMContentLoaded', function () {
         answerText.innerHTML = renderMarkdown(accumulatedAnswer);
         setupBibleRefHoverPreviews();
         setStreamingState(false);
+        
+        // Save for sharing
+        lastResponseData = {
+            question: context.question || input.value,
+            answer: accumulatedAnswer,
+            passages: passages,
+            mode: currentMode
+        };
+        
+        if (shareAnswerButton) {
+            shareAnswerButton.textContent = 'Share';
+            shareAnswerButton.disabled = false;
+        }
     }
 
     function setStreamingState(isActive) {
@@ -572,6 +587,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function buildPassageViewerUrl(passage) {
+        if (passage.book && passage.chapter) {
+            const url = new URL(`/bible/${encodeURIComponent(passage.book)}/${passage.chapter}`, window.location.origin);
+            if (passage.verses) {
+                const start = passage.verses.split('-')[0];
+                if (start) {
+                    url.hash = start;
+                }
+            }
+            return url.toString();
+        }
+        
         const url = new URL('/static/passage.html', window.location.origin);
         if (passage.source_path) {
             url.searchParams.set('path', passage.source_path);
@@ -860,13 +886,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const book = link.dataset.book;
         const chapter = link.dataset.chapter;
         const verseStart = link.dataset.verseStart;
-        const verseEnd = link.dataset.verseEnd;
-
-        const url = new URL('/static/passage.html', window.location.origin);
-        url.searchParams.set('book', book);
-        url.searchParams.set('chapter', chapter);
-        url.searchParams.set('start', verseStart);
-        url.searchParams.set('end', verseEnd);
+        
+        const url = new URL(`/bible/${encodeURIComponent(book)}/${chapter}`, window.location.origin);
+        if (verseStart) {
+            url.hash = verseStart;
+        }
 
         window.open(url.toString(), '_blank', 'noopener,noreferrer');
     }
@@ -978,6 +1002,46 @@ document.addEventListener('DOMContentLoaded', function () {
     if (copyAnswerButton) {
         copyAnswerButton.addEventListener('click', copyAnswer);
     }
+    
+    if (shareAnswerButton) {
+        shareAnswerButton.addEventListener('click', async () => {
+            if (!lastResponseData) return;
+            
+            const originalText = shareAnswerButton.textContent;
+            shareAnswerButton.textContent = 'Saving...';
+            shareAnswerButton.disabled = true;
+            
+            try {
+                const response = await fetch('/api/share', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(lastResponseData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to share');
+                
+                const data = await response.json();
+                await copyToClipboard(data.share_url);
+                
+                shareAnswerButton.textContent = 'Copied Link!';
+                setTimeout(() => {
+                    shareAnswerButton.textContent = originalText;
+                    shareAnswerButton.disabled = false;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Share error:', error);
+                shareAnswerButton.textContent = 'Error';
+                setTimeout(() => {
+                    shareAnswerButton.textContent = originalText;
+                    shareAnswerButton.disabled = false;
+                }, 2000);
+            }
+        });
+    }
+
     if (clearRecentsButton) {
         clearRecentsButton.addEventListener('click', () => {
             localStorage.removeItem(RECENT_KEY);

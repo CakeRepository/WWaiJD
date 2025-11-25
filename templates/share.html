@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Mobile & Utility -->
+    <meta name="theme-color" content="#050c1f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="rating" content="General">
+
+    <meta name="robots" content="index, follow">
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <meta name="keywords" content="bible question, AI Jesus, christian advice, bible study, {{ question }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ og_url }}">
+    <meta property="og:title" content="{{ og_title }}">
+    <meta property="og:description" content="{{ og_description }}">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ twitter_url }}">
+    <meta name="twitter:title" content="{{ twitter_title }}">
+    <meta name="twitter:description" content="{{ twitter_description }}">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {{ schema_json | safe }}
+    </script>
+    
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/passage.css">
+    <style>
+        .share-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .question-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .question-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        .answer-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .answer-content {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        .passages-list {
+            display: grid;
+            gap: 1rem;
+        }
+        .passage-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-primary);
+        }
+        .passage-ref {
+            font-weight: bold;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .cta-section {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(108, 228, 214, 0.05);
+            border-radius: 16px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: var(--accent-primary);
+            color: #000;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="passage-wrapper">
+        <header class="passage-header">
+            <div class="header-top">
+                <a href="/" class="home-icon" title="Home">🏠</a>
+            </div>
+        </header>
+
+        <main class="share-container">
+            <article class="question-card">
+                <h1 class="question-text">{{ question }}</h1>
+                <div class="meta-info">
+                    <span class="mode-badge">{{ mode }} focus</span>
+                    <span class="date-badge">{{ date }}</span>
+                </div>
+            </article>
+
+            <article class="answer-card">
+                <div class="answer-content">
+                    {{ answer_html | safe }}
+                </div>
+            </article>
+
+            {% if passages %}
+            <section class="passages-card">
+                <h3>Biblical References</h3>
+                <div class="passages-list">
+                    {% for passage in passages %}
+                    <div class="passage-item">
+                        <a href="/bible/{{ passage.book }}/{{ passage.chapter }}" class="passage-ref">{{ passage.reference }}</a>
+                        <div class="passage-text">{{ passage.text }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <div class="cta-section">
+                <h2>Have your own question?</h2>
+                <p>Ask AI Jesus for biblical guidance on any topic.</p>
+                <a href="/" class="cta-button">Ask a Question</a>
+            </div>
+        </main>
+
+        <footer class="passage-footer">
+            <a href="/" class="back-link">← Return to What Would AI Jesus Do?</a>
+        </footer>
+    </div>
+</body>
+</html>

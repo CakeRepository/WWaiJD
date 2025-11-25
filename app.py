@@ -10,7 +10,7 @@ import sys
 os.environ['PYTHONUNBUFFERED'] = '1'
 sys.stdout.reconfigure(line_buffering=True) if hasattr(sys.stdout, 'reconfigure') else None
 
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template, abort, url_for
 from waitress import serve
 from pathlib import Path
 import json
@@ -24,9 +24,19 @@ from bible_utils import (
     resolve_bible_path,
 )
 from rag_pipeline import BibleRAG, MODE_INSTRUCTIONS, DEFAULT_MODE
+import database
+import markdown
 
 app = Flask(__name__, static_folder='static')
 BIBLE_DATA_DIR = (Path(__file__).parent / 'bible-data').resolve()
+# Initialize Bible Index
+try:
+    BIBLE_INDEX = build_bible_index(BIBLE_DATA_DIR)
+    print("✅ Bible index built successfully", flush=True)
+except Exception as e:
+    print(f"⚠️  Warning: Could not build Bible index: {e}", flush=True)
+    BIBLE_INDEX = []
+
 OLLAMA_LLM_KEEP_ALIVE = os.getenv('WWAIJD_LLM_KEEP_ALIVE', '120s')
 OLLAMA_EMBED_KEEP_ALIVE = os.getenv('WWAIJD_EMBED_KEEP_ALIVE', '0s')
 
@@ -57,6 +67,47 @@ def normalize_book_name(book_name):
     """Normalize book names to handle common variations."""
     normalized = book_name.lower().strip()
     return BOOK_NAME_VARIATIONS.get(normalized, normalized)
+
+def find_chapter_path(book_name, chapter_num):
+    """Find the file path for a specific book and chapter."""
+    target_book = normalize_book_name(book_name)
+    target_chapter = str(chapter_num)
+    
+    for testament in BIBLE_INDEX:
+        for book in testament['books']:
+            if normalize_book_name(book['name']) == target_book:
+                for chapter in book['chapters']:
+                    if chapter['number'] == target_chapter:
+                        return chapter['path'], book['name']
+    return None, None
+
+def get_next_prev_chapters(book_name, chapter_num):
+    """Get the next and previous chapter references."""
+    target_book = normalize_book_name(book_name)
+    target_chapter = int(chapter_num)
+    
+    flat_chapters = []
+    for testament in BIBLE_INDEX:
+        for book in testament['books']:
+            b_name = book['name']
+            for chapter in book['chapters']:
+                flat_chapters.append({
+                    'book': b_name,
+                    'chapter': int(chapter['number'])
+                })
+    
+    prev_chap = None
+    next_chap = None
+    
+    for i, chap in enumerate(flat_chapters):
+        if normalize_book_name(chap['book']) == target_book and chap['chapter'] == target_chapter:
+            if i > 0:
+                prev_chap = flat_chapters[i-1]
+            if i < len(flat_chapters) - 1:
+                next_chap = flat_chapters[i+1]
+            break
+            
+    return prev_chap, next_chap
 
 def normalize_mode(mode_raw):
     """Ensure mode matches a supported focus option."""
@@ -713,6 +764,91 @@ def _find_chapter_markdown(book: str, chapter: int):
     raise FileNotFoundError(f'Chapter not found: {book} {chapter}')
 
 
+@app.route('/bible/<book>/<chapter>')
+def bible_chapter(book, chapter):
+    """Serve a specific Bible chapter with SSR."""
+    try:
+        # Normalize inputs
+        book_name = normalize_book_name(book)
+        chapter_num = int(chapter)
+        
+        # Find the file path
+        file_path, proper_book_name = find_chapter_path(book_name, chapter_num)
+        
+        if not file_path:
+            abort(404)
+            
+        # Resolve full path
+        full_path = resolve_bible_path(file_path, BIBLE_DATA_DIR)
+        
+        # Read and parse content
+        with open(full_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        verses = parse_verses(content)
+        
+        # Format content as HTML
+        passage_html = []
+        for v_num, v_text in verses:
+            passage_html.append(
+                f'<div class="verse" id="{v_num}">'
+                f'<span class="verse-num">{v_num}</span> '
+                f'<span class="verse-text">{v_text}</span>'
+                f'</div>'
+            )
+        passage_content = "\n".join(passage_html)
+        
+        # Get navigation
+        prev_chap, next_chap = get_next_prev_chapters(book_name, chapter_num)
+        
+        prev_url = url_for('bible_chapter', book=prev_chap['book'], chapter=prev_chap['chapter']) if prev_chap else None
+        next_url = url_for('bible_chapter', book=next_chap['book'], chapter=next_chap['chapter']) if next_chap else None
+        
+        # Metadata
+        title = f"{proper_book_name} {chapter_num} - KJV Bible | WWAIJD"
+        description = f"Read {proper_book_name} Chapter {chapter_num} of the King James Version Bible. {verses[0][1][:100]}..."
+        canonical_url = url_for('bible_chapter', book=proper_book_name, chapter=chapter_num, _external=True)
+        
+        # Schema.org
+        schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": f"{proper_book_name} Chapter {chapter_num}",
+            "description": description,
+            "inLanguage": "en",
+            "isPartOf": {
+                "@type": "Book",
+                "name": "The Holy Bible",
+                "bookEdition": "King James Version"
+            }
+        }
+        
+        return render_template(
+            'passage.html',
+            title=title,
+            description=description,
+            canonical_url=canonical_url,
+            og_url=canonical_url,
+            og_title=title,
+            og_description=description,
+            twitter_url=canonical_url,
+            twitter_title=title,
+            twitter_description=description,
+            schema_json=json.dumps(schema),
+            passage_title=f"{proper_book_name} {chapter_num}",
+            passage_subtitle="King James Version",
+            passage_content=passage_content,
+            prev_chapter_url=prev_url,
+            next_chapter_url=next_url,
+            book=proper_book_name,
+            chapter=chapter_num
+        )
+        
+    except Exception as e:
+        print(f"Error serving chapter: {e}")
+        abort(404)
+
+
 @app.route('/sitemap.xml')
 def sitemap():
     """
@@ -743,8 +879,9 @@ def sitemap():
     
     # Bible books and chapters
     try:
-        bible_index = build_bible_index(BIBLE_DATA_DIR)
-        # bible_index is a list of testament dicts
+        # Use the global BIBLE_INDEX if available, otherwise build it
+        bible_index = BIBLE_INDEX if BIBLE_INDEX else build_bible_index(BIBLE_DATA_DIR)
+        
         for testament_data in bible_index:
             for book_data in testament_data['books']:
                 book_name = book_data['name']
@@ -754,7 +891,8 @@ def sitemap():
                     # URL encode book name
                     safe_book = book_name.replace(' ', '%20')
                     xml.append('  <url>')
-                    xml.append(f'    <loc>{base_url}/static/passage.html?book={safe_book}&amp;chapter={chapter_num}</loc>')
+                    # Use the new clean URL structure
+                    xml.append(f'    <loc>{base_url}/bible/{safe_book}/{chapter_num}</loc>')
                     xml.append(f'    <lastmod>{today}</lastmod>')
                     xml.append('    <changefreq>yearly</changefreq>')
                     xml.append('    <priority>0.6</priority>')
@@ -766,6 +904,101 @@ def sitemap():
     
     return Response('\n'.join(xml), mimetype='application/xml')
 
+
+@app.route('/api/share', methods=['POST'])
+def share_conversation():
+    """
+    Save a conversation and return a shareable link.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        question = data.get('question')
+        answer = data.get('answer')
+        passages = data.get('passages')
+        mode = data.get('mode', 'balanced')
+        
+        if not question or not answer:
+            return jsonify({'error': 'Missing question or answer'}), 400
+            
+        share_id = database.save_conversation(question, answer, passages, mode)
+        share_url = url_for('shared_page', share_id=share_id, _external=True)
+        
+        return jsonify({
+            'share_id': share_id,
+            'share_url': share_url
+        })
+        
+    except Exception as e:
+        print(f"Error sharing conversation: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/q/<share_id>')
+def shared_page(share_id):
+    """Render a shared conversation page."""
+    try:
+        data = database.get_conversation(share_id)
+        if not data:
+            abort(404)
+            
+        # Parse passages if stored as JSON string
+        passages = data['passages']
+        if isinstance(passages, str):
+            try:
+                passages = json.loads(passages)
+            except:
+                passages = []
+                
+        # Render markdown answer to HTML
+        answer_html = markdown.markdown(data['answer'])
+        
+        # Metadata
+        title = f"{data['question']} - AI Jesus Answer | WWAIJD"
+        description = f"AI Jesus answers: {data['question']}. Read the biblical perspective and scripture references."
+        canonical_url = url_for('shared_page', share_id=share_id, _external=True)
+        
+        # Schema.org
+        schema = {
+            "@context": "https://schema.org",
+            "@type": "QAPage",
+            "mainEntity": {
+                "@type": "Question",
+                "name": data['question'],
+                "text": data['question'],
+                "answerCount": 1,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": data['answer'],
+                    "dateCreated": data['created_at'],
+                    "author": {
+                        "@type": "Organization",
+                        "name": "What Would AI Jesus Do"
+                    }
+                }
+            }
+        }
+        
+        return render_template(
+            'share.html',
+            title=title,
+            description=description,
+            canonical_url=canonical_url,
+            og_url=canonical_url,
+            og_title=title,
+            og_description=description,
+            twitter_url=canonical_url,
+            twitter_title=title,
+            twitter_description=description,
+            schema_json=json.dumps(schema),
+            question=data['question'],
+            answer_html=answer_html,
+            passages=passages,
+            mode=data['mode'],
+            date=data['created_at'][:10]
+        )
+        
+    except Exception as e:
+        print(f"Error rendering shared page: {e}")
+        abort(404)
 
 def main():
     """Run the Flask application."""
