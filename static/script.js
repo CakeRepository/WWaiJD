@@ -101,6 +101,28 @@ document.addEventListener('DOMContentLoaded', function () {
         if (searchCard) searchCard.classList.remove('is-focused');
     });
 
+    // Auto-expand textarea
+    input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if (this.value === '') {
+             this.style.height = ''; // Reset if empty
+        }
+    });
+
+    // Handle Enter key to submit
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            // Trigger form submit
+            if (form.requestSubmit) {
+                form.requestSubmit();
+            } else {
+                form.dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}));
+            }
+        }
+    });
+
     // Tool Switcher Logic
     toolButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -980,81 +1002,78 @@ document.addEventListener('DOMContentLoaded', function () {
     refreshHealth();
     updateModeUI();
 
-    initHolyTrinityEasterEgg();
-    initInteractiveBackground();
+    // Mobile Navigation Logic
+    const navItems = document.querySelectorAll('.nav-item');
+    const sections = {
+        '#top': document.body,
+        '#study-cta': document.getElementById('study-cta'),
+        '#study-tools': document.getElementById('study-tools'),
+        '#about': document.getElementById('about')
+    };
 
-    function initHolyTrinityEasterEgg() {
-        const state = {
-            overlay: null,
-            hideTimeoutId: null
-        };
+    function updateActiveNav() {
+        let current = '';
+        const scrollPosition = window.scrollY + window.innerHeight / 3;
 
-        input.addEventListener('input', () => {
-            if (containsHolyTrinity(input.value)) {
-                triggerHolyTrinity();
+        for (const [id, section] of Object.entries(sections)) {
+            if (section && section.offsetTop <= scrollPosition) {
+                current = id;
+            }
+        }
+
+        // Default to top if nothing selected or near top
+        if (window.scrollY < 100) current = '#top';
+
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('href') === current) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    window.addEventListener('scroll', updateActiveNav);
+    
+    // Initial check
+    updateActiveNav();
+
+    // Handle nav clicks for smooth scrolling and focus
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = item.getAttribute('href');
+            const targetSection = sections[targetId];
+            
+            if (targetSection) {
+                if (targetId === '#top') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    targetSection.scrollIntoView({ behavior: 'smooth' });
+                }
+                
+                // Special handling for "Ask" to focus input
+                if (targetId === '#study-cta') {
+                    setTimeout(() => {
+                        input.focus();
+                    }, 500); // Wait for scroll
+                }
+            }
+        });
+    });
+
+    // Collapsible Hero Logic
+    const heroSection = document.querySelector('.primary-hero');
+    
+    if (heroSection) {
+        input.addEventListener('focus', () => {
+            // On mobile, collapse the hero to save space when typing
+            if (window.innerWidth <= 640) {
+                heroSection.classList.add('collapsed');
             }
         });
 
-        function containsHolyTrinity(value) {
-            if (!value) {
-                return false;
-            }
-            const normalized = value.toLowerCase();
-            const hasFather = normalized.includes('father');
-            const hasSon = normalized.includes('son');
-            const hasSpirit =
-                normalized.includes('holy spirit') ||
-                normalized.includes('holy-spirit') ||
-                normalized.includes('holyspirit');
-            return hasFather && hasSon && hasSpirit;
-        }
-
-        function triggerHolyTrinity() {
-            const overlay = ensureOverlay();
-            overlay.classList.add('visible');
-            document.body.classList.add('holy-trinity-active');
-
-            clearTimeout(state.hideTimeoutId);
-            state.hideTimeoutId = setTimeout(() => {
-                overlay.classList.remove('visible');
-                document.body.classList.remove('holy-trinity-active');
-            }, 5000);
-        }
-
-        function ensureOverlay() {
-            if (state.overlay) {
-                return state.overlay;
-            }
-            const overlay = document.createElement('div');
-            overlay.className = 'trinity-overlay';
-            overlay.setAttribute('aria-hidden', 'true');
-            overlay.innerHTML = `
-                <div class="divine-geometry">
-                    <svg class="triangle-path" viewBox="0 0 600 600">
-                        <polygon points="300,60 100,480 500,480" />
-                    </svg>
-                    <div class="vertex vertex-top">
-                        <div class="vertex-glow"></div>
-                        <div class="vertex-label">Father</div>
-                    </div>
-                    <div class="vertex vertex-right">
-                        <div class="vertex-glow"></div>
-                        <div class="vertex-label">Son</div>
-                    </div>
-                    <div class="vertex vertex-left">
-                        <div class="vertex-glow"></div>
-                        <div class="vertex-label">Spirit</div>
-                    </div>
-                    <div class="center-light"></div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-            state.overlay = overlay;
-            return overlay;
-        }
-    }
-
-    function initInteractiveBackground() {
-        // Disabled custom cursor for now - using normal cursor
+        // Optional: Restore it if they scroll to top? 
+        // Or maybe just leave it collapsed until reload?
+        // Let's leave it collapsed to keep the interface clean for the session.
     }
 });
