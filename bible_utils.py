@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Iterable, List, Sequence, Tuple
+from typing import Iterable, List, Sequence, Tuple, Dict, Any, Union
 
 BIBLE_ROOT = Path("bible-data")
 
@@ -16,7 +16,16 @@ _CHAPTER_NUMBER_RE = re.compile(r"(\d+)")
 
 
 def extract_book_name(folder_name: str) -> str:
-    """Strip the numeric prefix from a folder name like '18 Job'."""
+    """
+    Extract the book name from a folder name, stripping any numeric prefix.
+
+    Args:
+        folder_name: The name of the folder (e.g., "18 Job").
+
+    Returns:
+        str: The book name without the numeric prefix (e.g., "Job").
+             If no prefix is found, returns the original name.
+    """
     if not folder_name:
         return folder_name
     return folder_name.split(" ", 1)[1] if " " in folder_name else folder_name
@@ -24,9 +33,18 @@ def extract_book_name(folder_name: str) -> str:
 
 def extract_chapter_number(file_path: Path | str) -> str:
     """
-    Attempt to read the chapter number from a file stem (e.g., job12 -> 12).
-    Returns "1" when no numeric suffix can be found.
-    Looks for the LAST number in the filename to handle books like "1 Corinthians".
+    Extract the chapter number from a file path or filename.
+
+    Attempts to find the numeric suffix in the file stem (e.g., "job12.md" -> "12").
+    Uses the last number found in the filename to handle books with numbers
+    in their name (e.g., "1 Corinthians").
+
+    Args:
+        file_path: The file path or filename to parse.
+
+    Returns:
+        str: The extracted chapter number as a string.
+             Returns "1" if no number is found.
     """
     stem = Path(file_path).stem
     # Find all numbers in the stem and take the last one (the chapter number)
@@ -35,7 +53,16 @@ def extract_chapter_number(file_path: Path | str) -> str:
 
 
 def to_relative_source_path(file_path: Path, bible_dir: Path | str = BIBLE_ROOT) -> str:
-    """Return the path to a markdown file relative to the bible root directory."""
+    """
+    Convert an absolute file path to a path relative to the Bible root directory.
+
+    Args:
+        file_path: The absolute path to the file.
+        bible_dir: The root directory of the Bible data. Defaults to BIBLE_ROOT.
+
+    Returns:
+        str: The relative path as a POSIX string.
+    """
     base = Path(bible_dir).resolve()
     absolute = Path(file_path).resolve()
     return absolute.relative_to(base).as_posix()
@@ -43,8 +70,16 @@ def to_relative_source_path(file_path: Path, bible_dir: Path | str = BIBLE_ROOT)
 
 def parse_verses(markdown_text: str) -> List[Tuple[str, str]]:
     """
-    Parse a markdown chapter into (verse_number, verse_text) tuples.
-    Verses are identified by lines that look like '## 12.'.
+    Parse a markdown chapter into a list of verse tuples.
+
+    Identifies verses based on markdown headers like '## 12.'.
+
+    Args:
+        markdown_text: The content of the markdown file.
+
+    Returns:
+        List[Tuple[str, str]]: A list of tuples, where each tuple contains
+            (verse_number, verse_text).
     """
     verses: List[Tuple[str, str]] = []
     verse_num: str | None = None
@@ -70,8 +105,21 @@ def parse_verses(markdown_text: str) -> List[Tuple[str, str]]:
 
 def resolve_bible_path(relative_path: str, bible_dir: Path | str = BIBLE_ROOT) -> Path:
     """
-    Resolve a relative bible path such as 'Old Testament/18 Job/job1.md'
-    and ensure it stays within the bible directory tree.
+    Resolve a relative Bible path to an absolute path, ensuring security.
+
+    Prevents directory traversal attacks by checking if the resolved path
+    is within the Bible directory.
+
+    Args:
+        relative_path: The relative path to resolve (e.g., 'Old Testament/18 Job/job1.md').
+        bible_dir: The root directory of the Bible data. Defaults to BIBLE_ROOT.
+
+    Returns:
+        Path: The resolved absolute path.
+
+    Raises:
+        ValueError: If the path resolves to a location outside the Bible directory.
+        FileNotFoundError: If the file does not exist.
     """
     base = Path(bible_dir).resolve()
     candidate = (base / Path(relative_path)).resolve()
@@ -83,14 +131,55 @@ def resolve_bible_path(relative_path: str, bible_dir: Path | str = BIBLE_ROOT) -
 
 
 def _compact_lines(lines: Sequence[str]) -> str:
-    """Join verse lines with spaces while removing empty fragments."""
+    """
+    Join lines of text, removing empty lines and extra whitespace.
+
+    Args:
+        lines: A sequence of strings.
+
+    Returns:
+        str: A single string with lines joined by spaces.
+    """
     filtered = [line for line in lines if line]
     return " ".join(filtered).strip()
 
 
-def build_bible_index(bible_dir: Path | str = BIBLE_ROOT):
+def build_bible_index(bible_dir: Path | str = BIBLE_ROOT) -> List[Dict[str, Any]]:
     """
-    Return a structured index of available testaments, books, and chapters.
+    Build a structured index of the Bible from the file system.
+
+    Scans the directory structure to organize testaments, books, and chapters.
+
+    Args:
+        bible_dir: The root directory of the Bible data. Defaults to BIBLE_ROOT.
+
+    Returns:
+        List[Dict[str, Any]]: A list of dictionaries representing testaments.
+            Each testament contains a list of books, and each book contains
+            a list of chapters with metadata.
+
+            Example structure:
+            [
+                {
+                    "name": "Old Testament",
+                    "books": [
+                        {
+                            "name": "Genesis",
+                            "folder": "01 Genesis",
+                            "chapters": [
+                                {
+                                    "number": "1",
+                                    "path": "Old Testament/01 Genesis/gen1.md",
+                                    "filename": "gen1.md"
+                                },
+                                ...
+                            ]
+                        },
+                        ...
+                    ]
+                },
+                ...
+            ]
     """
     bible_path = Path(bible_dir)
     testaments = []

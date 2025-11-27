@@ -3,11 +3,24 @@ import uuid
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, Dict, Union, Any, List
 
 DB_PATH = Path("wwaijd.db")
 
 def init_db():
-    """Initialize the database with the shared_conversations table."""
+    """
+    Initialize the SQLite database with the shared_conversations table.
+
+    Creates the table if it does not already exist.
+    The table stores shared conversations including question, answer, passages,
+    mode, and creation timestamp.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -23,8 +36,24 @@ def init_db():
     conn.commit()
     conn.close()
 
-def save_conversation(question, answer, passages, mode='balanced'):
-    """Save a conversation and return its ID."""
+def save_conversation(
+    question: str,
+    answer: str,
+    passages: Union[List[Dict[str, Any]], str],
+    mode: str = 'balanced'
+) -> str:
+    """
+    Save a conversation to the database and return its unique ID.
+
+    Args:
+        question: The user's question.
+        answer: The AI generated answer.
+        passages: The list of Bible passages used, or a JSON string of them.
+        mode: The tone/mode used for the answer. Defaults to 'balanced'.
+
+    Returns:
+        str: The unique 8-character ID for the saved conversation.
+    """
     share_id = str(uuid.uuid4())[:8]  # Use first 8 chars for shorter URLs
     
     conn = sqlite3.connect(DB_PATH)
@@ -43,8 +72,18 @@ def save_conversation(question, answer, passages, mode='balanced'):
     
     return share_id
 
-def get_conversation(share_id):
-    """Retrieve a conversation by ID."""
+def get_conversation(share_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve a saved conversation by its ID.
+
+    Args:
+        share_id: The unique ID of the conversation to retrieve.
+
+    Returns:
+        Optional[Dict[str, Any]]: A dictionary containing the conversation data
+        (id, question, answer, passages, mode, created_at) if found,
+        otherwise None.
+    """
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()

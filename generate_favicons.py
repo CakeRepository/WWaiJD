@@ -1,5 +1,5 @@
 """
-Generate favicon files from the meta image
+Generate favicon files from the meta image.
 Requires: pip install Pillow
 """
 
@@ -7,7 +7,23 @@ from PIL import Image
 import os
 
 def generate_favicons():
-    """Generate various favicon sizes from the meta image."""
+    """
+    Generate various favicon sizes and an ICO file from the meta image.
+
+    Reads 'img/wwaijd-metaimage.png' and creates:
+    - favicon-16x16.png
+    - favicon-32x32.png
+    - apple-touch-icon.png (180x180)
+    - favicon.ico (containing 16x16, 32x32, 48x48 sizes)
+
+    The output files are saved to the 'static' directory.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     
     # Input image
     input_image = 'img/wwaijd-metaimage.png'

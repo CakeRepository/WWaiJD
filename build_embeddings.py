@@ -6,6 +6,7 @@ using Ollama's Gemma embeddings via ChromaDB.
 from pathlib import Path
 import chromadb
 import ollama
+from typing import List, Dict, Any, Optional
 from bible_utils import (
     extract_book_name,
     extract_chapter_number,
@@ -14,8 +15,21 @@ from bible_utils import (
 )
 
 
-def read_bible_files(bible_dir="bible-data"):
-    """Read every Bible markdown chapter and capture its metadata."""
+def read_bible_files(bible_dir: str = "bible-data") -> List[Dict[str, str]]:
+    """
+    Read every Bible markdown chapter and capture its metadata.
+
+    Iterates through Old and New Testament folders, reading each chapter file.
+
+    Args:
+        bible_dir: Path to the root directory containing Bible data.
+                   Defaults to "bible-data".
+
+    Returns:
+        List[Dict[str, str]]: A list of dictionaries, where each dictionary
+        contains metadata and content for a chapter.
+        Keys: "book", "testament", "chapter", "content", "source_path".
+    """
     texts = []
     bible_path = Path(bible_dir)
 
@@ -49,10 +63,21 @@ def read_bible_files(bible_dir="bible-data"):
     return texts
 
 
-def chunk_bible_text(texts, chunk_size=500):
+def chunk_bible_text(texts: List[Dict[str, str]], chunk_size: int = 500) -> List[Dict[str, Any]]:
     """
     Chunk the Bible text into smaller passages for better retrieval.
-    Tries to split on verse boundaries when possible.
+
+    Tries to split on verse boundaries when possible to maintain context.
+    Accumulates verses until the chunk size is reached.
+
+    Args:
+        texts: A list of chapter dictionaries (as returned by read_bible_files).
+        chunk_size: Approximate maximum size of a text chunk in characters.
+                    Defaults to 500.
+
+    Returns:
+        List[Dict[str, Any]]: A list of chunk dictionaries.
+        Keys: "text", "book", "testament", "chapter", "verses", "reference", "source_path".
     """
     chunks = []
 
@@ -115,14 +140,32 @@ def chunk_bible_text(texts, chunk_size=500):
 
 
 def _format_verse_range(start: str, end: str | None) -> str:
-    """Format a readable verse range string."""
+    """
+    Format a readable verse range string.
+
+    Args:
+        start: The starting verse number.
+        end: The ending verse number.
+
+    Returns:
+        str: A string like "1" or "1-5".
+    """
     if not end or start == end:
         return str(start)
     return f"{start}-{end}"
 
 
-def create_embedding(text):
-    """Generate embeddings using Ollama's Gemma model."""
+def create_embedding(text: str) -> Optional[List[float]]:
+    """
+    Generate embeddings using Ollama's Gemma model.
+
+    Args:
+        text: The text content to embed.
+
+    Returns:
+        Optional[List[float]]: The vector embedding as a list of floats,
+        or None if generation fails.
+    """
     try:
         response = ollama.embeddings(model='embeddinggemma', prompt=text)
         return response['embedding']
@@ -131,8 +174,20 @@ def create_embedding(text):
         return None
 
 
-def build_vector_database(chunks, db_path="chroma_db"):
-    """Build the ChromaDB vector database with Bible chunks."""
+def build_vector_database(chunks: List[Dict[str, Any]], db_path: str = "chroma_db"):
+    """
+    Build the ChromaDB vector database with Bible chunks.
+
+    Removes any existing database at the path before creating a new one.
+    Processes chunks in batches to manage memory usage.
+
+    Args:
+        chunks: List of text chunks (as returned by chunk_bible_text).
+        db_path: Path where the ChromaDB will be stored. Defaults to "chroma_db".
+
+    Returns:
+        None
+    """
     print(f"\nBuilding vector database with {len(chunks)} chunks...")
     
     # Remove old database if it exists to avoid dimension mismatch
@@ -194,7 +249,21 @@ def build_vector_database(chunks, db_path="chroma_db"):
 
 
 def main():
-    """Main function to build the embeddings database."""
+    """
+    Main function to build the embeddings database.
+
+    Orchestrates the entire process:
+    1. Checks for Ollama and Gemma model.
+    2. Reads Bible files.
+    3. Chunks text.
+    4. Builds the vector database.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     print("=" * 60)
     print("What Would AI Jesus Do - Embeddings Builder")
     print("=" * 60)
