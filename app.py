@@ -16,6 +16,7 @@ from pathlib import Path
 import json
 import ollama
 from datetime import datetime
+from typing import Optional, Tuple, Dict, Any, Union
 from bible_utils import (
     build_bible_index,
     extract_book_name,
@@ -63,13 +64,34 @@ BOOK_NAME_VARIATIONS = {
     '2 chronicles': '2chronicles',
 }
 
-def normalize_book_name(book_name):
-    """Normalize book names to handle common variations."""
+def normalize_book_name(book_name: str) -> str:
+    """
+    Normalize book names to handle common variations.
+
+    Converts to lowercase and maps known variations (e.g., 'Psalm' -> 'psalms')
+    to a standard format.
+
+    Args:
+        book_name: The input book name.
+
+    Returns:
+        str: The normalized book name.
+    """
     normalized = book_name.lower().strip()
     return BOOK_NAME_VARIATIONS.get(normalized, normalized)
 
-def find_chapter_path(book_name, chapter_num):
-    """Find the file path for a specific book and chapter."""
+def find_chapter_path(book_name: str, chapter_num: int) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Find the file path for a specific book and chapter.
+
+    Args:
+        book_name: The name of the Bible book.
+        chapter_num: The chapter number.
+
+    Returns:
+        Tuple[Optional[str], Optional[str]]: A tuple containing (relative_path, proper_book_name).
+        Returns (None, None) if not found.
+    """
     target_book = normalize_book_name(book_name)
     target_chapter = str(chapter_num)
     
@@ -81,8 +103,18 @@ def find_chapter_path(book_name, chapter_num):
                         return chapter['path'], book['name']
     return None, None
 
-def get_next_prev_chapters(book_name, chapter_num):
-    """Get the next and previous chapter references."""
+def get_next_prev_chapters(book_name: str, chapter_num: Union[int, str]) -> Tuple[Optional[Dict], Optional[Dict]]:
+    """
+    Get the next and previous chapter references.
+
+    Args:
+        book_name: The name of the Bible book.
+        chapter_num: The current chapter number.
+
+    Returns:
+        Tuple[Optional[Dict], Optional[Dict]]: A tuple containing (previous_chapter_dict, next_chapter_dict).
+        Each dict has 'book' and 'chapter' keys. Returns None for a direction if no chapter exists.
+    """
     target_book = normalize_book_name(book_name)
     target_chapter = int(chapter_num)
     
@@ -109,8 +141,16 @@ def get_next_prev_chapters(book_name, chapter_num):
             
     return prev_chap, next_chap
 
-def normalize_mode(mode_raw):
-    """Ensure mode matches a supported focus option."""
+def normalize_mode(mode_raw: Optional[str]) -> str:
+    """
+    Ensure mode matches a supported focus option.
+
+    Args:
+        mode_raw: The input mode string (e.g., "Comfort").
+
+    Returns:
+        str: The normalized mode key (e.g., "comfort") or DEFAULT_MODE.
+    """
     if not mode_raw:
         return DEFAULT_MODE
     mode_key = str(mode_raw).strip().lower()
@@ -131,25 +171,51 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    """Serve the main page."""
+    """
+    Serve the main page (index.html).
+
+    Returns:
+        Response: The index.html file content.
+    """
     return send_from_directory('static', 'index.html')
 
 
 @app.route('/static/<path:path>')
 def serve_static(path):
-    """Serve static files."""
+    """
+    Serve static files from the static directory.
+
+    Args:
+        path: The relative path to the static file.
+
+    Returns:
+        Response: The static file content.
+    """
     return send_from_directory('static', path)
 
 
 @app.route('/robots.txt')
 def robots():
-    """Serve robots.txt for search engine crawlers."""
+    """
+    Serve robots.txt for search engine crawlers.
+
+    Returns:
+        Response: The robots.txt file content.
+    """
     return send_from_directory('static', 'robots.txt')
 
 
 @app.route('/img/<path:path>')
 def serve_image(path):
-    """Serve image files for social media."""
+    """
+    Serve image files from the img directory.
+
+    Args:
+        path: The relative path to the image file.
+
+    Returns:
+        Response: The image file content.
+    """
     return send_from_directory('img', path)
 
 
@@ -158,23 +224,17 @@ def ask_question():
     """
     API endpoint to handle questions.
     
-    Request body:
-        {
-            "question": "User's question"
-        }
+    Expects a JSON payload with a "question" key.
+    Returns the AI-generated answer and relevant Bible passages.
     
-    Response:
+    Request Body:
         {
-            "answer": "AI Jesus response",
-            "passages": [
-                {
-                    "text": "Bible verse text",
-                    "reference": "Book Chapter:Verses",
-                    "book": "Book name",
-                    "testament": "Old/New Testament"
-                }
-            ]
+            "question": "User's question",
+            "mode": "Optional tone mode"
         }
+
+    Returns:
+        JSON response with "answer", "passages", and "mode".
     """
     if not rag:
         return jsonify({
@@ -217,18 +277,17 @@ def ask_question():
 def ask_question_stream():
     """
     API endpoint to handle questions with streaming response.
-    Uses Server-Sent Events (SSE) to stream the AI response in real-time.
     
-    Request body:
+    Uses Server-Sent Events (SSE) to stream the AI response token by token.
+
+    Request Body:
         {
-            "question": "User's question"
+            "question": "User's question",
+            "mode": "Optional tone mode"
         }
     
-    Response: Server-Sent Events stream
-        - event: chunk - Response text chunks
-        - event: passages - Bible passages used
-        - event: done - Stream complete
-        - event: error - Error occurred
+    Returns:
+        Response: Event stream with types 'passages', 'chunk', 'done', or 'error'.
     """
     if not rag:
         return jsonify({
@@ -298,10 +357,13 @@ def generate_study():
     """
     API endpoint to generate a thematic Bible study.
     
-    Request body:
+    Request Body:
         {
             "topic": "Topic string"
         }
+
+    Returns:
+        JSON response containing the study text and source passages.
     """
     if not rag:
         return jsonify({
@@ -338,10 +400,13 @@ def generate_prayer():
     """
     API endpoint to generate a personalized prayer.
     
-    Request body:
+    Request Body:
         {
-            "request": "Prayer request"
+            "request": "Prayer request text"
         }
+
+    Returns:
+        JSON response containing the prayer text and source passages.
     """
     if not rag:
         return jsonify({
@@ -377,7 +442,16 @@ def generate_prayer():
 def generate_study_stream():
     """
     API endpoint to generate a thematic Bible study with streaming.
+
     Uses Server-Sent Events (SSE) to stream the response.
+
+    Request Body:
+        {
+            "topic": "Topic string"
+        }
+
+    Returns:
+        Response: Event stream.
     """
     if not rag:
         return jsonify({
@@ -469,7 +543,16 @@ Keep the tone encouraging and insightful.
 def generate_prayer_stream():
     """
     API endpoint to generate a personalized prayer with streaming.
+
     Uses Server-Sent Events (SSE) to stream the response.
+
+    Request Body:
+        {
+            "request": "Prayer request text"
+        }
+
+    Returns:
+        Response: Event stream.
     """
     if not rag:
         return jsonify({
@@ -555,7 +638,12 @@ Write a heartfelt, comforting prayer for them.
 
 @app.route('/api/bible-index', methods=['GET'])
 def get_bible_index():
-    """Return the structure of the Bible library."""
+    """
+    Return the structure of the Bible library.
+
+    Returns:
+        JSON response with the list of testaments, books, and chapters.
+    """
     index = build_bible_index()
     return jsonify({'testaments': index})
 
@@ -564,10 +652,16 @@ def get_bible_index():
 def get_bible_passage():
     """
     Returns the verses for a specific Bible markdown chapter so the UI can render it.
+
     Query parameters:
-        path  - relative markdown path inside bible-data (required)
-        start - optional starting verse number
-        end   - optional ending verse number
+        path  - relative markdown path inside bible-data (optional if book/chapter provided)
+        book  - Book name (optional if path provided)
+        chapter - Chapter number (optional if path provided)
+        start - optional starting verse number for highlighting
+        end   - optional ending verse number for highlighting
+
+    Returns:
+        JSON response with book, chapter, verses, and highlight info.
     """
     relative_path = request.args.get('path', '').strip()
     book_param = request.args.get('book', '').strip()
@@ -622,11 +716,15 @@ def get_bible_passage():
 def get_verse_preview():
     """
     Returns the text of specific verses for tooltip preview.
+
     Query parameters:
         book        - Book name (e.g., "Proverbs")
         chapter     - Chapter number
         verse_start - Starting verse number
         verse_end   - Ending verse number (optional, defaults to verse_start)
+
+    Returns:
+        JSON response with the verse text.
     """
     book = request.args.get('book', '').strip()
     chapter_raw = request.args.get('chapter', '').strip()
@@ -681,7 +779,12 @@ def get_verse_preview():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint."""
+    """
+    Health check endpoint.
+
+    Returns:
+        JSON status indicating if the service is healthy and RAG is initialized.
+    """
     status = {
         'status': 'healthy',
         'rag_initialized': rag is not None
@@ -700,18 +803,36 @@ def health_check():
 
 @app.errorhandler(404)
 def not_found(e):
-    """Handle 404 errors."""
+    """
+    Handle 404 errors.
+
+    Returns:
+        JSON error message with 404 status.
+    """
     return jsonify({'error': 'Not found'}), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
-    """Handle 500 errors."""
+    """
+    Handle 500 errors.
+
+    Returns:
+        JSON error message with 500 status.
+    """
     return jsonify({'error': 'Internal server error'}), 500
 
 
-def _safe_int(value):
-    """Convert a value to int when possible."""
+def _safe_int(value: Any) -> Optional[int]:
+    """
+    Convert a value to int when possible.
+
+    Args:
+        value: The input value.
+
+    Returns:
+        Optional[int]: The integer value, or None if conversion fails.
+    """
     try:
         if value is None or value == '':
             return None
@@ -720,8 +841,16 @@ def _safe_int(value):
         return None
 
 
-def _derive_metadata_from_path(relative_path: str):
-    """Derive (book, testament, chapter) from a bible-data relative path."""
+def _derive_metadata_from_path(relative_path: str) -> Tuple[str, str, str]:
+    """
+    Derive (book, testament, chapter) from a bible-data relative path.
+
+    Args:
+        relative_path: The relative path to the markdown file.
+
+    Returns:
+        Tuple[str, str, str]: (book, testament, chapter) strings.
+    """
     path = Path(relative_path)
     parts = path.parts
     testament = parts[0] if parts else ""
@@ -731,8 +860,21 @@ def _derive_metadata_from_path(relative_path: str):
     return book, testament, chapter
 
 
-def _find_chapter_markdown(book: str, chapter: int):
-    """Locate a chapter markdown file using a book/chapter reference."""
+def _find_chapter_markdown(book: str, chapter: int) -> Tuple[Path, str, str, str]:
+    """
+    Locate a chapter markdown file using a book/chapter reference.
+
+    Args:
+        book: The book name.
+        chapter: The chapter number.
+
+    Returns:
+        Tuple[Path, str, str, str]: (absolute_path, relative_path, book_name, testament).
+
+    Raises:
+        ValueError: If book or chapter is missing.
+        FileNotFoundError: If the chapter cannot be found.
+    """
     normalized_book = normalize_book_name(book)
     if not normalized_book:
         raise ValueError('A valid book name is required to locate a passage.')
@@ -766,7 +908,16 @@ def _find_chapter_markdown(book: str, chapter: int):
 
 @app.route('/bible/<book>/<chapter>')
 def bible_chapter(book, chapter):
-    """Serve a specific Bible chapter with SSR."""
+    """
+    Serve a specific Bible chapter with Server-Side Rendering (SSR).
+
+    Args:
+        book: The name of the book (URL path parameter).
+        chapter: The chapter number (URL path parameter).
+
+    Returns:
+        Response: Rendered HTML template or 404 abort.
+    """
     try:
         # Normalize inputs
         book_name = normalize_book_name(book)
@@ -853,7 +1004,12 @@ def bible_chapter(book, chapter):
 def sitemap():
     """
     Generate dynamic XML sitemap for SEO.
-    Includes main pages and all Bible books/chapters.
+
+    Includes main pages and all Bible books/chapters to help search engines
+    index the content.
+
+    Returns:
+        Response: XML sitemap content.
     """
     base_url = 'https://wwaijd.org'
     today = datetime.now().strftime('%Y-%m-%d')
@@ -909,6 +1065,17 @@ def sitemap():
 def share_conversation():
     """
     Save a conversation and return a shareable link.
+
+    Request Body:
+        {
+            "question": "Question text",
+            "answer": "Answer text",
+            "passages": [Passage objects],
+            "mode": "Tone mode"
+        }
+
+    Returns:
+        JSON response with share_id and share_url.
     """
     try:
         data = request.get_json(silent=True) or {}
@@ -934,7 +1101,15 @@ def share_conversation():
 
 @app.route('/q/<share_id>')
 def shared_page(share_id):
-    """Render a shared conversation page."""
+    """
+    Render a shared conversation page.
+
+    Args:
+        share_id: The unique conversation ID.
+
+    Returns:
+        Response: Rendered HTML template or 404 abort.
+    """
     try:
         data = database.get_conversation(share_id)
         if not data:
@@ -1005,23 +1180,13 @@ def search_bible():
     """
     API endpoint to search for Bible passages without generating an LLM response.
     
-    Request body:
+    Request Body:
         {
             "query": "Search query"
         }
     
-    Response:
-        {
-            "passages": [
-                {
-                    "text": "Bible verse text",
-                    "reference": "Book Chapter:Verses",
-                    "book": "Book name",
-                    "testament": "Old/New Testament"
-                }
-            ],
-            "count": "Number of passages found"
-        }
+    Returns:
+        JSON response with found passages and count.
     """
     if not rag:
         return jsonify({
@@ -1054,7 +1219,11 @@ def search_bible():
 
 
 def main():
-    """Run the Flask application."""
+    """
+    Run the Flask application using Waitress.
+
+    This is the entry point for the production server.
+    """
     print("=" * 60, flush=True)
     print("What Would AI Jesus Do - Web Application", flush=True)
     print("=" * 60, flush=True)
@@ -1075,5 +1244,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-

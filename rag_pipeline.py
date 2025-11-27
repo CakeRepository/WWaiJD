@@ -6,7 +6,7 @@ Retrieves relevant Bible passages and generates responses using Gemma3:4b
 import os
 import chromadb
 import ollama
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Generator, Any, Union
 
 # Focus modes allow the caller to steer tone and structure without changing the UX copy.
 MODE_INSTRUCTIONS = {
@@ -28,23 +28,24 @@ class BibleRAG:
     
     def __init__(
         self,
-        db_path="chroma_db",
-        top_k=5,
+        db_path: str = "chroma_db",
+        top_k: int = 5,
         embedding_model: str = DEFAULT_EMBED_MODEL,
         llm_model: str = DEFAULT_LLM_MODEL,
-        embed_keep_alive: Optional[str | float] = None,
-        llm_keep_alive: Optional[str | float] = None,
+        embed_keep_alive: Optional[Union[str, float]] = None,
+        llm_keep_alive: Optional[Union[str, float]] = None,
     ):
         """
         Initialize the RAG pipeline.
         
         Args:
-            db_path: Path to the ChromaDB database
-            top_k: Number of relevant passages to retrieve
-            embedding_model: Ollama embedding model name
-            llm_model: Ollama generation model name
-            embed_keep_alive: How long to keep the embedding model in VRAM (string or seconds). Defaults to '0s' so it unloads immediately.
-            llm_keep_alive: How long to keep the LLM in VRAM (string or seconds). Defaults to 2 minutes.
+            db_path: Path to the ChromaDB database directory. Defaults to "chroma_db".
+            top_k: Number of relevant passages to retrieve for each query. Defaults to 5.
+            embedding_model: Name of the Ollama embedding model. Defaults to "embeddinggemma".
+            llm_model: Name of the Ollama generation model. Defaults to "gemma3:4b".
+            embed_keep_alive: Duration to keep the embedding model loaded in VRAM (e.g., '5m', 300).
+                Defaults to '0s' (immediate unload) to save resources.
+            llm_keep_alive: Duration to keep the LLM loaded in VRAM. Defaults to '120s'.
         """
         self.db_path = db_path
         self.top_k = top_k
@@ -55,8 +56,16 @@ class BibleRAG:
         self.client = chromadb.PersistentClient(path=db_path)
         self.collection = self.client.get_collection(name="bible_kjv")
         
-    def generate_query_embedding(self, query: str):
-        """Generate embedding for the user's query."""
+    def generate_query_embedding(self, query: str) -> Optional[List[float]]:
+        """
+        Generate a vector embedding for the user's query.
+
+        Args:
+            query: The user's input text.
+
+        Returns:
+            Optional[List[float]]: The embedding vector if successful, None otherwise.
+        """
         try:
             response = ollama.embeddings(
                 model=self.embedding_model,
@@ -68,15 +77,27 @@ class BibleRAG:
             print(f"Error generating query embedding: {e}")
             return None
     
-    def retrieve_passages(self, query: str) -> List[Dict]:
+    def retrieve_passages(self, query: str) -> List[Dict[str, Any]]:
         """
         Retrieve relevant Bible passages based on the query.
         
+        Uses the embedding model to convert the query to a vector and finds
+        semantically similar passages in the ChromaDB collection.
+
         Args:
-            query: User's question
+            query: The user's question or search term.
             
         Returns:
-            List of relevant passages with metadata
+            List[Dict[str, Any]]: A list of relevant passages. Each dictionary contains:
+                - text: The verse text.
+                - reference: Book Chapter:Verses.
+                - book: Book name.
+                - testament: Old or New Testament.
+                - chapter: Chapter number.
+                - verses: Verse range.
+                - source_path: Relative path to source file.
+                - distance: Vector distance score.
+                - relevance: Normalized relevance score (0-100).
         """
         # Generate query embedding
         query_embedding = self.generate_query_embedding(query)
@@ -111,8 +132,16 @@ class BibleRAG:
     
     def _normalize_relevance(self, distances: List[float]) -> List[float]:
         """
-        Convert raw vector distances into a relative 0-100 relevance score
-        so the UI can surface confidence without leaking raw distances.
+        Convert raw vector distances into a relative 0-100 relevance score.
+
+        This helps the UI display confidence without exposing raw distance metrics.
+        Lower distance means higher relevance.
+
+        Args:
+            distances: A list of float distances from ChromaDB.
+
+        Returns:
+            List[float]: A list of normalized scores from 0.0 to 100.0.
         """
         if not distances:
             return []
@@ -130,14 +159,33 @@ class BibleRAG:
             return []
     
     def _normalize_mode(self, mode: Optional[str]) -> str:
-        """Map provided mode to a supported key."""
+        """
+        Map a provided mode string to a supported key in MODE_INSTRUCTIONS.
+
+        Args:
+            mode: The requested mode (e.g., "Comfort", "balanced").
+
+        Returns:
+            str: The normalized mode key (e.g., "comfort").
+                 Returns DEFAULT_MODE if the input is invalid or None.
+        """
         if not mode:
             return DEFAULT_MODE
         mode_key = mode.strip().lower()
         return mode_key if mode_key in MODE_INSTRUCTIONS else DEFAULT_MODE
     
     def _build_prompt(self, query: str, passages: List[Dict], mode: str) -> str:
-        """Construct the chat prompt with passages and the requested tone."""
+        """
+        Construct the chat prompt with retrieved passages and the requested tone.
+
+        Args:
+            query: The user's question.
+            passages: A list of retrieved passage dictionaries.
+            mode: The normalized mode key determining the tone.
+
+        Returns:
+            str: The fully formatted prompt string ready for the LLM.
+        """
         tone_instruction = MODE_INSTRUCTIONS.get(mode, MODE_INSTRUCTIONS[DEFAULT_MODE])
         
         context = "Here are relevant passages from the King James Bible:\n\n"
@@ -161,17 +209,23 @@ Based on these Biblical passages, provide a thoughtful response in the voice of 
 
 Response:"""
     
-    def generate_response(self, query: str, passages: List[Dict], mode: Optional[str] = None) -> Dict:
+    def generate_response(self, query: str, passages: List[Dict], mode: Optional[str] = None) -> Dict[str, Any]:
         """
-        Generate a response using Gemma3:4b based on retrieved passages.
+        Generate a complete response using the LLM based on retrieved passages.
         
+        This is a blocking call that waits for the full response.
+
         Args:
-            query: User's question
-            passages: Retrieved Bible passages
-            mode: Optional focus mode for tone/structure
-            
+            query: The user's question.
+            passages: The list of retrieved Bible passages.
+            mode: Optional focus mode for tone/structure.
+
         Returns:
-            Dict with response and source passages
+            Dict[str, Any]: A dictionary containing:
+                - answer: The generated text response.
+                - passages: The input passages.
+                - error: Boolean indicating if an error occurred.
+                - mode: The mode used.
         """
         selected_mode = self._normalize_mode(mode)
 
@@ -212,25 +266,45 @@ Response:"""
                 'mode': selected_mode
             }
 
-    def ask(self, query: str, mode: Optional[str] = None) -> Dict:
+    def ask(self, query: str, mode: Optional[str] = None) -> Dict[str, Any]:
         """
         Convenience wrapper that retrieves passages then generates a response.
+
+        Combines `retrieve_passages` and `generate_response`.
+
+        Args:
+            query: The user's question.
+            mode: Optional focus mode.
+
+        Returns:
+            Dict[str, Any]: The response dictionary (see `generate_response`).
         """
         passages = self.retrieve_passages(query)
         return self.generate_response(query, passages, mode=mode)
     
-    def generate_response_stream(self, query: str, passages: List[Dict], mode: Optional[str] = None):
+    def generate_response_stream(
+        self,
+        query: str,
+        passages: List[Dict],
+        mode: Optional[str] = None
+    ) -> Generator[Dict[str, Any], None, None]:
         """
-        Generate a streaming response using Gemma3:4b based on retrieved passages.
-        Yields response chunks as they are generated.
+        Generate a streaming response using the LLM based on retrieved passages.
         
+        Yields response chunks as they are generated, allowing for real-time UI updates.
+
         Args:
-            query: User's question
-            passages: Retrieved Bible passages
-            mode: Optional focus mode for tone/structure
-            
+            query: The user's question.
+            passages: The list of retrieved Bible passages.
+            mode: Optional focus mode for tone/structure.
+
         Yields:
-            Dict chunks with response text
+            Dict[str, Any]: Chunks of the response.
+                - chunk: The text fragment.
+                - done: Boolean indicating completion.
+                - error: Boolean indicating error.
+                - mode: The mode used.
+                - passages: (Final chunk only) The passages used.
         """
         selected_mode = self._normalize_mode(mode)
 
@@ -285,9 +359,21 @@ Response:"""
                 'mode': selected_mode
             }
 
-    def generate_study(self, topic: str) -> Dict:
+    def generate_study(self, topic: str) -> Dict[str, Any]:
         """
         Generate a thematic Bible study based on a topic.
+
+        Retrieves passages related to the topic and instructs the LLM to
+        create a structured study with introduction, key verses, reflection, and prayer.
+
+        Args:
+            topic: The topic for the Bible study.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - study: The generated study text.
+                - passages: The passages used.
+                - error: Boolean indicating success/failure.
         """
         passages = self.retrieve_passages(topic)
         
@@ -330,9 +416,20 @@ Keep the tone encouraging and insightful.
             print(f"Error generating study: {e}")
             return {'study': "Error generating study.", 'error': True}
 
-    def generate_prayer(self, request: str) -> Dict:
+    def generate_prayer(self, request: str) -> Dict[str, Any]:
         """
-        Generate a personalized prayer based on a request.
+        Generate a personalized prayer based on a user request.
+
+        Retrieves relevant verses to inspire the prayer content.
+
+        Args:
+            request: The user's prayer request.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - prayer: The generated prayer text.
+                - passages: The passages used for inspiration.
+                - error: Boolean indicating success/failure.
         """
         passages = self.retrieve_passages(request)
         
@@ -370,7 +467,12 @@ Write a heartfelt, comforting prayer for them.
 
 
 def main():
-    """Test the RAG pipeline."""
+    """
+    Test the RAG pipeline with a sample question.
+
+    Initializes the pipeline and asks "What should I do when someone wrongs me?".
+    Prints the answer and source passages.
+    """
     print("=" * 60)
     print("Testing What Would AI Jesus Do RAG Pipeline")
     print("=" * 60)

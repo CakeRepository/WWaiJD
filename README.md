@@ -101,6 +101,7 @@ wwaijd/
 ├── bible_utils.py            # Utilities for Bible text processing
 ├── startup_check.py          # Validates prerequisites and setup
 ├── generate_favicons.py      # Generates favicon images
+├── database.py               # SQLite database for shared conversations
 ├── requirements.txt          # Python dependencies
 ├── setup.ps1                 # Windows PowerShell setup script
 ├── README.md                 # This file
