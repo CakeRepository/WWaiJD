@@ -98,7 +98,19 @@
                 ☀️
             </button>
             <h1 id="passageTitle">✟ Opening sacred passage...</h1>
-            <p id="passageSubtitle" class="passage-subtitle"></p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <p id="passageSubtitle" class="passage-subtitle" style="margin: 0;"></p>
+                
+                <div class="version-dropdown" id="versionDropdown">
+                    <button class="version-btn" type="button" id="versionBtn" aria-haspopup="true" aria-expanded="false" aria-label="Select Bible Version">
+                        <span class="current-version" id="currentVersionDisplay">KJV</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="version-menu" id="versionMenu" role="menu">
+                        <!-- Versions loaded dynamically -->
+                    </div>
+                </div>
+            </div>
         </header>
 
         <main class="passage-card">

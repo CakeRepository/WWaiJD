@@ -65,11 +65,21 @@
             <h1>{{ passage_title }}</h1>
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                 <p class="passage-subtitle" style="margin: 0;">{{ passage_subtitle }}</p>
-                <select onchange="window.location.href=this.value" class="version-selector" style="padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--card-background); color: var(--text-color); font-family: inherit; font-size: 0.9rem;">
-                    {% for v in available_versions %}
-                    <option value="/bible/{{ v.code }}/{{ book }}/{{ chapter }}" {% if version == v.code %}selected{% endif %}>{{ v.short }}</option>
-                    {% endfor %}
-                </select>
+                
+                <div class="version-dropdown" id="versionDropdown">
+                    <button class="version-btn" type="button" onclick="toggleVersionMenu(event)" aria-label="Select Bible Version">
+                        <span class="current-version">{{ version|upper }}</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="version-menu" role="menu">
+                        {% for v in available_versions %}
+                        <a href="/bible/{{ v.code }}/{{ book }}/{{ chapter }}" class="version-option {% if version == v.code %}active{% endif %}" role="menuitem">
+                            <span class="version-code">{{ v.short }}</span>
+                            <span class="version-name">{{ v.name }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -112,6 +122,21 @@
             const isLight = html.classList.contains('light-mode');
             localStorage.setItem('wwaijd-theme', isLight ? 'light' : 'dark');
             toggle.textContent = isLight ? '🌙' : '☀️';
+        });
+
+        // Version Dropdown Logic
+        function toggleVersionMenu(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('versionDropdown');
+            dropdown.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('versionDropdown');
+            if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+            }
         });
     </script>
 </body>

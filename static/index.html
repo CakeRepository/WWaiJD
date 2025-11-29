@@ -148,6 +148,7 @@
     </script>
 
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/tool_switcher.css">
 </head>
 
 <body>
@@ -194,10 +195,16 @@
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="search">Search</button>
                         
                         <div class="version-selector-wrapper">
-                            <select id="versionSelector" class="version-selector" aria-label="Select Bible Version">
-                                <option value="kjv" selected>KJV</option>
-                                <!-- Versions loaded dynamically from API -->
-                            </select>
+                            <div class="version-dropdown" id="versionDropdown">
+                                <button class="version-btn" type="button" id="versionBtn" aria-haspopup="true" aria-expanded="false" aria-label="Select Bible Version">
+                                    <span class="current-version" id="currentVersionDisplay">KJV</span>
+                                    <span class="dropdown-arrow">▼</span>
+                                </button>
+                                <div class="version-menu" id="versionMenu" role="menu">
+                                    <!-- Versions loaded dynamically -->
+                                </div>
+                                <input type="hidden" id="versionSelector" value="kjv">
+                            </div>
                         </div>
                     </div>
 

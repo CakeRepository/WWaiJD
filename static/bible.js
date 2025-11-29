@@ -13,7 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const coffeeMargin = document.getElementById('coffeeMargin');
     const coffeeVerse = document.getElementById('coffeeVerse');
     const coffeeSubtext = document.getElementById('coffeeSubtext');
-    const versionSelector = document.getElementById('versionSelector');
+    
+    // Version Selector Elements
+    const versionDropdown = document.getElementById('versionDropdown');
+    const versionBtn = document.getElementById('versionBtn');
+    const versionMenu = document.getElementById('versionMenu');
+    const currentVersionDisplay = document.getElementById('currentVersionDisplay');
 
     let activeButton = null;
     let currentPassageMeta = null;
@@ -61,18 +66,46 @@ document.addEventListener('DOMContentLoaded', () => {
     prevChapter.addEventListener('click', () => navigateChapter(-1));
     nextChapter.addEventListener('click', () => navigateChapter(1));
 
-    // Version selector
-    if (versionSelector) {
-        versionSelector.addEventListener('change', () => {
-            fetchLibrary();
-            // Clear current chapter view when switching versions
-            chapterBody.innerHTML = '';
-            chapterTitle.textContent = 'Select a Passage';
-            chapterSubtitle.textContent = 'Choose any book or chapter from the library to begin your journey.';
-            currentPassageMeta = null;
-            toggleStandalone(null, false);
+    // Helper to get current version
+    function getCurrentVersion() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get('version') || 'kjv';
+    }
+
+    // Helper to set version
+    function setVersion(version, name, short) {
+        currentVersionDisplay.textContent = short.toUpperCase();
+        
+        // Update URL
+        const url = new URL(window.location);
+        url.searchParams.set('version', version);
+        window.history.pushState({}, '', url);
+        
+        // Refresh library
+        fetchLibrary();
+        
+        // Clear current chapter view
+        chapterBody.innerHTML = '';
+        chapterTitle.textContent = 'Select a Passage';
+        chapterSubtitle.textContent = 'Choose any book or chapter from the library to begin your journey.';
+        currentPassageMeta = null;
+        toggleStandalone(null, false);
+    }
+
+    // Toggle Dropdown
+    if (versionBtn) {
+        versionBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            versionDropdown.classList.toggle('open');
         });
     }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (versionDropdown && versionDropdown.classList.contains('open') && !versionDropdown.contains(e.target)) {
+            versionDropdown.classList.remove('open');
+        }
+    });
 
     // Load available versions from API
     loadVersions();
@@ -83,20 +116,46 @@ document.addEventListener('DOMContentLoaded', () => {
     checkResumeReading();
 
     async function loadVersions() {
-        if (!versionSelector) return;
+        if (!versionMenu) return;
         try {
             const response = await fetch('/api/versions');
             const data = await response.json();
             if (data.versions && data.versions.length > 0) {
-                const currentValue = versionSelector.value;
-                versionSelector.innerHTML = '';
+                versionMenu.innerHTML = '';
+                const currentVer = getCurrentVersion();
+                
+                let foundCurrent = false;
+
                 data.versions.forEach(v => {
-                    const option = document.createElement('option');
-                    option.value = v.code;
-                    option.textContent = `${v.short} - ${v.name}`;
-                    if (v.code === currentValue) option.selected = true;
-                    versionSelector.appendChild(option);
+                    const option = document.createElement('div');
+                    option.className = 'version-option';
+                    if (v.code === currentVer) {
+                        option.classList.add('active');
+                        currentVersionDisplay.textContent = v.short;
+                        foundCurrent = true;
+                    }
+                    
+                    option.innerHTML = `
+                        <span class="version-code">${v.short}</span>
+                        <span class="version-name">${v.name}</span>
+                    `;
+                    
+                    option.addEventListener('click', () => {
+                        // Update active state
+                        document.querySelectorAll('.version-option').forEach(el => el.classList.remove('active'));
+                        option.classList.add('active');
+                        
+                        setVersion(v.code, v.name, v.short);
+                        versionDropdown.classList.remove('open');
+                    });
+                    
+                    versionMenu.appendChild(option);
                 });
+                
+                if (!foundCurrent && data.versions.length > 0) {
+                    // If current version not found, default to first
+                    currentVersionDisplay.textContent = data.versions[0].short;
+                }
             }
         } catch (err) {
             console.warn('Could not load versions:', err);
@@ -105,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchLibrary() {
         try {
-            const version = versionSelector ? versionSelector.value : 'kjv';
+            const version = getCurrentVersion();
             const response = await fetch(`/api/bible-index?version=${version}`);
             const data = await response.json();
 
@@ -295,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openStandalone.onclick = () => {
             const book = meta.book || data.book;
             const chapter = meta.chapter || data.chapter;
-            const version = versionSelector ? versionSelector.value : 'kjv';
+            const version = getCurrentVersion();
             // Use new SSR route
             const readerUrl = new URL(`/bible/${version}/${encodeURIComponent(book)}/${chapter}`, window.location.origin);
             window.open(readerUrl.toString(), '_blank', 'noopener');
@@ -468,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-            const version = versionSelector?.value || 'kjv';
+            const version = getCurrentVersion();
             
             // Create history entry
             const entry = {
@@ -512,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (history.length === 0) return;
         
         const last = history[0];
-        const version = versionSelector?.value || 'kjv';
+        const version = getCurrentVersion();
         
         // Only show resume if same version and recent (within 7 days)
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);

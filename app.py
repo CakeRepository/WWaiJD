@@ -1233,24 +1233,36 @@ def sitemap():
     
     # Bible books and chapters
     try:
-        # Use the global BIBLE_INDEX if available, otherwise build it
-        bible_index = BIBLE_INDEX if BIBLE_INDEX else build_bible_index(BIBLE_DATA_DIR)
+        # Iterate through all available versions
+        # If BIBLE_INDICES is empty, try to build at least the default one
+        indices_to_process = BIBLE_INDICES if BIBLE_INDICES else {DEFAULT_VERSION: build_bible_index(BIBLE_DATA_DIR)}
         
-        for testament_data in bible_index:
-            for book_data in testament_data['books']:
-                book_name = book_data['name']
-                # Use the actual chapters list from the index
-                for chapter_data in book_data['chapters']:
-                    chapter_num = chapter_data['number']
-                    # URL encode book name
-                    safe_book = book_name.replace(' ', '%20')
-                    xml.append('  <url>')
-                    # Use the new clean URL structure
-                    xml.append(f'    <loc>{base_url}/bible/{safe_book}/{chapter_num}</loc>')
-                    xml.append(f'    <lastmod>{today}</lastmod>')
-                    xml.append('    <changefreq>yearly</changefreq>')
-                    xml.append('    <priority>0.6</priority>')
-                    xml.append('  </url>')
+        for version_code, bible_index in indices_to_process.items():
+            is_default = (version_code == DEFAULT_VERSION)
+            
+            for testament_data in bible_index:
+                for book_data in testament_data['books']:
+                    book_name = book_data['name']
+                    # Use the actual chapters list from the index
+                    for chapter_data in book_data['chapters']:
+                        chapter_num = chapter_data['number']
+                        # URL encode book name
+                        safe_book = book_name.replace(' ', '%20')
+                        
+                        # Generate URL for this version
+                        xml.append('  <url>')
+                        if is_default:
+                            # Default version gets the clean short URL
+                            xml.append(f'    <loc>{base_url}/bible/{safe_book}/{chapter_num}</loc>')
+                        else:
+                            # Other versions get the version-prefixed URL
+                            xml.append(f'    <loc>{base_url}/bible/{version_code}/{safe_book}/{chapter_num}</loc>')
+                            
+                        xml.append(f'    <lastmod>{today}</lastmod>')
+                        xml.append('    <changefreq>yearly</changefreq>')
+                        xml.append('    <priority>0.6</priority>')
+                        xml.append('  </url>')
+                        
     except Exception as e:
         print(f"Warning: Could not generate Bible URLs for sitemap: {e}", flush=True)
     

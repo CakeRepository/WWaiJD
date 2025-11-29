@@ -8,35 +8,73 @@ document.addEventListener('DOMContentLoaded', () => {
     const fallbackReference = params.get('reference');
     const version = params.get('version') || 'kjv';
 
-    // Version display names (KISS - matches server-side VERSION_NAMES)
-    const VERSION_NAMES = {
-        'kjv': 'King James Version',
-        'esv': 'English Standard Version',
-        'niv': 'New International Version',
-        'nasb': 'New American Standard Bible',
-        'nkjv': 'New King James Version',
-        'nlt': 'New Living Translation',
-        'csb': 'Christian Standard Bible',
-        'asv': 'American Standard Version',
-        'web': 'World English Bible',
-        'bsb': 'Berean Standard Bible',
-        'blb': 'Berean Literal Bible',
-        'net': 'NET Bible',
-        'gnt': 'Good News Translation',
-        'cev': 'Contemporary English Version',
-        'nrsv': 'New Revised Standard Version',
-        'hcsb': 'Holman Christian Standard Bible',
-        'amp': 'Amplified Bible',
-        'nasb95': 'NASB 1995',
-        'nasb77': 'NASB 1977',
-        'ylt': "Young's Literal Translation",
-        'drb': 'Douay-Rheims Bible',
-        'lsv': 'Literal Standard Version',
-        'lsb': 'Legacy Standard Bible',
-        'msb': 'Majority Standard Bible'
-    };
-    const versionName = VERSION_NAMES[version] || version.toUpperCase();
-    const versionShort = version.toUpperCase();
+    // Version Dropdown Elements
+    const versionDropdown = document.getElementById('versionDropdown');
+    const versionBtn = document.getElementById('versionBtn');
+    const versionMenu = document.getElementById('versionMenu');
+    const currentVersionDisplay = document.getElementById('currentVersionDisplay');
+
+    // Toggle Dropdown
+    if (versionBtn) {
+        versionBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            versionDropdown.classList.toggle('open');
+        });
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (versionDropdown && versionDropdown.classList.contains('open') && !versionDropdown.contains(e.target)) {
+            versionDropdown.classList.remove('open');
+        }
+    });
+
+    // Load Versions
+    loadVersions();
+
+    async function loadVersions() {
+        if (!versionMenu) return;
+        try {
+            const response = await fetch('/api/versions');
+            const data = await response.json();
+            if (data.versions && data.versions.length > 0) {
+                versionMenu.innerHTML = '';
+                
+                let foundCurrent = false;
+
+                data.versions.forEach(v => {
+                    const option = document.createElement('div');
+                    option.className = 'version-option';
+                    if (v.code === version) {
+                        option.classList.add('active');
+                        if (currentVersionDisplay) currentVersionDisplay.textContent = v.short;
+                        foundCurrent = true;
+                    }
+                    
+                    option.innerHTML = `
+                        <span class="version-code">${v.short}</span>
+                        <span class="version-name">${v.name}</span>
+                    `;
+                    
+                    option.addEventListener('click', () => {
+                        // Reload with new version
+                        const newUrl = new URL(window.location);
+                        newUrl.searchParams.set('version', v.code);
+                        window.location.href = newUrl.toString();
+                    });
+                    
+                    versionMenu.appendChild(option);
+                });
+                
+                if (!foundCurrent && data.versions.length > 0) {
+                    // If current version not found in list, just show it as is or default
+                    if (currentVersionDisplay) currentVersionDisplay.textContent = version.toUpperCase();
+                }
+            }
+        } catch (err) {
+            console.warn('Could not load versions:', err);
+        }
+    }
 
     const titleEl = document.getElementById('passageTitle');
     const subtitleEl = document.getElementById('passageSubtitle');

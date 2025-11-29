@@ -1117,6 +1117,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderRecents(loadRecents());
     loadNotes();
+    // Version Dropdown Logic
+    const versionDropdown = document.getElementById('versionDropdown');
+    const versionBtn = document.getElementById('versionBtn');
+    const versionMenu = document.getElementById('versionMenu');
+    const currentVersionDisplay = document.getElementById('currentVersionDisplay');
+    const versionInput = document.getElementById('versionSelector');
+
+    if (versionBtn) {
+        versionBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            versionDropdown.classList.toggle('open');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (versionDropdown && versionDropdown.classList.contains('open') && !versionDropdown.contains(e.target)) {
+            versionDropdown.classList.remove('open');
+        }
+    });
+
     loadVersions();
     refreshHealth();
     updateModeUI();
@@ -1124,21 +1144,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Load available Bible versions from API (KISS - single source of truth)
     async function loadVersions() {
-        const versionSelector = document.getElementById('versionSelector');
-        if (!versionSelector) return;
+        if (!versionMenu) return;
         try {
             const response = await fetch('/api/versions');
             const data = await response.json();
             if (data.versions && data.versions.length > 0) {
-                const currentValue = versionSelector.value;
-                versionSelector.innerHTML = '';
+                versionMenu.innerHTML = '';
+                const currentVer = versionInput ? versionInput.value : 'kjv';
+                
+                let foundCurrent = false;
+
                 data.versions.forEach(v => {
-                    const option = document.createElement('option');
-                    option.value = v.code;
-                    option.textContent = v.short;
-                    if (v.code === currentValue) option.selected = true;
-                    versionSelector.appendChild(option);
+                    const option = document.createElement('div');
+                    option.className = 'version-option';
+                    if (v.code === currentVer) {
+                        option.classList.add('active');
+                        if (currentVersionDisplay) currentVersionDisplay.textContent = v.short;
+                        foundCurrent = true;
+                    }
+                    
+                    option.innerHTML = `
+                        <span class="version-code">${v.short}</span>
+                        <span class="version-name">${v.name}</span>
+                    `;
+                    
+                    option.addEventListener('click', () => {
+                        // Update active state
+                        document.querySelectorAll('.version-option').forEach(el => el.classList.remove('active'));
+                        option.classList.add('active');
+                        
+                        if (versionInput) versionInput.value = v.code;
+                        if (currentVersionDisplay) currentVersionDisplay.textContent = v.short;
+                        
+                        versionDropdown.classList.remove('open');
+                    });
+                    
+                    versionMenu.appendChild(option);
                 });
+                
+                if (!foundCurrent && data.versions.length > 0) {
+                    if (currentVersionDisplay) currentVersionDisplay.textContent = data.versions[0].short;
+                    if (versionInput) versionInput.value = data.versions[0].code;
+                }
             }
         } catch (err) {
             console.warn('Could not load versions:', err);
