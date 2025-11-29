@@ -63,7 +63,14 @@
                 </button>
             </div>
             <h1>{{ passage_title }}</h1>
-            <p class="passage-subtitle">{{ passage_subtitle }}</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <p class="passage-subtitle" style="margin: 0;">{{ passage_subtitle }}</p>
+                <select onchange="window.location.href=this.value" class="version-selector" style="padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--card-background); color: var(--text-color); font-family: inherit; font-size: 0.9rem;">
+                    {% for v in available_versions %}
+                    <option value="/bible/{{ v.code }}/{{ book }}/{{ chapter }}" {% if version == v.code %}selected{% endif %}>{{ v.short }}</option>
+                    {% endfor %}
+                </select>
+            </div>
         </header>
 
         <main class="passage-card">

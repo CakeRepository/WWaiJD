@@ -25,32 +25,54 @@ ollama pull qwen3-vl:4b
 pip install -r requirements.txt
 ```
 
-### 2. Check Prerequisites
+### 2. Download Bible Versions
+Download Bible JSON files from the arron-taylor/bible-versions repository:
+
+```bash
+# Download popular versions (KJV, ESV, NIV, NLT, NASB, NKJV, CSB, ASV, WEB)
+python download_bibles.py
+
+# Or download ALL available versions (35+ files)
+python download_bibles.py --all
+
+# Or download a specific version
+python download_bibles.py --version "KING JAMES BIBLE.json"
+
+# List available versions
+python download_bibles.py --list
+
+# List locally downloaded versions
+python download_bibles.py --local
+```
+
+Bible files are stored in `bible-data/json/` as JSON files.
+
+### 3. Check Prerequisites
 Run the startup check to verify everything is ready:
 ```bash
 python startup_check.py
 ```
 
-### 3. Build the Vector Database
-This step processes the King James Bible and creates embeddings. **This will take 10-30 minutes** depending on your system:
+### 4. Build the Vector Database
+This step processes the Bible versions and creates embeddings. **This will take 10-30 minutes** depending on your system and how many versions you downloaded:
 
 ```bash
 python build_embeddings.py
 ```
 
 You should see progress as it:
-- Reads all Bible books
+- Reads all Bible versions (JSON files)
 - Chunks text into passages
 - Generates embeddings for each chunk
 - Stores them in ChromaDB
 
-### 4. Test the RAG Pipeline (Optional)
+### 5. Test the RAG Pipeline (Optional)
 You can test the RAG pipeline directly:
 ```bash
 python rag_pipeline.py
 ```
 
-### 5. Run the Web Application
+### 6. Run the Web Application
 ```bash
 python app.py
 ```
@@ -65,9 +87,13 @@ Simply type your question in the search bar, such as:
 - "What does it mean to love my neighbor?"
 - "How can I find peace in difficult times?"
 
-The AI will retrieve relevant Bible passages and provide guidance based on Biblical teachings.
+You can also select different Bible versions (KJV, ESV, NIV, etc.) to see passages from your preferred translation.
 
 ## Troubleshooting
+
+### "No Bible versions found"
+- Run `python download_bibles.py` to download Bible versions
+- Check if `bible-data/json/` directory contains JSON files
 
 ### "Ollama is not running"
 - Make sure Ollama is installed and running
@@ -86,6 +112,13 @@ The AI will retrieve relevant Bible passages and provide guidance based on Bibli
 - The first request may be slower as models load into memory
 - Subsequent requests should be faster
 - Larger models (like qwen3-vl:4b) require more RAM
+
+## Bible Data Source
+
+Bible data is sourced from [arron-taylor/bible-versions](https://github.com/arron-taylor/bible-versions), 
+a comprehensive JSON dataset with 35+ English Bible translations.
+
+Available versions include: KJV, ESV, NIV, NLT, NASB, NKJV, CSB, ASV, WEB, and many more!
 
 ## Architecture
 

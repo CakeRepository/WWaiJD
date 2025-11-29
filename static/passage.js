@@ -6,6 +6,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const fallbackBook = params.get('book');
     const fallbackChapter = params.get('chapter');
     const fallbackReference = params.get('reference');
+    const version = params.get('version') || 'kjv';
+
+    // Version display names (KISS - matches server-side VERSION_NAMES)
+    const VERSION_NAMES = {
+        'kjv': 'King James Version',
+        'esv': 'English Standard Version',
+        'niv': 'New International Version',
+        'nasb': 'New American Standard Bible',
+        'nkjv': 'New King James Version',
+        'nlt': 'New Living Translation',
+        'csb': 'Christian Standard Bible',
+        'asv': 'American Standard Version',
+        'web': 'World English Bible',
+        'bsb': 'Berean Standard Bible',
+        'blb': 'Berean Literal Bible',
+        'net': 'NET Bible',
+        'gnt': 'Good News Translation',
+        'cev': 'Contemporary English Version',
+        'nrsv': 'New Revised Standard Version',
+        'hcsb': 'Holman Christian Standard Bible',
+        'amp': 'Amplified Bible',
+        'nasb95': 'NASB 1995',
+        'nasb77': 'NASB 1977',
+        'ylt': "Young's Literal Translation",
+        'drb': 'Douay-Rheims Bible',
+        'lsv': 'Literal Standard Version',
+        'lsb': 'Legacy Standard Bible',
+        'msb': 'Majority Standard Bible'
+    };
+    const versionName = VERSION_NAMES[version] || version.toUpperCase();
+    const versionShort = version.toUpperCase();
 
     const titleEl = document.getElementById('passageTitle');
     const subtitleEl = document.getElementById('passageSubtitle');
@@ -50,10 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
         book: fallbackBook,
         chapter: fallbackChapter,
         start,
-        end
+        end,
+        version
     });
 
-    async function fetchPassage({ path: relativePath, book, chapter, start: startVerse, end: endVerse }) {
+    async function fetchPassage({ path: relativePath, book, chapter, start: startVerse, end: endVerse, version }) {
         const url = new URL('/api/bible-passage', window.location.origin);
         if (relativePath) {
             url.searchParams.set('path', relativePath);
@@ -63,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (startVerse) url.searchParams.set('start', startVerse);
         if (endVerse) url.searchParams.set('end', endVerse);
+        if (version) url.searchParams.set('version', version);
 
         try {
             const response = await fetch(url);
@@ -141,28 +174,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Update title
-        const pageTitle = `${book} ${chapter}${verseRange} - King James Bible | WWAIJD`;
+        const pageTitle = `${book} ${chapter}${verseRange} - ${versionName} | WWAIJD`;
         document.title = pageTitle;
         document.getElementById('dynamicTitle').textContent = pageTitle;
         
         // Update description
         const description = firstVerseText 
-            ? `Read ${book} Chapter ${chapter}${verseRange} from the King James Bible. "${firstVerseText}" Free online Bible study.`
-            : `Read ${book} Chapter ${chapter} from the King James Bible. ${testament}. Free online Bible study.`;
+            ? `Read ${book} Chapter ${chapter}${verseRange} from the ${versionName}. "${firstVerseText}" Free online Bible study.`
+            : `Read ${book} Chapter ${chapter} from the ${versionName}. ${testament}. Free online Bible study.`;
         document.getElementById('dynamicDescription').setAttribute('content', description);
         
         // Update canonical URL
-        const canonicalUrl = `https://wwaijd.org/static/passage.html?book=${encodeURIComponent(book)}&chapter=${chapter}`;
+        const canonicalUrl = `https://wwaijd.org/static/passage.html?book=${encodeURIComponent(book)}&chapter=${chapter}&version=${version}`;
         document.getElementById('dynamicCanonical').setAttribute('href', canonicalUrl);
         
         // Update Open Graph tags
         document.getElementById('dynamicOgUrl').setAttribute('content', canonicalUrl);
-        document.getElementById('dynamicOgTitle').setAttribute('content', `${book} ${chapter}${verseRange} - King James Bible`);
+        document.getElementById('dynamicOgTitle').setAttribute('content', `${book} ${chapter}${verseRange} - ${versionName}`);
         document.getElementById('dynamicOgDescription').setAttribute('content', description);
         
         // Update Twitter tags
         document.getElementById('dynamicTwitterUrl').setAttribute('content', canonicalUrl);
-        document.getElementById('dynamicTwitterTitle').setAttribute('content', `${book} ${chapter}${verseRange} - KJV`);
+        document.getElementById('dynamicTwitterTitle').setAttribute('content', `${book} ${chapter}${verseRange} - ${versionShort}`);
         document.getElementById('dynamicTwitterDescription').setAttribute('content', description);
         
         // Update structured data
@@ -175,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
             "isPartOf": {
                 "@type": "Book",
                 "name": "The Holy Bible",
-                "bookEdition": "King James Version"
+                "bookEdition": versionName
             },
             "about": {
                 "@type": "Thing",

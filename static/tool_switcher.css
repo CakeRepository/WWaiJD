@@ -3,6 +3,7 @@
 .tool-switcher {
     display: flex;
     justify-content: center;
+    align-items: center;
     gap: 5px;
     margin-bottom: 20px;
     background: rgba(255, 255, 255, 0.08);
@@ -12,6 +13,38 @@
     margin-left: auto;
     margin-right: auto;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+}
+
+.version-selector-wrapper {
+    margin-left: 10px;
+    padding-left: 10px;
+    border-left: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+}
+
+.version-selector {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.version-selector:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.version-selector option {
+    background: #1a1a2e;
+    color: white;
 }
 
 .tool-button {
@@ -44,6 +77,22 @@
         width: 100%;
         border-radius: 20px;
         gap: 2px;
+    }
+    
+    .version-selector-wrapper {
+        margin-left: 0;
+        padding-left: 0;
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 8px;
+        margin-top: 4px;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .version-selector {
+        width: 100%;
+        text-align: center;
     }
     
     .tool-button {

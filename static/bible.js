@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const coffeeMargin = document.getElementById('coffeeMargin');
     const coffeeVerse = document.getElementById('coffeeVerse');
     const coffeeSubtext = document.getElementById('coffeeSubtext');
+    const versionSelector = document.getElementById('versionSelector');
 
     let activeButton = null;
     let currentPassageMeta = null;
@@ -37,6 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
     let lastCoffeeNoteIndex = -1;
+    
+    // Reading history
+    const HISTORY_KEY = 'wwaijd:reading-history';
+    const MAX_HISTORY = 10;
 
     // Initialize night mode
     if (isNightMode) {
@@ -56,12 +61,52 @@ document.addEventListener('DOMContentLoaded', () => {
     prevChapter.addEventListener('click', () => navigateChapter(-1));
     nextChapter.addEventListener('click', () => navigateChapter(1));
 
+    // Version selector
+    if (versionSelector) {
+        versionSelector.addEventListener('change', () => {
+            fetchLibrary();
+            // Clear current chapter view when switching versions
+            chapterBody.innerHTML = '';
+            chapterTitle.textContent = 'Select a Passage';
+            chapterSubtitle.textContent = 'Choose any book or chapter from the library to begin your journey.';
+            currentPassageMeta = null;
+            toggleStandalone(null, false);
+        });
+    }
+
+    // Load available versions from API
+    loadVersions();
     fetchLibrary();
     refreshCoffeeMargin(null);
+    
+    // Check for resume reading
+    checkResumeReading();
+
+    async function loadVersions() {
+        if (!versionSelector) return;
+        try {
+            const response = await fetch('/api/versions');
+            const data = await response.json();
+            if (data.versions && data.versions.length > 0) {
+                const currentValue = versionSelector.value;
+                versionSelector.innerHTML = '';
+                data.versions.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.code;
+                    option.textContent = `${v.short} - ${v.name}`;
+                    if (v.code === currentValue) option.selected = true;
+                    versionSelector.appendChild(option);
+                });
+            }
+        } catch (err) {
+            console.warn('Could not load versions:', err);
+        }
+    }
 
     async function fetchLibrary() {
         try {
-            const response = await fetch('/api/bible-index');
+            const version = versionSelector ? versionSelector.value : 'kjv';
+            const response = await fetch(`/api/bible-index?version=${version}`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -169,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             renderChapter(data);
+            saveToHistory(meta);  // Save to reading history
         } catch (err) {
             showChapterError(err.message);
         } finally {
@@ -249,8 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
         openStandalone.onclick = () => {
             const book = meta.book || data.book;
             const chapter = meta.chapter || data.chapter;
+            const version = versionSelector ? versionSelector.value : 'kjv';
             // Use new SSR route
-            const readerUrl = new URL(`/bible/${encodeURIComponent(book)}/${chapter}`, window.location.origin);
+            const readerUrl = new URL(`/bible/${version}/${encodeURIComponent(book)}/${chapter}`, window.location.origin);
             window.open(readerUrl.toString(), '_blank', 'noopener');
         };
     }
@@ -412,4 +459,124 @@ document.addEventListener('DOMContentLoaded', () => {
         const parts = path.split('/');
         return parts[0] || '';
     }
+
+    // ========================================
+    // Reading History Functions
+    // ========================================
+    function saveToHistory(meta) {
+        if (!meta || !meta.book || !meta.chapter) return;
+        
+        try {
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const version = versionSelector?.value || 'kjv';
+            
+            // Create history entry
+            const entry = {
+                book: meta.book,
+                chapter: meta.chapter,
+                testament: meta.testament,
+                path: meta.path,
+                version: version,
+                timestamp: Date.now()
+            };
+            
+            // Remove duplicate if exists (same book+chapter+version)
+            history = history.filter(h => 
+                !(h.book === entry.book && h.chapter === entry.chapter && h.version === entry.version)
+            );
+            
+            // Add to front
+            history.unshift(entry);
+            
+            // Limit size
+            if (history.length > MAX_HISTORY) {
+                history = history.slice(0, MAX_HISTORY);
+            }
+            
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        } catch (err) {
+            console.warn('Could not save reading history:', err);
+        }
+    }
+    
+    function getReadingHistory() {
+        try {
+            return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        } catch {
+            return [];
+        }
+    }
+    
+    function checkResumeReading() {
+        const history = getReadingHistory();
+        if (history.length === 0) return;
+        
+        const last = history[0];
+        const version = versionSelector?.value || 'kjv';
+        
+        // Only show resume if same version and recent (within 7 days)
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        if (last.version === version && last.timestamp > sevenDaysAgo) {
+            showResumePrompt(last);
+        }
+    }
+    
+    function showResumePrompt(entry) {
+        // Create a subtle resume banner
+        const banner = document.createElement('div');
+        banner.className = 'resume-banner';
+        banner.innerHTML = `
+            <span class="resume-text">📖 Continue reading: <strong>${entry.book} ${entry.chapter}</strong></span>
+            <button class="resume-btn" type="button">Resume</button>
+            <button class="resume-dismiss" type="button" aria-label="Dismiss">×</button>
+        `;
+        
+        // Insert at top of chapter panel
+        const chapterPanel = document.querySelector('.chapter-panel');
+        if (chapterPanel) {
+            chapterPanel.insertBefore(banner, chapterPanel.firstChild);
+            
+            banner.querySelector('.resume-btn').addEventListener('click', () => {
+                loadChapter(entry);
+                banner.remove();
+            });
+            
+            banner.querySelector('.resume-dismiss').addEventListener('click', () => {
+                banner.remove();
+            });
+            
+            // Auto-dismiss after 10 seconds
+            setTimeout(() => {
+                if (banner.parentNode) {
+                    banner.style.opacity = '0';
+                    setTimeout(() => banner.remove(), 300);
+                }
+            }, 10000);
+        }
+    }
+
+    // ========================================
+    // Keyboard Shortcuts for Bible Reader
+    // ========================================
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger when typing
+        if (e.target.matches('input, textarea, select')) return;
+        
+        // Left/Right arrows: Navigate chapters
+        if (e.key === 'ArrowLeft' && !prevChapter.disabled) {
+            navigateChapter(-1);
+        } else if (e.key === 'ArrowRight' && !nextChapter.disabled) {
+            navigateChapter(1);
+        }
+        
+        // N: Toggle night mode
+        if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+            nightModeToggle.click();
+        }
+        
+        // Home: Go to main site
+        if (e.key === 'h' && !e.ctrlKey && !e.metaKey) {
+            window.location.href = '/';
+        }
+    });
 });

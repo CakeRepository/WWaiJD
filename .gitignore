@@ -76,6 +76,9 @@ chroma_db/
 *.sqlite
 *.sqlite3
 
+# Bible data (downloaded via download_bibles.py)
+bible-data/json/
+
 # Frontend tooling
 node_modules/
 npm-debug.log*

@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     async function askQuestionStream(question) {
+        const version = document.getElementById('versionSelector').value;
         // Handle streaming response from the server
         setStreamingState(true);
         try {
@@ -205,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ question: question, mode: currentMode })
+                body: JSON.stringify({ question: question, mode: currentMode, version: version })
             });
 
             if (!response.ok) {
@@ -213,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error(data.error || 'Failed to get response');
             }
 
-            await streamResponse(response, { mode: currentMode, question: question });
+            await streamResponse(response, { mode: currentMode, question: question, version: version });
         } finally {
             setStreamingState(false);
         }
@@ -343,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (eventType === 'passages') {
                     passages = data.passages || [];
-                    displayPassages(passages);
+                    displayPassages(passages, data.version);
                     setTimeout(() => {
                         passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 80);
@@ -414,8 +415,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function displayPassages(passages) {
+    function displayPassages(passages, version) {
         // Display Bible passages in the UI
+        const heading = document.getElementById('passagesHeading');
+        if (heading) {
+            const ver = (version || 'KJV').toUpperCase();
+            heading.textContent = `${ver} Biblical References`;
+        }
+
         passagesContainer.innerHTML = '';
 
         // Reset animation by removing and re-adding the class
@@ -631,7 +638,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function buildPassageViewerUrl(passage) {
         if (passage.book && passage.chapter) {
-            const url = new URL(`/bible/${encodeURIComponent(passage.book)}/${passage.chapter}`, window.location.origin);
+            // Use version-aware URL if version is present, otherwise default
+            const versionPath = passage.version ? `/${passage.version}` : '';
+            const url = new URL(`/bible${versionPath}/${encodeURIComponent(passage.book)}/${passage.chapter}`, window.location.origin);
+            
             if (passage.verses) {
                 const start = passage.verses.split('-')[0];
                 if (start) {
@@ -650,6 +660,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (passage.chapter) {
             url.searchParams.set('chapter', passage.chapter);
+        }
+        if (passage.version) {
+            url.searchParams.set('version', passage.version);
         }
         if (passage.reference) {
             url.searchParams.set('reference', passage.reference);
@@ -1104,9 +1117,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
     renderRecents(loadRecents());
     loadNotes();
+    loadVersions();
     refreshHealth();
     updateModeUI();
     autoResizeInput();
+
+    // Load available Bible versions from API (KISS - single source of truth)
+    async function loadVersions() {
+        const versionSelector = document.getElementById('versionSelector');
+        if (!versionSelector) return;
+        try {
+            const response = await fetch('/api/versions');
+            const data = await response.json();
+            if (data.versions && data.versions.length > 0) {
+                const currentValue = versionSelector.value;
+                versionSelector.innerHTML = '';
+                data.versions.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.code;
+                    option.textContent = v.short;
+                    if (v.code === currentValue) option.selected = true;
+                    versionSelector.appendChild(option);
+                });
+            }
+        } catch (err) {
+            console.warn('Could not load versions:', err);
+        }
+    }
 
     // Mobile Navigation Logic
     const navItems = document.querySelectorAll('.nav-item');
@@ -1177,9 +1214,125 @@ document.addEventListener('DOMContentLoaded', function () {
                 heroSection.classList.add('collapsed');
             }
         });
-
-        // Optional: Restore it if they scroll to top? 
-        // Or maybe just leave it collapsed until reload?
-        // Let's leave it collapsed to keep the interface clean for the session.
     }
+
+    // ========================================
+    // Verse of the Day Feature
+    // ========================================
+    loadVerseOfTheDay();
+
+    async function loadVerseOfTheDay() {
+        const container = document.getElementById('verseOfTheDay');
+        const textEl = document.getElementById('vodText');
+        const refEl = document.getElementById('vodRef');
+        const compareBtn = document.getElementById('vodCompare');
+        
+        if (!container || !textEl || !refEl) return;
+        
+        try {
+            const version = document.getElementById('versionSelector')?.value || 'kjv';
+            const response = await fetch(`/api/verse-of-the-day?version=${version}`);
+            const data = await response.json();
+            
+            textEl.textContent = `"${data.text}"`;
+            refEl.textContent = `— ${data.reference} (${data.version})`;
+            container.style.display = 'block';
+            
+            // Store verse data for comparison
+            container.dataset.book = data.book;
+            container.dataset.chapter = data.chapter;
+            container.dataset.verse = data.verse;
+            
+            if (compareBtn) {
+                compareBtn.addEventListener('click', () => {
+                    showCompareModal(data.book, data.chapter, data.verse, data.reference);
+                });
+            }
+        } catch (err) {
+            console.warn('Could not load verse of the day:', err);
+        }
+    }
+
+    async function showCompareModal(book, chapter, verse, reference) {
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'compare-modal';
+        modal.innerHTML = `
+            <div class="compare-modal-content">
+                <div class="compare-modal-header">
+                    <h3 class="compare-modal-title">${reference} - Compare Translations</h3>
+                    <button class="compare-modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="compare-modal-body">
+                    <p style="color: var(--text-muted);">Loading translations...</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close handlers
+        modal.querySelector('.compare-modal-close').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+        
+        // Fetch comparisons
+        try {
+            const response = await fetch(`/api/compare-verse?book=${encodeURIComponent(book)}&chapter=${chapter}&verse=${verse}`);
+            const data = await response.json();
+            
+            const bodyEl = modal.querySelector('.compare-modal-body');
+            if (data.comparisons && data.comparisons.length > 0) {
+                bodyEl.innerHTML = data.comparisons.map(c => `
+                    <div class="compare-item">
+                        <div class="compare-version">${c.version_name}</div>
+                        <div class="compare-text">${c.text}</div>
+                    </div>
+                `).join('');
+            } else {
+                bodyEl.innerHTML = '<p style="color: var(--text-muted);">No translations available for comparison.</p>';
+            }
+        } catch (err) {
+            modal.querySelector('.compare-modal-body').innerHTML = '<p style="color: var(--danger);">Failed to load translations.</p>';
+        }
+    }
+
+    // ========================================
+    // Keyboard Shortcuts
+    // ========================================
+    document.addEventListener('keydown', (e) => {
+        // Don't trigger shortcuts when typing in input fields
+        if (e.target.matches('input, textarea, select')) return;
+        
+        // Ctrl/Cmd + K: Focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            input.focus();
+        }
+        
+        // Escape: Clear input or close modal
+        if (e.key === 'Escape') {
+            const modal = document.querySelector('.compare-modal');
+            if (modal) {
+                modal.remove();
+            } else if (document.activeElement === input) {
+                input.blur();
+            }
+        }
+        
+        // Number keys 1-5: Switch modes (when not typing)
+        if (['1', '2', '3', '4', '5'].includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            const modes = ['balanced', 'comfort', 'clarity', 'challenge', 'blessing'];
+            const modeIndex = parseInt(e.key) - 1;
+            if (modes[modeIndex]) {
+                setMode(modes[modeIndex]);
+            }
+        }
+        
+        // B: Open Bible reader
+        if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
+            window.location.href = '/static/bible.html';
+        }
+    });
 });

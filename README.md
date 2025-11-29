@@ -1,14 +1,15 @@
 # What Would AI Jesus Do (WWAIJD) ✝️
 
-An AI-powered application that provides moral and spiritual guidance based on the King James Bible using advanced RAG (Retrieval Augmented Generation) technology. Ask any question and receive compassionate, biblically-grounded wisdom with relevant scripture references.
+An AI-powered application that provides moral and spiritual guidance based on the Bible using advanced RAG (Retrieval Augmented Generation) technology. Ask any question and receive compassionate, biblically-grounded wisdom with relevant scripture references.
 
 ## ✨ Features
 
-- 📖 **Grounded in Scripture** - All answers based on the King James Bible
+- 📖 **Grounded in Scripture** - All answers based on the Bible (35+ translations available!)
 - 🤖 **Advanced AI** - Uses Ollama with Gemma embeddings and Gemma3:4b model
 - 🔍 **Smart Retrieval** - RAG pipeline finds the most relevant passages
 - 💬 **Beautiful Interface** - Clean, responsive web UI with gradient design
 - 📚 **Bible Reader** - Built-in Bible browser to read any book, chapter, or verse
+- 📜 **Multiple Versions** - KJV, ESV, NIV, NLT, NASB, NKJV, and 30+ more translations
 - ⚡ **Real-time Streaming** - Watch responses generate in real-time
 - 🎯 **Context-Aware** - Retrieves top 5 most relevant passages for each question
 - 🌐 **REST API** - Easy integration with other applications
@@ -38,23 +39,32 @@ An AI-powered application that provides moral and spiritual guidance based on th
    pip install -r requirements.txt
    ```
 
-3. **Run setup check** (optional but recommended)
+3. **Download Bible versions**
+   ```bash
+   # Download popular versions (KJV, ESV, NIV, NLT, NASB, NKJV, etc.)
+   python download_bibles.py
+   
+   # Or download ALL 35+ available versions
+   python download_bibles.py --all
+   ```
+
+4. **Run setup check** (optional but recommended)
    ```bash
    python startup_check.py
    ```
 
-4. **Build the vector database** (first time only - takes 10-30 minutes)
+5. **Build the vector database** (first time only - takes 10-30 minutes)
    ```bash
    python build_embeddings.py
    ```
-   This processes all 66 books of the King James Bible and creates searchable embeddings.
+   This processes all Bible versions and creates searchable embeddings.
 
-5. **Run the application**
+6. **Run the application**
    ```bash
    python app.py
    ```
 
-6. **Open your browser** to `http://localhost:5000`
+7. **Open your browser** to `http://localhost:5000`
 
 ### Windows PowerShell Quick Setup
 ```powershell
@@ -66,7 +76,8 @@ An AI-powered application that provides moral and spiritual guidance based on th
 ### Web Interface
 1. Visit `http://localhost:5000`
 2. Type your question in the search bar
-3. Examples:
+3. Select your preferred Bible version
+4. Examples:
    - "What should I do when someone wrongs me?"
    - "How can I find peace in difficult times?"
    - "What does it mean to love my neighbor?"
@@ -77,18 +88,19 @@ An AI-powered application that provides moral and spiritual guidance based on th
 - Browse by Testament → Book → Chapter
 - Search for specific passages
 - View verses with verse numbers
+- Switch between translations
 
 ### API Usage
 ```bash
 # POST to /api/ask
 curl -X POST http://localhost:5000/api/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "What should I do when someone wrongs me?"}'
+  -d '{"question": "What should I do when someone wrongs me?", "version": "kjv"}'
 
 # Streaming endpoint
 curl -X POST http://localhost:5000/api/ask-stream \
   -H "Content-Type: application/json" \
-  -d '{"question": "How can I find strength?"}'
+  -d '{"question": "How can I find strength?", "version": "esv"}'
 ```
 
 ## 📁 Project Structure
@@ -98,7 +110,9 @@ wwaijd/
 ├── app.py                    # Main Flask web server with API endpoints
 ├── rag_pipeline.py           # RAG implementation (retrieval + generation)
 ├── build_embeddings.py       # Processes Bible and creates vector database
-├── bible_utils.py            # Utilities for Bible text processing
+├── download_bibles.py        # Script to download Bible versions from GitHub
+├── json_bible_utils.py       # JSON Bible file utilities
+├── bible_utils.py            # Bible data handling (JSON + legacy MD support)
 ├── startup_check.py          # Validates prerequisites and setup
 ├── generate_favicons.py      # Generates favicon images
 ├── requirements.txt          # Python dependencies
@@ -118,9 +132,12 @@ wwaijd/
 │   ├── passage.css           # Passage styling
 │   ├── passage.js            # Passage logic
 │   └── [favicons]            # Favicon files
-├── bible-data/               # King James Bible (markdown)
-│   ├── Old Testament/        # 39 books
-│   └── New Testament/        # 27 books
+├── bible-data/               # Bible data directory
+│   └── json/                 # JSON Bible versions
+│       ├── kjv.json          # King James Version
+│       ├── esv.json          # English Standard Version
+│       ├── niv.json          # New International Version
+│       └── [35+ more...]     # Other translations
 └── chroma_db/                # Vector database (generated after setup)
 ```
 
@@ -130,7 +147,7 @@ wwaijd/
 - **Vector Database**: ChromaDB (stores Bible embeddings)
 - **Embeddings**: Ollama Gemma (converts text to vectors)
 - **LLM**: Ollama Gemma3:4b (generates compassionate responses)
-- **Data Source**: King James Bible (66 books, 1,189 chapters, 31,102 verses)
+- **Data Source**: [arron-taylor/bible-versions](https://github.com/arron-taylor/bible-versions) (35+ English translations)
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Server**: Waitress (production-ready WSGI server)
 

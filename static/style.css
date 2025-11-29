@@ -1112,6 +1112,129 @@ h1, h2, h3, h4 {
     border-color: var(--accent);
 }
 
+/* Verse of the Day */
+.verse-of-day {
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(135deg, rgba(243, 200, 102, 0.08), rgba(108, 228, 214, 0.05));
+    border: 1px solid rgba(243, 200, 102, 0.2);
+    border-radius: var(--radius-md);
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.verse-of-day-label {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+}
+
+.verse-of-day-text {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--text-main);
+    font-style: italic;
+    line-height: 1.7;
+    margin: 0 0 0.75rem 0;
+    padding: 0;
+    border: none;
+}
+
+.verse-of-day-ref {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--accent-2);
+    font-style: normal;
+}
+
+.verse-compare-btn {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
+/* Compare Modal */
+.compare-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(5, 12, 31, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+.compare-modal-content {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-strong);
+}
+
+.compare-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.compare-modal-title {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--accent);
+}
+
+.compare-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.compare-modal-close:hover {
+    color: var(--text-main);
+}
+
+.compare-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.compare-item:last-child {
+    border-bottom: none;
+}
+
+.compare-version {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-2);
+    margin-bottom: 0.5rem;
+}
+
+.compare-text {
+    font-family: var(--font-serif);
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .minimal-footer {
     margin-top: auto;
     padding-top: 2rem;

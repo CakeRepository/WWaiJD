@@ -192,6 +192,13 @@
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="study">Bible Study</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="prayer">Prayer Request</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="search">Search</button>
+                        
+                        <div class="version-selector-wrapper">
+                            <select id="versionSelector" class="version-selector" aria-label="Select Bible Version">
+                                <option value="kjv" selected>KJV</option>
+                                <!-- Versions loaded dynamically from API -->
+                            </select>
+                        </div>
                     </div>
 
                     <h2 id="searchHeading" class="visually-hidden">Ask your Bible question</h2>
@@ -225,6 +232,14 @@
                         <button type="button" class="question-pill" data-question="What is God's plan for my life?">God's Plan</button>
                         <button type="button" class="question-pill" data-question="How can I find peace during hard times?">Finding Peace</button>
                     </div>
+                    
+                    <!-- Verse of the Day -->
+                    <div id="verseOfTheDay" class="verse-of-day" style="display: none;">
+                        <div class="verse-of-day-label">✨ Verse of the Day</div>
+                        <blockquote id="vodText" class="verse-of-day-text"></blockquote>
+                        <cite id="vodRef" class="verse-of-day-ref"></cite>
+                        <button type="button" id="vodCompare" class="ghost-button verse-compare-btn" title="Compare across translations">Compare versions</button>
+                    </div>
                 </div>
             </section>
 
@@ -243,7 +258,7 @@
                             </div>
                         </div>
                         <div class="passages-card">
-                            <h3>KJV Biblical References</h3>
+                            <h3 id="passagesHeading">Biblical References</h3>
                             <div id="passagesContainer" class="passages-container"></div>
                         </div>
                     </div>

@@ -84,6 +84,34 @@ if (Test-Path "requirements.txt") {
 
 Write-Host ""
 
+# Download Bible versions
+Write-Host "Checking Bible data..." -ForegroundColor Yellow
+$jsonDir = "bible-data\json"
+if (Test-Path $jsonDir) {
+    $jsonFiles = Get-ChildItem -Path $jsonDir -Filter "*.json" | Measure-Object
+    if ($jsonFiles.Count -gt 0) {
+        Write-Host "✓ Found $($jsonFiles.Count) Bible version(s)" -ForegroundColor Green
+    } else {
+        Write-Host "⚠ No Bible versions found" -ForegroundColor Yellow
+        $response = Read-Host "Would you like to download Bible versions now? (y/n)"
+        if ($response -eq 'y') {
+            Write-Host "Downloading popular Bible versions..." -ForegroundColor Yellow
+            python download_bibles.py
+            Write-Host "✓ Bible versions downloaded" -ForegroundColor Green
+        }
+    }
+} else {
+    Write-Host "⚠ Bible data directory not found" -ForegroundColor Yellow
+    $response = Read-Host "Would you like to download Bible versions now? (y/n)"
+    if ($response -eq 'y') {
+        Write-Host "Downloading popular Bible versions..." -ForegroundColor Yellow
+        python download_bibles.py
+        Write-Host "✓ Bible versions downloaded" -ForegroundColor Green
+    }
+}
+
+Write-Host ""
+
 # Check vector database
 Write-Host "Checking vector database..." -ForegroundColor Yellow
 if (Test-Path "chroma_db") {

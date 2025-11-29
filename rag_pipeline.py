@@ -53,7 +53,16 @@ class BibleRAG:
         self.embed_keep_alive = DEFAULT_EMBED_KEEP_ALIVE if embed_keep_alive is None else embed_keep_alive
         self.llm_keep_alive = DEFAULT_LLM_KEEP_ALIVE if llm_keep_alive is None else llm_keep_alive
         self.client = chromadb.PersistentClient(path=db_path)
-        self.collection = self.client.get_collection(name="bible_kjv")
+        try:
+            self.collection = self.client.get_collection(name="bible_verses")
+        except Exception:
+            # Fallback to old name if new one doesn't exist yet
+            try:
+                self.collection = self.client.get_collection(name="bible_kjv")
+            except Exception:
+                # If neither exists, let it fail or handle gracefully
+                print("[!] Warning: Bible collection not found. Please run build_embeddings.py")
+                self.collection = None
         
     def generate_query_embedding(self, query: str):
         """Generate embedding for the user's query."""
@@ -68,25 +77,33 @@ class BibleRAG:
             print(f"Error generating query embedding: {e}")
             return None
     
-    def retrieve_passages(self, query: str) -> List[Dict]:
+    def retrieve_passages(self, query: str, version: str = None) -> List[Dict]:
         """
         Retrieve relevant Bible passages based on the query.
         
         Args:
             query: User's question
+            version: Optional Bible version to filter by (e.g., 'kjv', 'esv')
             
         Returns:
             List of relevant passages with metadata
         """
+        if not self.collection:
+            return []
+
         # Generate query embedding
         query_embedding = self.generate_query_embedding(query)
         if query_embedding is None:
             return []
         
+        # Prepare filter
+        where_filter = {"version": version} if version else None
+
         # Query the vector database
         results = self.collection.query(
             query_embeddings=[query_embedding],
-            n_results=self.top_k
+            n_results=self.top_k,
+            where=where_filter
         )
         distances = results['distances'][0] if results and 'distances' in results else []
         normalized_scores = self._normalize_relevance(distances)
@@ -103,6 +120,7 @@ class BibleRAG:
                     'chapter': results['metadatas'][0][i].get('chapter'),
                     'verses': results['metadatas'][0][i].get('verses'),
                     'source_path': results['metadatas'][0][i].get('source_path'),
+                    'version': results['metadatas'][0][i].get('version', 'kjv'),
                     'distance': results['distances'][0][i] if 'distances' in results else 0,
                     'relevance': normalized_scores[i] if normalized_scores else None
                 })
@@ -136,15 +154,16 @@ class BibleRAG:
         mode_key = mode.strip().lower()
         return mode_key if mode_key in MODE_INSTRUCTIONS else DEFAULT_MODE
     
-    def _build_prompt(self, query: str, passages: List[Dict], mode: str) -> str:
+    def _build_prompt(self, query: str, passages: List[Dict], mode: str, version: str = "kjv") -> str:
         """Construct the chat prompt with passages and the requested tone."""
         tone_instruction = MODE_INSTRUCTIONS.get(mode, MODE_INSTRUCTIONS[DEFAULT_MODE])
         
-        context = "Here are relevant passages from the King James Bible:\n\n"
+        version_name = version.upper() if version else "Bible"
+        context = f"Here are relevant passages from the {version_name} Bible:\n\n"
         for i, passage in enumerate(passages, 1):
             context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
         
-        return f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the King James Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
+        return f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the {version_name} Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
 
 Question: {query}
 
@@ -161,7 +180,7 @@ Based on these Biblical passages, provide a thoughtful response in the voice of 
 
 Response:"""
     
-    def generate_response(self, query: str, passages: List[Dict], mode: Optional[str] = None) -> Dict:
+    def generate_response(self, query: str, passages: List[Dict], mode: Optional[str] = None, version: str = "kjv") -> Dict:
         """
         Generate a response using Gemma3:4b based on retrieved passages.
         
@@ -169,6 +188,7 @@ Response:"""
             query: User's question
             passages: Retrieved Bible passages
             mode: Optional focus mode for tone/structure
+            version: Bible version used
             
         Returns:
             Dict with response and source passages
@@ -183,7 +203,7 @@ Response:"""
                 'mode': selected_mode
             }
         
-        prompt = self._build_prompt(query, passages, selected_mode)
+        prompt = self._build_prompt(query, passages, selected_mode, version=version)
         
         try:
             # Generate response using Gemma3:4b
@@ -212,14 +232,14 @@ Response:"""
                 'mode': selected_mode
             }
 
-    def ask(self, query: str, mode: Optional[str] = None) -> Dict:
+    def ask(self, query: str, mode: Optional[str] = None, version: str = None) -> Dict:
         """
         Convenience wrapper that retrieves passages then generates a response.
         """
-        passages = self.retrieve_passages(query)
-        return self.generate_response(query, passages, mode=mode)
+        passages = self.retrieve_passages(query, version=version)
+        return self.generate_response(query, passages, mode=mode, version=version)
     
-    def generate_response_stream(self, query: str, passages: List[Dict], mode: Optional[str] = None):
+    def generate_response_stream(self, query: str, passages: List[Dict], mode: Optional[str] = None, version: str = "kjv"):
         """
         Generate a streaming response using Gemma3:4b based on retrieved passages.
         Yields response chunks as they are generated.
@@ -228,6 +248,7 @@ Response:"""
             query: User's question
             passages: Retrieved Bible passages
             mode: Optional focus mode for tone/structure
+            version: Bible version used
             
         Yields:
             Dict chunks with response text
@@ -244,7 +265,7 @@ Response:"""
             }
             return
         
-        prompt = self._build_prompt(query, passages, selected_mode)
+        prompt = self._build_prompt(query, passages, selected_mode, version=version)
         
         try:
             # Generate streaming response using Gemma3:4b
@@ -378,9 +399,9 @@ def main():
     # Initialize RAG
     try:
         rag = BibleRAG()
-        print("✅ RAG pipeline initialized")
+        print("[OK] RAG pipeline initialized")
     except Exception as e:
-        print(f"❌ Error initializing RAG: {e}")
+        print(f"[ERROR] Error initializing RAG: {e}")
         print("Make sure you've run build_embeddings.py first!")
         return
     
@@ -389,12 +410,12 @@ def main():
     result = rag.ask(test_question)
     
     print("\n" + "=" * 60)
-    print("📜 Answer:")
+    print("Answer:")
     print("=" * 60)
     print(result['answer'])
     
     print("\n" + "=" * 60)
-    print("📚 Source Passages:")
+    print("Source Passages:")
     print("=" * 60)
     for i, passage in enumerate(result['passages'][:3], 1):
         print(f"\n{i}. {passage['reference']}:")
