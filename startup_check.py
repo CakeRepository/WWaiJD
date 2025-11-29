@@ -9,8 +9,16 @@ import os
 from pathlib import Path
 
 
-def check_python_version():
-    """Check if Python version is 3.8 or higher."""
+def check_python_version() -> bool:
+    """
+    Check if the current Python version is 3.8 or higher.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if Python version is >= 3.8, False otherwise.
+    """
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
         print("❌ Python 3.8 or higher is required")
@@ -20,8 +28,16 @@ def check_python_version():
     return True
 
 
-def check_ollama():
-    """Check if Ollama is installed and running."""
+def check_ollama() -> bool:
+    """
+    Check if the Ollama Python package is installed and the Ollama service is running.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if Ollama is accessible, False otherwise.
+    """
     try:
         import ollama
         ollama.list()
@@ -36,8 +52,18 @@ def check_ollama():
         return False
 
 
-def check_ollama_models():
-    """Check if required Ollama models are available."""
+def check_ollama_models() -> bool:
+    """
+    Check if the required Ollama models are available.
+
+    Verifies the presence of 'embeddinggemma' and 'gemma3:4b'.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if all required models are found, False otherwise.
+    """
     try:
         import ollama
         models_list = ollama.list()
@@ -64,8 +90,18 @@ def check_ollama_models():
         return False
 
 
-def check_dependencies():
-    """Check if required Python packages are installed."""
+def check_dependencies() -> bool:
+    """
+    Check if required Python packages are installed.
+
+    Verifies installation of 'flask', 'chromadb', and 'ollama'.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if all dependencies are installed, False otherwise.
+    """
     required = ['flask', 'chromadb', 'ollama']
     missing = []
     
@@ -80,8 +116,16 @@ def check_dependencies():
     return len(missing) == 0
 
 
-def check_vector_database():
-    """Check if vector database exists."""
+def check_vector_database() -> bool:
+    """
+    Check if the vector database directory exists and is not empty.
+
+    Args:
+        None
+
+    Returns:
+        bool: True if the database exists, False otherwise.
+    """
     db_path = Path("chroma_db")
     if db_path.exists() and any(db_path.iterdir()):
         print("✅ Vector database found")
@@ -93,7 +137,22 @@ def check_vector_database():
 
 
 def main():
-    """Run startup checks and guide user."""
+    """
+    Run startup checks and guide the user through the setup process.
+
+    Performs the following checks:
+    1. Python version
+    2. Python dependencies
+    3. Ollama availability
+    4. Ollama models
+    5. Vector database existence
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     print("=" * 60)
     print("What Would AI Jesus Do - Startup Check")
     print("=" * 60)

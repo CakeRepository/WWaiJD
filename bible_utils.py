@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Iterable, List, Sequence, Tuple, Optional
+from typing import Iterable, List, Sequence, Tuple, Optional, Dict, Any, Union
 
 BIBLE_ROOT = Path("bible-data")
 BIBLE_JSON_ROOT = BIBLE_ROOT / "json"
@@ -75,7 +75,16 @@ def is_markdown_version(version: str, bible_root: Path | str = BIBLE_ROOT) -> bo
 
 
 def extract_book_name(folder_name: str) -> str:
-    """Strip the numeric prefix from a folder name like '18 Job'."""
+    """
+    Extract the book name from a folder name, stripping any numeric prefix.
+
+    Args:
+        folder_name: The name of the folder (e.g., "18 Job").
+
+    Returns:
+        str: The book name without the numeric prefix (e.g., "Job").
+             If no prefix is found, returns the original name.
+    """
     if not folder_name:
         return folder_name
     return folder_name.split(" ", 1)[1] if " " in folder_name else folder_name
@@ -83,9 +92,18 @@ def extract_book_name(folder_name: str) -> str:
 
 def extract_chapter_number(file_path: Path | str) -> str:
     """
-    Attempt to read the chapter number from a file stem (e.g., job12 -> 12).
-    Returns "1" when no numeric suffix can be found.
-    Looks for the LAST number in the filename to handle books like "1 Corinthians".
+    Extract the chapter number from a file path or filename.
+
+    Attempts to find the numeric suffix in the file stem (e.g., "job12.md" -> "12").
+    Uses the last number found in the filename to handle books with numbers
+    in their name (e.g., "1 Corinthians").
+
+    Args:
+        file_path: The file path or filename to parse.
+
+    Returns:
+        str: The extracted chapter number as a string.
+             Returns "1" if no number is found.
     """
     stem = Path(file_path).stem
     # Find all numbers in the stem and take the last one (the chapter number)
@@ -94,7 +112,16 @@ def extract_chapter_number(file_path: Path | str) -> str:
 
 
 def to_relative_source_path(file_path: Path, bible_dir: Path | str = BIBLE_ROOT) -> str:
-    """Return the path to a markdown file relative to the bible root directory."""
+    """
+    Convert an absolute file path to a path relative to the Bible root directory.
+
+    Args:
+        file_path: The absolute path to the file.
+        bible_dir: The root directory of the Bible data. Defaults to BIBLE_ROOT.
+
+    Returns:
+        str: The relative path as a POSIX string.
+    """
     base = Path(bible_dir).resolve()
     absolute = Path(file_path).resolve()
     try:
@@ -213,8 +240,21 @@ def normalize_book_name(book: str) -> str:
 
 def resolve_bible_path(relative_path: str, bible_dir: Path | str = BIBLE_ROOT) -> Path:
     """
-    Resolve a relative bible path such as 'Old Testament/18 Job/job1.md'
-    and ensure it stays within the bible directory tree.
+    Resolve a relative Bible path to an absolute path, ensuring security.
+
+    Prevents directory traversal attacks by checking if the resolved path
+    is within the Bible directory.
+
+    Args:
+        relative_path: The relative path to resolve (e.g., 'Old Testament/18 Job/job1.md').
+        bible_dir: The root directory of the Bible data. Defaults to BIBLE_ROOT.
+
+    Returns:
+        Path: The resolved absolute path.
+
+    Raises:
+        ValueError: If the path resolves to a location outside the Bible directory.
+        FileNotFoundError: If the file does not exist.
     """
     base = Path(bible_dir).resolve()
     candidate = (base / Path(relative_path)).resolve()

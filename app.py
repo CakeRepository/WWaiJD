@@ -16,6 +16,7 @@ from pathlib import Path
 import json
 import ollama
 from datetime import datetime
+from typing import Optional, Tuple, Dict, Any, Union
 from bible_utils import (
     build_bible_index,
     extract_book_name,
@@ -150,8 +151,16 @@ def get_next_prev_chapters(book_name, chapter_num, version=DEFAULT_VERSION):
             
     return prev_chap, next_chap
 
-def normalize_mode(mode_raw):
-    """Ensure mode matches a supported focus option."""
+def normalize_mode(mode_raw: Optional[str]) -> str:
+    """
+    Ensure mode matches a supported focus option.
+
+    Args:
+        mode_raw: The input mode string (e.g., "Comfort").
+
+    Returns:
+        str: The normalized mode key (e.g., "comfort") or DEFAULT_MODE.
+    """
     if not mode_raw:
         return DEFAULT_MODE
     mode_key = str(mode_raw).strip().lower()
@@ -172,25 +181,51 @@ except Exception as e:
 
 @app.route('/')
 def index():
-    """Serve the main page."""
+    """
+    Serve the main page (index.html).
+
+    Returns:
+        Response: The index.html file content.
+    """
     return send_from_directory('static', 'index.html')
 
 
 @app.route('/static/<path:path>')
 def serve_static(path):
-    """Serve static files."""
+    """
+    Serve static files from the static directory.
+
+    Args:
+        path: The relative path to the static file.
+
+    Returns:
+        Response: The static file content.
+    """
     return send_from_directory('static', path)
 
 
 @app.route('/robots.txt')
 def robots():
-    """Serve robots.txt for search engine crawlers."""
+    """
+    Serve robots.txt for search engine crawlers.
+
+    Returns:
+        Response: The robots.txt file content.
+    """
     return send_from_directory('static', 'robots.txt')
 
 
 @app.route('/img/<path:path>')
 def serve_image(path):
-    """Serve image files for social media."""
+    """
+    Serve image files from the img directory.
+
+    Args:
+        path: The relative path to the image file.
+
+    Returns:
+        Response: The image file content.
+    """
     return send_from_directory('img', path)
 
 
@@ -199,23 +234,17 @@ def ask_question():
     """
     API endpoint to handle questions.
     
-    Request body:
-        {
-            "question": "User's question"
-        }
+    Expects a JSON payload with a "question" key.
+    Returns the AI-generated answer and relevant Bible passages.
     
-    Response:
+    Request Body:
         {
-            "answer": "AI Jesus response",
-            "passages": [
-                {
-                    "text": "Bible verse text",
-                    "reference": "Book Chapter:Verses",
-                    "book": "Book name",
-                    "testament": "Old/New Testament"
-                }
-            ]
+            "question": "User's question",
+            "mode": "Optional tone mode"
         }
+
+    Returns:
+        JSON response with "answer", "passages", and "mode".
     """
     if not rag:
         return jsonify({
@@ -260,18 +289,17 @@ def ask_question():
 def ask_question_stream():
     """
     API endpoint to handle questions with streaming response.
-    Uses Server-Sent Events (SSE) to stream the AI response in real-time.
     
-    Request body:
+    Uses Server-Sent Events (SSE) to stream the AI response token by token.
+
+    Request Body:
         {
-            "question": "User's question"
+            "question": "User's question",
+            "mode": "Optional tone mode"
         }
     
-    Response: Server-Sent Events stream
-        - event: chunk - Response text chunks
-        - event: passages - Bible passages used
-        - event: done - Stream complete
-        - event: error - Error occurred
+    Returns:
+        Response: Event stream with types 'passages', 'chunk', 'done', or 'error'.
     """
     if not rag:
         return jsonify({
@@ -342,10 +370,13 @@ def generate_study():
     """
     API endpoint to generate a thematic Bible study.
     
-    Request body:
+    Request Body:
         {
             "topic": "Topic string"
         }
+
+    Returns:
+        JSON response containing the study text and source passages.
     """
     if not rag:
         return jsonify({
@@ -382,10 +413,13 @@ def generate_prayer():
     """
     API endpoint to generate a personalized prayer.
     
-    Request body:
+    Request Body:
         {
-            "request": "Prayer request"
+            "request": "Prayer request text"
         }
+
+    Returns:
+        JSON response containing the prayer text and source passages.
     """
     if not rag:
         return jsonify({
@@ -421,7 +455,16 @@ def generate_prayer():
 def generate_study_stream():
     """
     API endpoint to generate a thematic Bible study with streaming.
+
     Uses Server-Sent Events (SSE) to stream the response.
+
+    Request Body:
+        {
+            "topic": "Topic string"
+        }
+
+    Returns:
+        Response: Event stream.
     """
     if not rag:
         return jsonify({
@@ -513,7 +556,16 @@ Keep the tone encouraging and insightful.
 def generate_prayer_stream():
     """
     API endpoint to generate a personalized prayer with streaming.
+
     Uses Server-Sent Events (SSE) to stream the response.
+
+    Request Body:
+        {
+            "request": "Prayer request text"
+        }
+
+    Returns:
+        Response: Event stream.
     """
     if not rag:
         return jsonify({
@@ -845,6 +897,7 @@ def get_bible_passage():
 def get_verse_preview():
     """
     Returns the text of specific verses for tooltip preview.
+
     Query parameters:
         book        - Book name (e.g., "Proverbs")
         chapter     - Chapter number
@@ -902,7 +955,12 @@ def get_verse_preview():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint."""
+    """
+    Health check endpoint.
+
+    Returns:
+        JSON status indicating if the service is healthy and RAG is initialized.
+    """
     status = {
         'status': 'healthy',
         'rag_initialized': rag is not None
@@ -921,18 +979,36 @@ def health_check():
 
 @app.errorhandler(404)
 def not_found(e):
-    """Handle 404 errors."""
+    """
+    Handle 404 errors.
+
+    Returns:
+        JSON error message with 404 status.
+    """
     return jsonify({'error': 'Not found'}), 404
 
 
 @app.errorhandler(500)
 def server_error(e):
-    """Handle 500 errors."""
+    """
+    Handle 500 errors.
+
+    Returns:
+        JSON error message with 500 status.
+    """
     return jsonify({'error': 'Internal server error'}), 500
 
 
-def _safe_int(value):
-    """Convert a value to int when possible."""
+def _safe_int(value: Any) -> Optional[int]:
+    """
+    Convert a value to int when possible.
+
+    Args:
+        value: The input value.
+
+    Returns:
+        Optional[int]: The integer value, or None if conversion fails.
+    """
     try:
         if value is None or value == '':
             return None
@@ -941,8 +1017,16 @@ def _safe_int(value):
         return None
 
 
-def _derive_metadata_from_path(relative_path: str):
-    """Derive (book, testament, chapter) from a bible-data relative path."""
+def _derive_metadata_from_path(relative_path: str) -> Tuple[str, str, str]:
+    """
+    Derive (book, testament, chapter) from a bible-data relative path.
+
+    Args:
+        relative_path: The relative path to the markdown file.
+
+    Returns:
+        Tuple[str, str, str]: (book, testament, chapter) strings.
+    """
     path = Path(relative_path)
     parts = path.parts
     
@@ -1118,7 +1202,12 @@ def bible_chapter(version, book, chapter):
 def sitemap():
     """
     Generate dynamic XML sitemap for SEO.
-    Includes main pages and all Bible books/chapters.
+
+    Includes main pages and all Bible books/chapters to help search engines
+    index the content.
+
+    Returns:
+        Response: XML sitemap content.
     """
     base_url = 'https://wwaijd.org'
     today = datetime.now().strftime('%Y-%m-%d')
@@ -1174,6 +1263,17 @@ def sitemap():
 def share_conversation():
     """
     Save a conversation and return a shareable link.
+
+    Request Body:
+        {
+            "question": "Question text",
+            "answer": "Answer text",
+            "passages": [Passage objects],
+            "mode": "Tone mode"
+        }
+
+    Returns:
+        JSON response with share_id and share_url.
     """
     try:
         data = request.get_json(silent=True) or {}
@@ -1199,7 +1299,15 @@ def share_conversation():
 
 @app.route('/q/<share_id>')
 def shared_page(share_id):
-    """Render a shared conversation page."""
+    """
+    Render a shared conversation page.
+
+    Args:
+        share_id: The unique conversation ID.
+
+    Returns:
+        Response: Rendered HTML template or 404 abort.
+    """
     try:
         data = database.get_conversation(share_id)
         if not data:
@@ -1270,23 +1378,13 @@ def search_bible():
     """
     API endpoint to search for Bible passages without generating an LLM response.
     
-    Request body:
+    Request Body:
         {
             "query": "Search query"
         }
     
-    Response:
-        {
-            "passages": [
-                {
-                    "text": "Bible verse text",
-                    "reference": "Book Chapter:Verses",
-                    "book": "Book name",
-                    "testament": "Old/New Testament"
-                }
-            ],
-            "count": "Number of passages found"
-        }
+    Returns:
+        JSON response with found passages and count.
     """
     if not rag:
         return jsonify({
@@ -1319,7 +1417,11 @@ def search_bible():
 
 
 def main():
-    """Run the Flask application."""
+    """
+    Run the Flask application using Waitress.
+
+    This is the entry point for the production server.
+    """
     print("=" * 60, flush=True)
     print("What Would AI Jesus Do - Web Application", flush=True)
     print("=" * 60, flush=True)
@@ -1340,5 +1442,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
