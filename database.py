@@ -9,17 +9,9 @@ DB_PATH = Path("wwaijd.db")
 
 def init_db():
     """
-    Initialize the SQLite database with the shared_conversations table.
+    Initialize the SQLite database with the shared_conversations and stats tables.
 
-    Creates the table if it does not already exist.
-    The table stores shared conversations including question, answer, passages,
-    mode, and creation timestamp.
-
-    Args:
-        None
-
-    Returns:
-        None
+    Creates the tables if they do not already exist.
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -33,6 +25,15 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Create stats table for general tracking
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS stats (
+            key TEXT PRIMARY KEY,
+            value INTEGER DEFAULT 0
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -95,6 +96,31 @@ def get_conversation(share_id: str) -> Optional[Dict[str, Any]]:
     if row:
         return dict(row)
     return None
+
+def increment_visit_count():
+    """
+    Increment the global visit counter.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('INSERT OR IGNORE INTO stats (key, value) VALUES (?, ?)', ('visits', 0))
+    c.execute('UPDATE stats SET value = value + 1 WHERE key = ?', ('visits',))
+    conn.commit()
+    conn.close()
+
+def get_visit_count() -> int:
+    """
+    Get the current global visit count.
+
+    Returns:
+        int: The number of visits.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT value FROM stats WHERE key = ?', ('visits',))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else 0
 
 # Initialize DB on module load
 init_db()

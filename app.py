@@ -187,7 +187,23 @@ def index():
     Returns:
         Response: The index.html file content.
     """
+    try:
+        database.increment_visit_count()
+    except Exception as e:
+        print(f"Error incrementing visit count: {e}")
     return send_from_directory('static', 'index.html')
+
+
+@app.route('/api/stats', methods=['GET'])
+def get_stats():
+    """
+    Get site statistics.
+
+    Returns:
+        JSON response with visit count.
+    """
+    count = database.get_visit_count()
+    return jsonify({'visits': count})
 
 
 @app.route('/static/<path:path>')
@@ -322,7 +338,7 @@ def ask_question_stream():
             """Generator function for SSE streaming."""
             try:
                 # Retrieve relevant passages first
-                print(f"\n[QUESTION] {question} ({version})")
+                print(f"\n[QUESTION] (hidden) ({version})")
                 print("[INFO] Retrieving relevant Bible passages...")
                 passages = rag.retrieve_passages(question, version=version)
                 print(f"[OK] Found {len(passages)} relevant passages")
@@ -484,7 +500,7 @@ def generate_study_stream():
             """Generator function for SSE streaming."""
             try:
                 # Retrieve relevant passages first
-                print(f"\n[STUDY] Bible Study Topic: {topic}")
+                print(f"\n[STUDY] Topic: (hidden)")
                 print("[INFO] Retrieving relevant passages...")
                 passages = rag.retrieve_passages(topic)
                 print(f"[OK] Found {len(passages)} relevant passages")
@@ -585,7 +601,7 @@ def generate_prayer_stream():
             """Generator function for SSE streaming."""
             try:
                 # Retrieve relevant passages first
-                print(f"\n[PRAYER] Prayer Request: {req_text}")
+                print(f"\n[PRAYER] Request: (hidden)")
                 print("[INFO] Retrieving relevant passages...")
                 passages = rag.retrieve_passages(req_text)
                 print(f"[OK] Found {len(passages)} relevant passages")
@@ -1412,7 +1428,7 @@ def search_bible():
                 'error': 'Search query is required'
             }), 400
             
-        print(f"\n[SEARCH] Searching Bible for: {query}")
+        print(f"\n[SEARCH] Searching Bible...")
         passages = rag.retrieve_passages(query)
         print(f"[OK] Found {len(passages)} relevant passages")
         
