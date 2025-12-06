@@ -1325,6 +1325,22 @@ def share_conversation():
         print(f"Error sharing conversation: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/recent-shares', methods=['GET'])
+def get_recent_shares():
+    """
+    Get recent shared conversations.
+
+    Returns:
+        JSON response with list of recent shares.
+    """
+    try:
+        limit = request.args.get('limit', 10, type=int)
+        shares = database.get_recent_shared_conversations(limit=limit)
+        return jsonify({'shares': shares})
+    except Exception as e:
+        print(f"Error getting recent shares: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/q/<share_id>')
 def shared_page(share_id):
     """

@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const healthDetail = document.getElementById('healthDetail');
     const copyAnswerButton = document.getElementById('copyAnswerButton');
     const shareAnswerButton = document.getElementById('shareAnswerButton');
+    const listenButton = document.getElementById('listenButton');
     const recentList = document.getElementById('recentQuestions');
     const clearRecentsButton = document.getElementById('clearRecentsButton');
     const sessionNotes = document.getElementById('sessionNotes');
@@ -378,6 +379,14 @@ document.addEventListener('DOMContentLoaded', function () {
             shareAnswerButton.textContent = 'Share';
             shareAnswerButton.disabled = false;
         }
+
+    // Reset Listen button state
+    if (listenButton) {
+        listenButton.textContent = 'Listen 🔊';
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
+    }
     }
 
     function setStreamingState(isActive) {
@@ -1059,6 +1068,51 @@ document.addEventListener('DOMContentLoaded', function () {
         copyAnswerButton.addEventListener('click', copyAnswer);
     }
     
+    if (listenButton) {
+        listenButton.addEventListener('click', () => {
+            if (!answerText) return;
+
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                listenButton.textContent = 'Listen 🔊';
+                return;
+            }
+
+            // Get plain text from the answer
+            const textToSpeak = answerText.innerText;
+            if (!textToSpeak) return;
+
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+
+            // Try to select a good voice
+            const voices = window.speechSynthesis.getVoices();
+            // Prefer Google US English or similar natural sounding voice
+            const preferredVoice = voices.find(v => v.name.includes('Google US English')) ||
+                                 voices.find(v => v.lang === 'en-US') ||
+                                 voices[0];
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+
+            utterance.onstart = () => {
+                listenButton.textContent = 'Stop ⏹';
+            };
+
+            utterance.onend = () => {
+                listenButton.textContent = 'Listen 🔊';
+            };
+
+            utterance.onerror = () => {
+                listenButton.textContent = 'Listen 🔊';
+            };
+
+            window.speechSynthesis.speak(utterance);
+        });
+    }
+
     if (shareAnswerButton) {
         shareAnswerButton.addEventListener('click', async () => {
             if (!lastResponseData) return;
@@ -1267,6 +1321,43 @@ document.addEventListener('DOMContentLoaded', function () {
     // Verse of the Day Feature
     // ========================================
     loadVerseOfTheDay();
+    loadCommunityQuestions();
+
+    async function loadCommunityQuestions() {
+        const container = document.getElementById('communityQuestions');
+        const list = document.getElementById('communityQuestionsList');
+
+        if (!container || !list) return;
+
+        try {
+            const response = await fetch('/api/recent-shares?limit=6');
+            if (!response.ok) return;
+
+            const data = await response.json();
+            const shares = data.shares || [];
+
+            if (shares.length === 0) return;
+
+            list.innerHTML = '';
+            shares.forEach(share => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'question-pill';
+                button.textContent = share.question.length > 50 ? share.question.substring(0, 50) + '...' : share.question;
+                button.title = share.question;
+
+                button.addEventListener('click', () => {
+                   window.location.href = `/q/${share.id}`;
+                });
+
+                list.appendChild(button);
+            });
+
+            container.style.display = 'block';
+        } catch (err) {
+            console.warn('Could not load community questions:', err);
+        }
+    }
 
     async function loadVerseOfTheDay() {
         const container = document.getElementById('verseOfTheDay');

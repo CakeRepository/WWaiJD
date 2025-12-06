@@ -97,6 +97,32 @@ def get_conversation(share_id: str) -> Optional[Dict[str, Any]]:
         return dict(row)
     return None
 
+def get_recent_shared_conversations(limit: int = 10) -> List[Dict[str, Any]]:
+    """
+    Retrieve the most recently saved conversations.
+
+    Args:
+        limit: Maximum number of conversations to return.
+
+    Returns:
+        List[Dict[str, Any]]: List of conversation dictionaries.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    c.execute('''
+        SELECT id, question, mode, created_at
+        FROM shared_conversations
+        ORDER BY created_at DESC
+        LIMIT ?
+    ''', (limit,))
+
+    rows = c.fetchall()
+    conn.close()
+
+    return [dict(row) for row in rows]
+
 def increment_visit_count():
     """
     Increment the global visit counter.
