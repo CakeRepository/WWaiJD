@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchCard = document.querySelector('.search-card');
     const streamStatusText = document.getElementById('streamStatusText');
     const streamMeter = document.getElementById('streamMeter');
+    const voiceButton = document.getElementById('voiceButton');
 
     // Tool Switcher Elements
     const toolButtons = document.querySelectorAll('.tool-button');
@@ -60,6 +61,12 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: 'What do you need prayer for? (e.g., Strength for a job interview)',
             buttonText: 'Pray',
             endpoint: '/api/prayer'
+        },
+        parable: {
+            heading: 'Generate a Modern Parable',
+            placeholder: 'Enter a topic or situation... (e.g., Ambition, Family conflict, Wealth)',
+            buttonText: 'Tell Story',
+            endpoint: '/api/parable'
         },
         search: {
             heading: 'Search the Bible',
@@ -186,6 +193,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 await generateStudy(value);
             } else if (currentTool === 'prayer') {
                 await generatePrayer(value);
+            } else if (currentTool === 'parable') {
+                await generateParable(value);
             } else if (currentTool === 'search') {
                 await performSearch(value);
             }
@@ -261,6 +270,27 @@ document.addEventListener('DOMContentLoaded', function () {
     } finally {
         setStreamingState(false);
     }
+    }
+
+    async function generateParable(topic) {
+        // Use streaming endpoint
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/parable-stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to generate parable');
+            }
+
+            await streamResponse(response, { mode: 'parable', question: `Parable about: ${topic}` });
+        } finally {
+            setStreamingState(false);
+        }
     }
 
     async function performSearch(query) {
@@ -1315,6 +1345,69 @@ document.addEventListener('DOMContentLoaded', function () {
                 heroSection.classList.add('collapsed');
             }
         });
+    }
+
+    // Voice Input Logic
+    if (voiceButton) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+
+            let isListening = false;
+
+            voiceButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    try {
+                        recognition.start();
+                    } catch (err) {
+                        console.warn('Recognition start error:', err);
+                    }
+                }
+            });
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceButton.classList.add('is-listening');
+                input.placeholder = 'Listening...';
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceButton.classList.remove('is-listening');
+                // Restore placeholder based on current tool
+                const toolConfig = TOOL_CONFIG[currentTool];
+                if (toolConfig) {
+                    input.placeholder = toolConfig.placeholder;
+                }
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                input.value = transcript;
+                autoResizeInput();
+
+                // Optional: Auto-submit or just focus?
+                // Let's just focus for now so user can review
+                input.focus();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                isListening = false;
+                voiceButton.classList.remove('is-listening');
+                input.placeholder = 'Error listening. Try again.';
+            };
+        } else {
+            // Hide button if not supported
+            voiceButton.style.display = 'none';
+        }
     }
 
     // ========================================

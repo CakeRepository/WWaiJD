@@ -193,6 +193,7 @@
                         <button type="button" class="tool-button is-active" role="tab" aria-selected="true" data-tool="ask">Ask Question</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="study">Bible Study</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="prayer">Prayer Request</button>
+                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="parable">Parable</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="search">Search</button>
                         
                         <div class="version-selector-wrapper">
@@ -225,6 +226,14 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 </div>
                                 <textarea id="questionInput" placeholder="Ask your question..." required rows="1"></textarea>
+                                <button type="button" id="voiceButton" class="icon-button voice-button" title="Speak your question">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                                    </svg>
+                                </button>
                                 <button type="submit" id="askButton" class="icon-button">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                                     <span id="buttonText" class="visually-hidden">Ask</span>

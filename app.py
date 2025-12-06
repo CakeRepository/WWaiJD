@@ -301,6 +301,145 @@ def ask_question():
         }), 500
 
 
+@app.route('/api/parable', methods=['POST'])
+def generate_parable():
+    """
+    API endpoint to generate a modern-day parable.
+
+    Request Body:
+        {
+            "topic": "Topic string"
+        }
+
+    Returns:
+        JSON response containing the parable text and source passages.
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+
+    try:
+        data = request.get_json(silent=True) or {}
+        topic = data.get('topic', '').strip()
+
+        if not topic:
+            return jsonify({
+                'error': 'Topic is required'
+            }), 400
+
+        result = rag.generate_parable(topic)
+
+        if result.get('error'):
+            return jsonify({
+                'error': result['parable']
+            }), 500
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error generating parable: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
+@app.route('/api/parable-stream', methods=['POST'])
+def generate_parable_stream():
+    """
+    API endpoint to generate a modern-day parable with streaming.
+
+    Uses Server-Sent Events (SSE) to stream the response.
+
+    Request Body:
+        {
+            "topic": "Topic string"
+        }
+
+    Returns:
+        Response: Event stream.
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+
+    try:
+        data = request.get_json(silent=True) or {}
+        topic = data.get('topic', '').strip()
+
+        if not topic:
+            return jsonify({
+                'error': 'Topic is required'
+            }), 400
+
+        def generate():
+            """Generator function for SSE streaming."""
+            try:
+                # Retrieve relevant passages first
+                print(f"\n[PARABLE] Topic: (hidden)")
+                print("[INFO] Retrieving relevant passages...")
+                passages = rag.retrieve_passages(topic)
+                print(f"[OK] Found {len(passages)} relevant passages")
+
+                # Send passages (even if empty)
+                yield f"event: passages\ndata: {json.dumps({'passages': passages[:3]})}\n\n"
+
+                context = ""
+                if passages:
+                    context = "Here are some relevant verses to ground the story:\n\n"
+                    for i, passage in enumerate(passages[:3], 1):
+                        context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+
+                prompt = f"""You are AI Jesus, a master storyteller. A user wants a parable about: "{topic}".
+
+{context}
+
+Create a modern-day parable that illustrates the biblical truth found in these verses.
+- The story should be set in contemporary times (e.g., office, home, city).
+- Do not preach; let the story reveal the truth.
+- Keep it under 300 words.
+- End with a brief section titled "The Meaning", referencing the scripture.
+"""
+
+                # Stream the response
+                print("[AI] Generating parable (streaming)...")
+                stream = ollama.generate(
+                    model=rag.llm_model if rag else 'gemma3:4b',
+                    prompt=prompt,
+                    stream=True,
+                    options={'temperature': 0.8},
+                    keep_alive=OLLAMA_LLM_KEEP_ALIVE
+                )
+
+                for chunk in stream:
+                    if chunk.get('response'):
+                        yield f"event: chunk\ndata: {json.dumps({'text': chunk['response']})}\n\n"
+                    if chunk.get('done'):
+                        yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
+                        print("[OK] Parable generated")
+                        break
+
+            except Exception as e:
+                print(f"Error in streaming parable: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype='text/event-stream',
+            headers={
+                'Cache-Control': 'no-cache',
+                'X-Accel-Buffering': 'no'
+            }
+        )
+
+    except Exception as e:
+        print(f"Error processing streaming parable: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
 @app.route('/api/ask-stream', methods=['POST'])
 def ask_question_stream():
     """

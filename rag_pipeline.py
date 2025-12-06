@@ -471,6 +471,55 @@ Write a heartfelt, comforting prayer for them.
             print(f"Error generating prayer: {e}")
             return {'prayer': "Error generating prayer.", 'error': True}
 
+    def generate_parable(self, topic: str) -> Dict[str, Any]:
+        """
+        Generate a modern-day parable based on a biblical principle.
+
+        Retrieves passages related to the topic and creates a story.
+
+        Args:
+            topic: The topic or situation for the parable.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - parable: The generated parable text.
+                - passages: The passages used for inspiration.
+                - error: Boolean indicating success/failure.
+        """
+        passages = self.retrieve_passages(topic)
+
+        context = ""
+        if passages:
+            context = "Here are some relevant verses to ground the story:\n\n"
+            for i, passage in enumerate(passages[:3], 1):
+                context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
+
+        prompt = f"""You are AI Jesus, a master storyteller. A user wants a parable about: "{topic}".
+
+{context}
+
+Create a modern-day parable that illustrates the biblical truth found in these verses.
+- The story should be set in contemporary times (e.g., office, home, city).
+- Do not preach; let the story reveal the truth.
+- Keep it under 300 words.
+- End with a brief section titled "The Meaning", referencing the scripture.
+"""
+        try:
+            response = ollama.generate(
+                model=self.llm_model,
+                prompt=prompt,
+                options={'temperature': 0.8},
+                keep_alive=self.llm_keep_alive
+            )
+            return {
+                'parable': response['response'].strip(),
+                'passages': passages,
+                'error': False
+            }
+        except Exception as e:
+            print(f"Error generating parable: {e}")
+            return {'parable': "Error generating parable.", 'error': True}
+
 
 def main():
     """
