@@ -520,6 +520,68 @@ Create a modern-day parable that illustrates the biblical truth found in these v
             print(f"Error generating parable: {e}")
             return {'parable': "Error generating parable.", 'error': True}
 
+    def generate_quiz(self, topic: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a multiple-choice Bible quiz question.
+
+        Args:
+            topic: Optional topic to focus the quiz on (e.g., "Faith", "David").
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - question: The question text.
+                - options: List of 4 options.
+                - correct_index: Index of the correct option (0-3).
+                - reference: Bible reference.
+                - explanation: Explanation text.
+                - error: Boolean indicating error.
+        """
+        context = ""
+        if topic:
+            passages = self.retrieve_passages(topic)
+            if passages:
+                # Use the top passage to ground the question
+                p = passages[0]
+                context = f"Base the question on this passage from {p['reference']}:\n\"{p['text']}\"\n\n"
+
+        prompt = f"""You are a Bible trivia generator. {context}Generate a multiple-choice question based on the King James Bible.
+
+        Format your response as a valid JSON object with the following keys:
+        - "question": The text of the question.
+        - "options": A list of 4 possible answers (strings).
+        - "correct_index": The integer index (0, 1, 2, or 3) of the correct answer.
+        - "reference": The Bible reference (Book Chapter:Verse) that supports the answer.
+        - "explanation": A brief explanation of why the answer is correct.
+
+        Do not include any markdown formatting or extra text. Just the JSON.
+        """
+
+        try:
+            response = ollama.generate(
+                model=self.llm_model,
+                prompt=prompt,
+                options={'temperature': 0.8},
+                keep_alive=self.llm_keep_alive
+            )
+
+            text = response['response'].strip()
+            # Clean up potential markdown code blocks
+            if text.startswith('```'):
+                text = text.replace('```json', '').replace('```', '').strip()
+
+            import json
+            data = json.loads(text)
+
+            # Basic validation
+            if 'question' in data and 'options' in data and 'correct_index' in data:
+                return data
+            else:
+                raise ValueError("Missing keys in JSON response")
+
+        except Exception as e:
+            print(f"Error generating quiz: {e}")
+            return {'error': True, 'message': str(e)}
+
 
 def main():
     """

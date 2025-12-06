@@ -33,6 +33,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const streamMeter = document.getElementById('streamMeter');
     const voiceButton = document.getElementById('voiceButton');
 
+    // Quiz Elements
+    const quizContainer = document.getElementById('quizContainer');
+    const quizQuestionArea = document.getElementById('quizQuestionArea');
+    const quizFeedback = document.getElementById('quizFeedback');
+    const nextQuizBtn = document.getElementById('nextQuizBtn');
+    let currentQuizData = null;
+
     // Tool Switcher Elements
     const toolButtons = document.querySelectorAll('.tool-button');
     const searchHeading = document.getElementById('searchHeading');
@@ -73,6 +80,12 @@ document.addEventListener('DOMContentLoaded', function () {
             placeholder: 'Search for passages... (e.g., love your neighbor)',
             buttonText: 'Search',
             endpoint: '/api/search'
+        },
+        quiz: {
+            heading: 'Bible Quiz',
+            placeholder: 'Enter a topic for the quiz... (e.g., David, Miracles, Faith) or leave blank for random',
+            buttonText: 'Start Quiz',
+            endpoint: '/api/quiz'
         }
     };
 
@@ -170,6 +183,12 @@ document.addEventListener('DOMContentLoaded', function () {
         // Hide previous results
         hideResponse();
         hideError();
+
+        // Hide quiz
+        if (quizContainer) quizContainer.style.display = 'none';
+        if (currentTool === 'quiz') {
+             // For quiz, we want to show the container when starting
+        }
     }
 
     form.addEventListener('submit', async function (e) {
@@ -197,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 await generateParable(value);
             } else if (currentTool === 'search') {
                 await performSearch(value);
+            } else if (currentTool === 'quiz') {
+                await generateQuiz(value);
             }
 
         } catch (error) {
@@ -326,6 +347,97 @@ document.addEventListener('DOMContentLoaded', function () {
         } finally {
             setStreamingState(false);
         }
+    }
+
+    async function generateQuiz(topic) {
+        setStreamingState(true);
+        try {
+            const response = await fetch('/api/quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to generate quiz');
+            }
+
+            const data = await response.json();
+            currentQuizData = data;
+
+            renderQuiz(data);
+
+            // Hide normal response section
+            responseSection.classList.add('is-hidden');
+            hideLoading();
+
+        } finally {
+            setStreamingState(false);
+        }
+    }
+
+    function renderQuiz(data) {
+        if (!quizContainer || !quizQuestionArea) return;
+
+        quizContainer.style.display = 'block';
+        quizFeedback.style.display = 'none';
+        nextQuizBtn.style.display = 'none';
+
+        let html = `<div class="quiz-question">${data.question}</div>`;
+        html += `<div class="quiz-options">`;
+
+        data.options.forEach((opt, idx) => {
+            html += `<button type="button" class="quiz-option" data-index="${idx}">${opt}</button>`;
+        });
+
+        html += `</div>`;
+
+        quizQuestionArea.innerHTML = html;
+
+        // Add listeners
+        const options = quizQuestionArea.querySelectorAll('.quiz-option');
+        options.forEach(btn => {
+            btn.addEventListener('click', () => handleQuizAnswer(parseInt(btn.dataset.index)));
+        });
+
+        setTimeout(() => {
+            quizContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 80);
+    }
+
+    function handleQuizAnswer(selectedIndex) {
+        if (!currentQuizData) return;
+
+        const options = quizQuestionArea.querySelectorAll('.quiz-option');
+        const correctIndex = currentQuizData.correct_index;
+
+        // Disable all buttons
+        options.forEach(btn => btn.disabled = true);
+
+        // Highlight correct and incorrect
+        options[correctIndex].classList.add('correct');
+        if (selectedIndex !== correctIndex) {
+            options[selectedIndex].classList.add('incorrect');
+        }
+
+        // Show feedback
+        const isCorrect = selectedIndex === correctIndex;
+        quizFeedback.innerHTML = `
+            <h3>${isCorrect ? 'Correct! 🎉' : 'Not quite.'}</h3>
+            <p>${currentQuizData.explanation}</p>
+            <p><small>Reference: ${currentQuizData.reference}</small></p>
+        `;
+        quizFeedback.style.display = 'block';
+
+        // Show next button
+        nextQuizBtn.style.display = 'inline-block';
+        nextQuizBtn.onclick = () => {
+             // Trigger another quiz generation with same topic if present
+             const topic = input.value.trim();
+             showLoading();
+             generateQuiz(topic);
+        };
     }
 
     async function streamResponse(response, context = {}) {

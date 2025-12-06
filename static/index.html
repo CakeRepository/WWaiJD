@@ -194,6 +194,7 @@
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="study">Bible Study</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="prayer">Prayer Request</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="parable">Parable</button>
+                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="quiz">Quiz</button>
                         <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="search">Search</button>
                         
                         <div class="version-selector-wrapper">
@@ -241,6 +242,15 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+
+                    <!-- Quiz UI (hidden by default) -->
+                    <div id="quizContainer" class="quiz-container" style="display: none;">
+                        <div id="quizQuestionArea">
+                            <!-- Question and options injected here -->
+                        </div>
+                        <div id="quizFeedback" class="quiz-feedback" style="display: none;"></div>
+                        <button type="button" id="nextQuizBtn" class="primary-button" style="display: none; margin-top: 1rem;">Next Question</button>
                     </div>
 
                     <div class="question-pills minimal-pills">
