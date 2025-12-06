@@ -149,6 +149,7 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/tool_switcher.css">
+    <link rel="stylesheet" href="/static/fundraiser.css">
 </head>
 
 <body>
@@ -247,6 +248,14 @@
                         <cite id="vodRef" class="verse-of-day-ref"></cite>
                         <button type="button" id="vodCompare" class="ghost-button verse-compare-btn" title="Compare across translations">Compare versions</button>
                     </div>
+
+                    <!-- Community Questions -->
+                    <div id="communityQuestions" class="community-questions" style="display: none; margin-top: 2rem;">
+                        <div class="verse-of-day-label" style="margin-bottom: 0.5rem;">👥 Community Questions</div>
+                        <div id="communityQuestionsList" class="question-pills minimal-pills">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -262,6 +271,7 @@
                             <div class="answer-actions">
                                 <button type="button" id="copyAnswerButton" class="ghost-button">Copy answer</button>
                                 <button type="button" id="shareAnswerButton" class="ghost-button">Share</button>
+                                <button type="button" id="listenButton" class="ghost-button">Listen 🔊</button>
                             </div>
                         </div>
                         <div class="passages-card">
@@ -306,6 +316,17 @@
                 <span id="notesStatus"></span>
             </div>
         </main>
+
+        <div class="fundraiser-banner">
+             <div class="fundraiser-content">
+                  <span class="fundraiser-icon">🖥️</span>
+                  <div class="fundraiser-text">
+                      <strong>Help us upgrade our servers!</strong>
+                      <p>We need more graphics cards to make AI Jesus faster and smarter. Your support keeps this free service running.</p>
+                  </div>
+                  <a href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer" class="fundraiser-button">Donate Hardware Fund</a>
+             </div>
+        </div>
 
         <footer class="site-footer">
             <div class="footer-links">
