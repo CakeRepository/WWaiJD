@@ -1402,7 +1402,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Speech recognition error', event.error);
                 isListening = false;
                 voiceButton.classList.remove('is-listening');
-                input.placeholder = 'Error listening. Try again.';
             };
         } else {
             // Hide button if not supported
