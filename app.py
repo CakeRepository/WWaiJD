@@ -606,6 +606,44 @@ def generate_prayer():
         }), 500
 
 
+@app.route('/api/quiz', methods=['POST'])
+def generate_quiz():
+    """
+    API endpoint to generate a Bible quiz question.
+
+    Request Body:
+        {
+            "topic": "Optional topic string"
+        }
+
+    Returns:
+        JSON response containing the question, options, answer, etc.
+    """
+    if not rag:
+        return jsonify({
+            'error': 'RAG pipeline not initialized.'
+        }), 500
+
+    try:
+        data = request.get_json(silent=True) or {}
+        topic = data.get('topic', '').strip()
+
+        result = rag.generate_quiz(topic if topic else None)
+
+        if result.get('error'):
+            return jsonify({
+                'error': result.get('message', 'Failed to generate quiz')
+            }), 500
+
+        return jsonify(result)
+
+    except Exception as e:
+        print(f"Error generating quiz: {e}")
+        return jsonify({
+            'error': f'An error occurred: {str(e)}'
+        }), 500
+
+
 @app.route('/api/study-stream', methods=['POST'])
 def generate_study_stream():
     """
