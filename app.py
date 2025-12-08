@@ -905,16 +905,10 @@ INSPIRING_VERSES = [
 ]
 
 
-@app.route('/api/verse-of-the-day', methods=['GET'])
-def get_verse_of_the_day():
-    """Return a random inspiring verse - changes daily based on date seed."""
+@app.route('/api/random-verse', methods=['GET'])
+def get_random_verse():
+    """Return a random inspiring verse - changes on every request."""
     import random
-    from datetime import date
-    
-    # Use today's date as seed for consistent daily verse
-    today = date.today()
-    seed = today.year * 10000 + today.month * 100 + today.day
-    random.seed(seed)
     
     book, chapter, verse_num = random.choice(INSPIRING_VERSES)
     version = request.args.get('version', DEFAULT_VERSION)
