@@ -867,8 +867,8 @@ INSPIRING_VERSES = [
 ]
 
 
-@app.route('/api/verse-of-the-day', methods=['GET'])
-def get_verse_of_the_day():
+@app.route('/api/random-verse', methods=['GET'])
+def get_random_verse():
     """Return a random inspiring verse - changes on every request."""
     import random
     

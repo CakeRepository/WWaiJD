@@ -1461,7 +1461,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         try {
             const version = document.getElementById('versionSelector')?.value || 'kjv';
-            const response = await fetch(`/api/verse-of-the-day?version=${version}`);
+            const response = await fetch(`/api/random-verse?version=${version}`);
             const data = await response.json();
             
             textEl.textContent = `"${data.text}"`;
