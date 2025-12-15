@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('questionInput');
     const askButton = document.getElementById('askButton');
     const buttonText = document.getElementById('buttonText');
-    const buttonSpinner = document.getElementById('buttonSpinner');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnLoader = document.getElementById('btnLoader');
 
     const responseSection = document.getElementById('responseSection');
     const answerText = document.getElementById('answerText');
@@ -684,15 +685,15 @@ document.addEventListener('DOMContentLoaded', function () {
     function showLoading() {
         loadingSection.style.display = 'block';
         askButton.disabled = true;
-        buttonText.style.display = 'none';
-        buttonSpinner.style.display = 'inline';
+        if (btnIcon) btnIcon.style.display = 'none';
+        if (btnLoader) btnLoader.style.display = 'flex';
     }
 
     function hideLoading() {
         loadingSection.style.display = 'none';
         askButton.disabled = false;
-        buttonText.style.display = 'inline';
-        buttonSpinner.style.display = 'none';
+        if (btnIcon) btnIcon.style.display = 'flex';
+        if (btnLoader) btnLoader.style.display = 'none';
     }
 
     function displayResponse(data) {
