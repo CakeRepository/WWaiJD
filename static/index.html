@@ -236,9 +236,16 @@
                                     </svg>
                                 </button>
                                 <button type="submit" id="askButton" class="icon-button">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                                    <span id="buttonText" class="visually-hidden">Ask</span>
-                                    <span id="buttonSpinner" class="spinner" style="display: none;">...</span>
+                                    <span id="btnIcon" class="btn-content-wrapper">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                                        <span id="buttonText" class="visually-hidden">Ask</span>
+                                    </span>
+                                    <span id="btnLoader" class="btn-loader-wrapper" style="display: none;">
+                                        <svg class="divine-loader" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+                                            <path class="spark-core" d="M12 1L15 9L23 12L15 15L12 23L9 15L1 12L9 9Z" fill="currentColor" />
+                                            <circle class="spark-ring" cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.6" />
+                                        </svg>
+                                    </span>
                                 </button>
                             </div>
                         </form>
