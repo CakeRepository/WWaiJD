@@ -33,6 +33,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const streamMeter = document.getElementById('streamMeter');
     const voiceButton = document.getElementById('voiceButton');
 
+    // Queue Elements
+    const queueDisplay = document.getElementById('queueDisplay');
+    const queuePeople = document.getElementById('queuePeople');
+    const queuePosNum = document.getElementById('queuePosNum');
+
     // Quiz Elements
     const quizContainer = document.getElementById('quizContainer');
     const quizQuestionArea = document.getElementById('quizQuestionArea');
@@ -485,13 +490,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     updateModeUI(context.mode);
                 }
 
-                if (eventType === 'passages') {
+                if (eventType === 'queue_update') {
+                    handleQueueUpdate(data.position);
+                } else if (eventType === 'passages') {
+                    hideQueue(); // Queue finished
                     passages = data.passages || [];
                     displayPassages(passages, data.version);
                     setTimeout(() => {
                         passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 80);
                 } else if (eventType === 'chunk') {
+                    hideQueue(); // Ensure queue is hidden
                     accumulatedAnswer += data.text || '';
                     answerText.innerHTML = renderMarkdown(accumulatedAnswer) + '<span class="typing-cursor"></span>';
                     setupBibleRefHoverPreviews();
@@ -505,6 +514,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Finalize output
+        hideQueue();
         answerText.innerHTML = renderMarkdown(accumulatedAnswer);
         setupBibleRefHoverPreviews();
         setStreamingState(false);
@@ -639,6 +649,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 passageDiv.appendChild(actions);
                 passagesContainer.appendChild(passageDiv);
             });
+        }
+    }
+
+    function handleQueueUpdate(position) {
+        if (!queueDisplay) return;
+
+        queueDisplay.classList.remove('is-hidden');
+        if (queuePosNum) queuePosNum.textContent = position;
+
+        if (queuePeople) {
+            // Update people icons based on position
+            // e.g., if position is 3, show 2 people ahead
+            let peopleHtml = '';
+            // Show up to 5 people
+            const peopleToShow = Math.min(position - 1, 5);
+            for (let i = 0; i < peopleToShow; i++) {
+                peopleHtml += '🧍';
+            }
+            if (position > 6) {
+                peopleHtml += '...';
+            }
+            // Add "You" marker if desired, or just list people ahead
+            queuePeople.innerHTML = peopleHtml;
+        }
+    }
+
+    function hideQueue() {
+        if (queueDisplay) {
+            queueDisplay.classList.add('is-hidden');
         }
     }
 

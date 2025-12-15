@@ -36,10 +36,13 @@ from json_bible_utils import (
     BIBLE_JSON_ROOT,
 )
 from rag_pipeline import BibleRAG, MODE_INSTRUCTIONS, DEFAULT_MODE
+from queue_manager import RequestQueue
 import database
 import markdown
+import time
 
 app = Flask(__name__, static_folder='static')
+request_queue = RequestQueue()
 BIBLE_DATA_DIR = (Path(__file__).parent / 'bible-data').resolve()
 BIBLE_JSON_DIR = BIBLE_DATA_DIR / 'json'
 
@@ -279,20 +282,27 @@ def ask_question():
                 'error': 'Question is required'
             }), 400
         
-        # Get response from RAG pipeline
-        result = rag.ask(question, mode=mode, version=version)
-        
-        if result.get('error'):
+        # Join queue and wait for turn
+        req_id = request_queue.join()
+        try:
+            request_queue.wait_for_turn_blocking(req_id)
+
+            # Get response from RAG pipeline
+            result = rag.ask(question, mode=mode, version=version)
+
+            if result.get('error'):
+                return jsonify({
+                    'error': result['answer']
+                }), 500
+
             return jsonify({
-                'error': result['answer']
-            }), 500
-        
-        return jsonify({
-            'answer': result['answer'],
-            'passages': result['passages'],
-            'mode': mode,
-            'version': version
-        })
+                'answer': result['answer'],
+                'passages': result['passages'],
+                'mode': mode,
+                'version': version
+            })
+        finally:
+            request_queue.leave(req_id)
         
     except Exception as e:
         print(f"Error processing question: {e}")
@@ -328,14 +338,20 @@ def generate_parable():
                 'error': 'Topic is required'
             }), 400
 
-        result = rag.generate_parable(topic)
+        # Join queue and wait for turn
+        req_id = request_queue.join()
+        try:
+            request_queue.wait_for_turn_blocking(req_id)
+            result = rag.generate_parable(topic)
 
-        if result.get('error'):
-            return jsonify({
-                'error': result['parable']
-            }), 500
+            if result.get('error'):
+                return jsonify({
+                    'error': result['parable']
+                }), 500
 
-        return jsonify(result)
+            return jsonify(result)
+        finally:
+            request_queue.leave(req_id)
 
     except Exception as e:
         print(f"Error generating parable: {e}")
@@ -375,7 +391,14 @@ def generate_parable_stream():
 
         def generate():
             """Generator function for SSE streaming."""
+            req_id = request_queue.join()
             try:
+                # Wait for turn
+                while not request_queue.is_turn(req_id):
+                    pos = request_queue.get_position(req_id)
+                    yield f"event: queue_update\ndata: {json.dumps({'position': pos})}\n\n"
+                    time.sleep(0.5)
+
                 # Retrieve relevant passages first
                 print(f"\n[PARABLE] Topic: (hidden)")
                 print("[INFO] Retrieving relevant passages...")
@@ -423,6 +446,8 @@ Create a modern-day parable that illustrates the biblical truth found in these v
             except Exception as e:
                 print(f"Error in streaming parable: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                request_queue.leave(req_id)
 
         return Response(
             stream_with_context(generate()),
@@ -475,7 +500,14 @@ def ask_question_stream():
         
         def generate():
             """Generator function for SSE streaming."""
+            req_id = request_queue.join()
             try:
+                # Wait for turn
+                while not request_queue.is_turn(req_id):
+                    pos = request_queue.get_position(req_id)
+                    yield f"event: queue_update\ndata: {json.dumps({'position': pos})}\n\n"
+                    time.sleep(0.5)
+
                 # Retrieve relevant passages first
                 print(f"\n[QUESTION] (hidden) ({version})")
                 print("[INFO] Retrieving relevant Bible passages...")
@@ -503,6 +535,8 @@ def ask_question_stream():
             except Exception as e:
                 print(f"Error in streaming: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                request_queue.leave(req_id)
         
         return Response(
             stream_with_context(generate()),
@@ -547,14 +581,20 @@ def generate_study():
                 'error': 'Topic is required'
             }), 400
         
-        result = rag.generate_study(topic)
-        
-        if result.get('error'):
-            return jsonify({
-                'error': result['study']
-            }), 500
-        
-        return jsonify(result)
+        # Join queue and wait for turn
+        req_id = request_queue.join()
+        try:
+            request_queue.wait_for_turn_blocking(req_id)
+            result = rag.generate_study(topic)
+
+            if result.get('error'):
+                return jsonify({
+                    'error': result['study']
+                }), 500
+
+            return jsonify(result)
+        finally:
+            request_queue.leave(req_id)
         
     except Exception as e:
         print(f"Error generating study: {e}")
@@ -590,14 +630,20 @@ def generate_prayer():
                 'error': 'Prayer request is required'
             }), 400
         
-        result = rag.generate_prayer(req_text)
-        
-        if result.get('error'):
-            return jsonify({
-                'error': result['prayer']
-            }), 500
-        
-        return jsonify(result)
+        # Join queue and wait for turn
+        req_id = request_queue.join()
+        try:
+            request_queue.wait_for_turn_blocking(req_id)
+            result = rag.generate_prayer(req_text)
+
+            if result.get('error'):
+                return jsonify({
+                    'error': result['prayer']
+                }), 500
+
+            return jsonify(result)
+        finally:
+            request_queue.leave(req_id)
         
     except Exception as e:
         print(f"Error generating prayer: {e}")
@@ -628,14 +674,20 @@ def generate_quiz():
         data = request.get_json(silent=True) or {}
         topic = data.get('topic', '').strip()
 
-        result = rag.generate_quiz(topic if topic else None)
+        # Join queue and wait for turn
+        req_id = request_queue.join()
+        try:
+            request_queue.wait_for_turn_blocking(req_id)
+            result = rag.generate_quiz(topic if topic else None)
 
-        if result.get('error'):
-            return jsonify({
-                'error': result.get('message', 'Failed to generate quiz')
-            }), 500
+            if result.get('error'):
+                return jsonify({
+                    'error': result.get('message', 'Failed to generate quiz')
+                }), 500
 
-        return jsonify(result)
+            return jsonify(result)
+        finally:
+            request_queue.leave(req_id)
 
     except Exception as e:
         print(f"Error generating quiz: {e}")
@@ -675,7 +727,14 @@ def generate_study_stream():
         
         def generate():
             """Generator function for SSE streaming."""
+            req_id = request_queue.join()
             try:
+                # Wait for turn
+                while not request_queue.is_turn(req_id):
+                    pos = request_queue.get_position(req_id)
+                    yield f"event: queue_update\ndata: {json.dumps({'position': pos})}\n\n"
+                    time.sleep(0.5)
+
                 # Retrieve relevant passages first
                 print(f"\n[STUDY] Topic: (hidden)")
                 print("[INFO] Retrieving relevant passages...")
@@ -728,6 +787,8 @@ Keep the tone encouraging and insightful.
             except Exception as e:
                 print(f"Error in streaming study: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                request_queue.leave(req_id)
         
         return Response(
             stream_with_context(generate()),
@@ -776,7 +837,14 @@ def generate_prayer_stream():
         
         def generate():
             """Generator function for SSE streaming."""
+            req_id = request_queue.join()
             try:
+                # Wait for turn
+                while not request_queue.is_turn(req_id):
+                    pos = request_queue.get_position(req_id)
+                    yield f"event: queue_update\ndata: {json.dumps({'position': pos})}\n\n"
+                    time.sleep(0.5)
+
                 # Retrieve relevant passages first
                 print(f"\n[PRAYER] Request: (hidden)")
                 print("[INFO] Retrieving relevant passages...")
@@ -825,6 +893,8 @@ Write a heartfelt, comforting prayer for them.
             except Exception as e:
                 print(f"Error in streaming prayer: {e}")
                 yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+            finally:
+                request_queue.leave(req_id)
         
         return Response(
             stream_with_context(generate()),
@@ -1651,8 +1721,8 @@ def main():
     print("\nPress Ctrl+C to stop the server", flush=True)
     print("=" * 60 + "\n", flush=True)
     
-    # Run with Waitress production server
-    serve(app, host='0.0.0.0', port=5000, threads=4)
+    # Run with Waitress production server (increased threads for queueing)
+    serve(app, host='0.0.0.0', port=5000, threads=12)
 
 
 if __name__ == '__main__':
