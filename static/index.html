@@ -281,6 +281,27 @@
             <section class="answer-lab" aria-live="polite">
                 <div class="response-wrapper">
                     <div id="responseSection" class="response-section is-hidden">
+
+                        <!-- Queue Visualization -->
+                        <div id="queueDisplay" class="queue-display is-hidden">
+                            <div class="train-station">
+                                <div class="train-track-container">
+                                    <div class="train-track">
+                                            <!-- Train icon -->
+                                        <div class="train-icon">🚆</div>
+                                        <!-- Queue line -->
+                                        <div class="queue-people" id="queuePeople">
+                                            <!-- Icons added dynamically -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="queue-status">
+                                    The server is busy. Your train is arriving shortly...
+                                    <div class="queue-pos-badge">Position: <span id="queuePosNum">1</span></div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="response-card">
                             <div class="response-heading">
                                 <h2>Answer</h2>
