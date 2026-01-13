@@ -192,9 +192,12 @@ def index():
     """
     try:
         database.increment_visit_count()
+        recent_shares = database.get_recent_shared_conversations(limit=6)
     except Exception as e:
-        print(f"Error incrementing visit count: {e}")
-    return render_template('index.html')
+        print(f"Error getting data: {e}")
+        recent_shares = []
+
+    return render_template('index.html', recent_shares=recent_shares)
 
 
 @app.route('/api/stats', methods=['GET'])
