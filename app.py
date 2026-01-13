@@ -194,7 +194,7 @@ def index():
         database.increment_visit_count()
     except Exception as e:
         print(f"Error incrementing visit count: {e}")
-    return send_from_directory('static', 'index.html')
+    return render_template('index.html')
 
 
 @app.route('/api/stats', methods=['GET'])

@@ -7,7 +7,6 @@ Allow: /static/
 Allow: /api/bible/
 
 # Prioritize main pages
-Allow: /static/index.html
 Allow: /static/bible.html
 Allow: /static/passage.html
 
