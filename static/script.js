@@ -1571,7 +1571,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const container = document.getElementById('communityQuestions');
         const list = document.getElementById('communityQuestionsList');
 
-        if (!container || !list) return;
+        // Only fetch if not already populated by SSR
+        if (!container || !list || list.children.length > 0) return;
 
         try {
             const response = await fetch('/api/recent-shares?limit=6');
@@ -1714,7 +1715,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // B: Open Bible reader
         if (e.key === 'b' && !e.ctrlKey && !e.metaKey) {
-            window.location.href = '/static/bible.html';
+            window.location.href = '/bible';
         }
     });
 });
