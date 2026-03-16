@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- Mobile & Utility -->
     <meta name="theme-color" content="#050c1f">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,44 +14,16 @@
     <meta name="robots" content="index, follow">
     <title>{{ title }}</title>
     <meta name="description" content="{{ description }}">
-    <meta name="keywords" content="bible passage, bible verse, scripture, KJV, King James Bible, bible reading, biblical text, holy scripture, {{ book }}, {{ book }} {{ chapter }}">
+    <meta name="keywords" content="bible passage, bible verse, scripture, KJV, King James Bible, bible reading, biblical text, holy scripture, {{ book }}, {{ book }} {{ chapter }}:{{ verse }}">
     <link rel="canonical" href="{{ canonical_url }}">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
-    <link rel="shortcut icon" href="/static/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ og_url }}">
-    <meta property="og:title" content="{{ og_title }}">
-    <meta property="og:description" content="{{ og_description }}">
-    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
-    <meta property="og:image:secure_url" content="https://wwaijd.org/img/wwaijd-metaimage.png">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{{ og_title }}">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ twitter_url }}">
-    <meta name="twitter:title" content="{{ twitter_title }}">
-    <meta name="twitter:description" content="{{ twitter_description }}">
-    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
-    
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    
+
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/passage.css">
+
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
     {{ schema_json | safe }}
     </script>
-    
-    <link rel="stylesheet" href="/static/passage.css">
 </head>
 <body>
     <div class="passage-wrapper">
@@ -62,10 +34,10 @@
                     ☀️
                 </button>
             </div>
-            <h1>{{ passage_title }}</h1>
+            <h1>{{ book }} {{ chapter }}:{{ verse }}</h1>
             <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <p class="passage-subtitle" style="margin: 0;">{{ passage_subtitle }}</p>
-                
+                <p class="passage-subtitle" style="margin: 0;">{{ version_name }}</p>
+
                 <div class="version-dropdown" id="versionDropdown">
                     <button class="version-btn" type="button" onclick="toggleVersionMenu(event)" aria-label="Select Bible Version">
                         <span class="current-version">{{ version|upper }}</span>
@@ -73,7 +45,7 @@
                     </button>
                     <div class="version-menu" role="menu">
                         {% for v in available_versions %}
-                        <a href="/bible/{{ v.code }}/{{ book }}/{{ chapter }}" class="version-option {% if version == v.code %}active{% endif %}" role="menuitem">
+                        <a href="/bible/{{ v.code }}/{{ book }}/{{ chapter }}/{{ verse }}" class="version-option {% if version == v.code %}active{% endif %}" role="menuitem">
                             <span class="version-code">{{ v.short }}</span>
                             <span class="version-name">{{ v.name }}</span>
                         </a>
@@ -85,19 +57,26 @@
 
         <main class="passage-card">
             <div class="passage-body">
-                {{ passage_content | safe }}
+                <div class="verse-row" style="margin-bottom: 2rem;">
+                    <span class="verse-number" style="font-size: 1.5rem; vertical-align: middle;">{{ verse }}</span>
+                    <span class="verse-text" style="font-size: 1.3rem; line-height: 1.6;">{{ verse_text }}</span>
+                </div>
+
+                {% if comparisons %}
+                <h3 style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">Compare Versions</h3>
+                <div class="comparisons-list">
+                    {% for comp in comparisons %}
+                    <div class="compare-item" style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-color); border-radius: 8px;">
+                        <strong style="color: var(--accent);">{{ comp.version_name }}</strong>
+                        <p style="margin: 0.5rem 0 0 0;">{{ comp.text }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
             </div>
-            
+
             <div class="chapter-nav">
-                {% if prev_chapter_url %}
-                <a href="{{ prev_chapter_url }}" class="nav-btn prev-btn">← Previous Chapter</a>
-                {% endif %}
-                
-                <a href="/bible" class="nav-btn index-btn">Bible Index</a>
-                
-                {% if next_chapter_url %}
-                <a href="{{ next_chapter_url }}" class="nav-btn next-btn">Next Chapter →</a>
-                {% endif %}
+                <a href="/bible/{{ version }}/{{ book }}/{{ chapter }}" class="nav-btn index-btn">Read Full Chapter</a>
             </div>
         </main>
 
@@ -107,11 +86,9 @@
     </div>
 
     <script>
-        // Simple night mode toggle (reused from original)
         const toggle = document.getElementById('nightModeToggle');
         const html = document.documentElement;
-        
-        // Check local storage
+
         if (localStorage.getItem('wwaijd-theme') === 'light') {
             html.classList.add('light-mode');
             toggle.textContent = '🌙';
@@ -124,14 +101,12 @@
             toggle.textContent = isLight ? '🌙' : '☀️';
         });
 
-        // Version Dropdown Logic
         function toggleVersionMenu(e) {
             e.stopPropagation();
             const dropdown = document.getElementById('versionDropdown');
             dropdown.classList.toggle('open');
         }
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             const dropdown = document.getElementById('versionDropdown');
             if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target)) {

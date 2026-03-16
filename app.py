@@ -194,7 +194,15 @@ def index():
         database.increment_visit_count()
     except Exception as e:
         print(f"Error incrementing visit count: {e}")
-    return render_template('index.html')
+
+    # Fetch recent shared questions for SEO and initial render
+    recent_shares = []
+    try:
+        recent_shares = database.get_recent_shared_conversations(limit=6)
+    except Exception as e:
+        print(f"Error fetching recent shares: {e}")
+
+    return render_template('index.html', recent_shares=recent_shares)
 
 
 @app.route('/api/stats', methods=['GET'])
@@ -1342,7 +1350,50 @@ def _find_chapter_markdown(book: str, chapter: int, version: str = DEFAULT_VERSI
     raise FileNotFoundError(f'Chapter not found: {book} {chapter} in {version}')
 
 
+
+@app.route('/bible')
+def bible_index_default():
+    """Serve the Bible index page for the default version."""
+    return bible_index(DEFAULT_VERSION)
+
+@app.route('/bible/<version>')
+def bible_index(version):
+    """Serve the Bible index page showing all books and chapters for SEO."""
+    # Normalize version
+    if version not in BIBLE_INDICES:
+        # Check if they are trying to access a book directly via legacy route (e.g. /bible/Genesis)
+        # This prevents 404s for old links
+        if normalize_book_name(version) and not version.lower() in [v.lower() for v in BIBLE_INDICES.keys()]:
+            # They meant to go to a chapter, but forgot the chapter number? Unlikely, but redirect to home just in case
+            pass
+        version = DEFAULT_VERSION
+
+    index = BIBLE_INDICES.get(version, [])
+
+    # Build version list for template
+    available_versions = []
+    for code in BIBLE_INDICES.keys():
+        available_versions.append({
+            'code': code,
+            'name': VERSION_NAMES.get(code, code.upper()),
+            'short': code.upper()
+        })
+    available_versions.sort(key=lambda v: (v['code'] != 'kjv', v['name']))
+
+    version_name = VERSION_NAMES.get(version, version.upper())
+    canonical_url = url_for('bible_index', version=version, _external=True) if version != DEFAULT_VERSION else url_for('bible_index_default', _external=True)
+
+    return render_template(
+        'bible_index.html',
+        index=index,
+        version=version,
+        version_name=version_name,
+        available_versions=available_versions,
+        canonical_url=canonical_url
+    )
+
 @app.route('/bible/<book>/<chapter>')
+
 def bible_chapter_legacy(book, chapter):
     """Serve a specific Bible chapter with SSR (default version)."""
     return bible_chapter(DEFAULT_VERSION, book, chapter)
@@ -1455,7 +1506,139 @@ def bible_chapter(version, book, chapter):
         abort(404)
 
 
+
+@app.route('/bible/<version>/<book>/<chapter>/<verse>')
+def bible_verse(version, book, chapter, verse):
+    """Serve a specific Bible verse with SSR and comparisons."""
+    try:
+        book_name = normalize_book_name(book)
+        chapter_num = int(chapter)
+        verse_num = int(verse)
+
+        verses = get_verses_for_chapter(version, book_name, chapter_num, BIBLE_DATA_DIR)
+
+        if not verses:
+            abort(404)
+
+        verse_text = None
+        for v_num_str, v_text in verses:
+            if int(v_num_str) == verse_num:
+                verse_text = v_text
+                break
+
+        if not verse_text:
+            abort(404)
+
+        # Get comparisons for other versions
+        comparisons = []
+        for v_code in BIBLE_INDICES.keys():
+            if v_code == version:
+                continue
+            try:
+                comp_verses = get_verses_for_chapter(v_code, book_name, chapter_num, BIBLE_DATA_DIR)
+                for comp_v_num, comp_text in comp_verses:
+                    if int(comp_v_num) == verse_num:
+                        comparisons.append({
+                            'version': v_code,
+                            'version_name': VERSION_NAMES.get(v_code, v_code.upper()),
+                            'text': comp_text
+                        })
+                        break
+            except Exception:
+                continue
+
+        proper_book_name = book_name
+        version_upper = version.upper()
+        version_name = VERSION_NAMES.get(version, version_upper)
+
+        title = f"{proper_book_name} {chapter_num}:{verse_num} - {version_name} | WWAIJD"
+        description = f"Read {proper_book_name} {chapter_num}:{verse_num} in the {version_name}. {verse_text[:100]}..."
+        canonical_url = url_for('bible_verse', version=version, book=proper_book_name, chapter=chapter_num, verse=verse_num, _external=True)
+
+        schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": f"{proper_book_name} {chapter_num}:{verse_num}",
+            "description": description,
+            "inLanguage": "en",
+            "isPartOf": {
+                "@type": "Book",
+                "name": "The Holy Bible",
+                "bookEdition": f"{version_name}"
+            }
+        }
+
+        available_versions = []
+        for code in BIBLE_INDICES.keys():
+            available_versions.append({
+                'code': code,
+                'name': VERSION_NAMES.get(code, code.upper()),
+                'short': code.upper()
+            })
+        available_versions.sort(key=lambda v: (v['code'] != 'kjv', v['name']))
+
+        return render_template(
+            'verse.html',
+            title=title,
+            description=description,
+            canonical_url=canonical_url,
+            schema_json=json.dumps(schema),
+            book=proper_book_name,
+            chapter=chapter_num,
+            verse=verse_num,
+            verse_text=verse_text,
+            version=version,
+            version_name=version_name,
+            available_versions=available_versions,
+            comparisons=comparisons
+        )
+    except Exception as e:
+        print(f"Error serving verse: {e}")
+        abort(404)
+
+
+# Common Bible topics for SEO
+BIBLE_TOPICS = [
+    "Love", "Forgiveness", "Faith", "Hope", "Peace", "Patience",
+    "Wisdom", "Strength", "Courage", "Grace", "Mercy", "Salvation",
+    "Anxiety", "Fear", "Healing", "Joy", "Marriage", "Money",
+    "Prayer", "Family", "Friendship", "Trust", "Worry", "Anger"
+]
+
+@app.route('/topics')
+def topics_index():
+    """Serve the topics index page for SEO."""
+    return render_template(
+        'topics_index.html',
+        topics=sorted(BIBLE_TOPICS)
+    )
+
+@app.route('/topics/<slug>')
+def topic_page(slug):
+    """Serve a specific topic page with retrieved passages for SEO."""
+    topic_name = slug.replace('-', ' ')
+
+    # Retrieve relevant passages
+    passages = []
+    if rag:
+        try:
+            passages = rag.retrieve_passages(topic_name, version=DEFAULT_VERSION)
+        except Exception as e:
+            print(f"Error retrieving passages for topic {topic_name}: {e}")
+
+    canonical_url = url_for('topic_page', slug=slug, _external=True)
+
+    return render_template(
+        'topic.html',
+        topic_name=topic_name,
+        passages=passages,
+        version=DEFAULT_VERSION,
+        canonical_url=canonical_url
+    )
+
 @app.route('/sitemap.xml')
+
+
 def sitemap():
     """
     Generate dynamic XML sitemap for SEO.
@@ -1476,10 +1659,32 @@ def sitemap():
     # Main pages
     main_pages = [
         {'loc': '/', 'priority': '1.0', 'changefreq': 'daily'},
-        {'loc': '/static/bible.html', 'priority': '0.9', 'changefreq': 'weekly'},
-        {'loc': '/static/passage.html', 'priority': '0.7', 'changefreq': 'monthly'},
+        {'loc': '/bible', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'loc': '/topics', 'priority': '0.9', 'changefreq': 'weekly'},
     ]
     
+    # Add topic pages
+    for topic in BIBLE_TOPICS:
+        slug = topic.lower().replace(' ', '-')
+        main_pages.append({
+            'loc': f'/topics/{slug}',
+            'priority': '0.8',
+            'changefreq': 'monthly'
+        })
+
+    # Add recent community questions
+    try:
+        shares = database.get_recent_shared_conversations(limit=50)
+        for share in shares:
+            main_pages.append({
+                'loc': f'/q/{share["id"]}',
+                'priority': '0.7',
+                'changefreq': 'yearly'
+            })
+    except Exception as e:
+        print(f"Warning: Could not fetch recent shares for sitemap: {e}")
+
+
     for page in main_pages:
         xml.append('  <url>')
         xml.append(f'    <loc>{base_url}{page["loc"]}</loc>')
@@ -1582,7 +1787,35 @@ def get_recent_shares():
         print(f"Error getting recent shares: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+def linkify_bible_references(html: str, version: str = DEFAULT_VERSION) -> str:
+    """
+    Converts Bible references in text to anchor tags for SEO and navigation.
+    Matches formats like "Proverbs 4:27" or "Matthew 5:3-10".
+    """
+    # Pattern to match Bible references like "Proverbs 4:27" or "Matthew 5:3-10"
+    # Matches: Book name (1-3 words) + Chapter:Verse or Chapter:Verse-Verse
+    bible_ref_pattern = re.compile(r'\b((?:[1-3]\s*)?[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(\d+):(\d+)(?:-(\d+))?')
+
+    def replacer(match):
+        book = match.group(1).strip()
+        chapter = match.group(2)
+        verse_start = match.group(3)
+        verse_end = match.group(4)
+
+        reference = f"{book} {chapter}:{verse_start}"
+        if verse_end:
+            reference += f"-{verse_end}"
+
+        safe_book = book.replace(' ', '%20')
+        url = f"/bible/{version}/{safe_book}/{chapter}#{verse_start}"
+
+        return f'<a href="{url}" class="bible-ref-link" data-book="{book}" data-chapter="{chapter}" data-verse-start="{verse_start}" data-verse-end="{verse_end or verse_start}" title="{reference}">{reference}</a>'
+
+    return bible_ref_pattern.sub(replacer, html)
+
 @app.route('/q/<share_id>')
+
 def shared_page(share_id):
     """
     Render a shared conversation page.
@@ -1608,6 +1841,7 @@ def shared_page(share_id):
                 
         # Render markdown answer to HTML
         answer_html = markdown.markdown(data['answer'])
+        answer_html = linkify_bible_references(answer_html, data.get('version', DEFAULT_VERSION))
         
         # Metadata
         title = f"{data['question']} - AI Jesus Answer | WWAIJD"
