@@ -7,6 +7,9 @@ Write-Host "  What Would AI Jesus Do - Quick Setup" -ForegroundColor Yellow
 Write-Host "===============================================" -ForegroundColor Cyan
 Write-Host ""
 
+$embedModel = "embeddinggemma"
+$llmModel = "gemma4:e2b"
+
 # Function to check if command exists
 function Test-Command {
     param($Command)
@@ -41,27 +44,27 @@ if (Test-Command ollama) {
     Write-Host "Checking Ollama models..." -ForegroundColor Yellow
     $models = ollama list | Out-String
     
-    if ($models -match "gemma") {
-        Write-Host "✓ Gemma model found" -ForegroundColor Green
+    if ($models -match [regex]::Escape($embedModel)) {
+        Write-Host "✓ $embedModel model found" -ForegroundColor Green
     } else {
-        Write-Host "⚠ Gemma model not found" -ForegroundColor Yellow
-        $response = Read-Host "Would you like to pull Gemma model now? (y/n)"
+        Write-Host "⚠ $embedModel model not found" -ForegroundColor Yellow
+        $response = Read-Host "Would you like to pull $embedModel now? (y/n)"
         if ($response -eq 'y') {
-            Write-Host "Pulling Gemma model (this may take a while)..." -ForegroundColor Yellow
-            ollama pull gemma
-            Write-Host "✓ Gemma model installed" -ForegroundColor Green
+            Write-Host "Pulling $embedModel model (this may take a while)..." -ForegroundColor Yellow
+            ollama pull $embedModel
+            Write-Host "✓ $embedModel model installed" -ForegroundColor Green
         }
     }
     
-    if ($models -match "qwen3-vl") {
-        Write-Host "✓ Qwen3-VL:4b model found" -ForegroundColor Green
+    if ($models -match [regex]::Escape($llmModel)) {
+        Write-Host "✓ $llmModel model found" -ForegroundColor Green
     } else {
-        Write-Host "⚠ Qwen3-VL:4b model not found" -ForegroundColor Yellow
-        $response = Read-Host "Would you like to pull Qwen3-VL:4b model now? (y/n)"
+        Write-Host "⚠ $llmModel model not found" -ForegroundColor Yellow
+        $response = Read-Host "Would you like to pull $llmModel now? (y/n)"
         if ($response -eq 'y') {
-            Write-Host "Pulling Qwen3-VL:4b model (this may take a while)..." -ForegroundColor Yellow
-            ollama pull qwen3-vl:4b
-            Write-Host "✓ Qwen3-VL:4b model installed" -ForegroundColor Green
+            Write-Host "Pulling $llmModel model (this may take a while)..." -ForegroundColor Yellow
+            ollama pull $llmModel
+            Write-Host "✓ $llmModel model installed" -ForegroundColor Green
         }
     }
 } else {

@@ -1,6 +1,6 @@
 """
 Script to process Bible JSON files and create a vector database
-using Ollama's Gemma embeddings via ChromaDB.
+using the configured Ollama embedding model via ChromaDB.
 
 Supports both JSON format (from arron-taylor/bible-versions) and legacy markdown files.
 Supports resuming interrupted builds and checking progress.
@@ -16,6 +16,7 @@ from bible_utils import (
     is_json_version,
     is_markdown_version,
 )
+from model_config import DEFAULT_EMBED_MODEL
 
 # Import JSON Bible utilities
 from json_bible_utils import (
@@ -213,7 +214,7 @@ def _format_verse_range(start: str, end: str | None) -> str:
 
 def create_embedding(text: str) -> Optional[List[float]]:
     """
-    Generate embeddings using Ollama's Gemma model.
+    Generate embeddings using the configured Ollama embedding model.
 
     Args:
         text: The text content to embed.
@@ -223,7 +224,7 @@ def create_embedding(text: str) -> Optional[List[float]]:
         or None if generation fails.
     """
     try:
-        response = ollama.embeddings(model='embeddinggemma', prompt=text)
+        response = ollama.embeddings(model=DEFAULT_EMBED_MODEL, prompt=text)
         return response['embedding']
     except Exception as e:
         print(f"Error generating embedding: {e}")
@@ -519,17 +520,17 @@ Examples:
         print(f"   Details: {e}")
         return
     
-    # Check if Gemma model is available
+    # Check if the configured embedding model is available
     try:
         models = ollama.list()
         model_names = [model['name'] for model in models.get('models', [])]
-        if not any('gemma' in name.lower() for name in model_names):
-            print("[!] Warning: Gemma model not found. Pulling it now...")
+        if not any(DEFAULT_EMBED_MODEL.lower() in name.lower() for name in model_names):
+            print(f"[!] Warning: {DEFAULT_EMBED_MODEL} model not found. Pulling it now...")
             print("   This may take a few minutes...")
-            ollama.pull('embeddinggemma')
-            print("[OK] Gemma model downloaded")
+            ollama.pull(DEFAULT_EMBED_MODEL)
+            print(f"[OK] {DEFAULT_EMBED_MODEL} model downloaded")
     except Exception as e:
-        print(f"[!] Could not verify Gemma model: {e}")
+        print(f"[!] Could not verify {DEFAULT_EMBED_MODEL} model: {e}")
     
     # Check existing database status
     if not args.resume and not args.fresh and Path("chroma_db").exists():

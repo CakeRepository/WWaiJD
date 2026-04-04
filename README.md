@@ -5,7 +5,7 @@ An AI-powered application that provides moral and spiritual guidance based on th
 ## ✨ Features
 
 - 📖 **Grounded in Scripture** - All answers based on the Bible (35+ translations available!)
-- 🤖 **Advanced AI** - Uses Ollama with Gemma embeddings and Gemma3:4b model
+- 🤖 **Advanced AI** - Uses Ollama with Gemma embeddings and Gemma 4 e2b (`gemma4:e2b`)
 - 🔍 **Smart Retrieval** - RAG pipeline finds the most relevant passages
 - 💬 **Beautiful Interface** - Clean, responsive web UI with gradient design
 - 📚 **Bible Reader** - Built-in Bible browser to read any book, chapter, or verse
@@ -23,7 +23,7 @@ An AI-powered application that provides moral and spiritual guidance based on th
 - Required Ollama models:
   ```bash
   ollama pull embeddinggemma
-  ollama pull gemma3:4b
+   ollama pull gemma4:e2b
   ```
 
 ### Installation
@@ -147,7 +147,7 @@ wwaijd/
 - **Backend**: Flask (Python web framework)
 - **Vector Database**: ChromaDB (stores Bible embeddings)
 - **Embeddings**: Ollama Gemma (converts text to vectors)
-- **LLM**: Ollama Gemma3:4b (generates compassionate responses)
+- **LLM**: Ollama Gemma 4 e2b (`gemma4:e2b`) (generates compassionate responses)
 - **Data Source**: [arron-taylor/bible-versions](https://github.com/arron-taylor/bible-versions) (35+ English translations)
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
 - **Server**: Waitress (production-ready WSGI server)
@@ -158,7 +158,7 @@ wwaijd/
 2. **Embedding generation** → Question converted to vector using Gemma
 3. **Semantic search** → ChromaDB finds 5 most relevant Bible passages
 4. **Context building** → Passages formatted with references
-5. **AI response** → Gemma3:4b generates compassionate answer as "AI Jesus"
+5. **AI response** → Gemma 4 e2b generates compassionate answer as "AI Jesus"
 6. **Display** → Answer shown with scripture references for transparency
 
 ## 📚 Additional Documentation
@@ -172,7 +172,7 @@ wwaijd/
 | Problem | Solution |
 |---------|----------|
 | "Ollama not running" | Start Ollama application |
-| "Model not found" | Run `ollama pull embeddinggemma` and `ollama pull gemma3:4b` |
+| "Model not found" | Run `ollama pull embeddinggemma` and `ollama pull gemma4:e2b` |
 | "Vector DB not found" | Run `python build_embeddings.py` |
 | Port 5000 in use | Change port in `app.py` (line 455) |
 | Slow first response | Models loading into memory (normal) |

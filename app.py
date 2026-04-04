@@ -35,6 +35,7 @@ from json_bible_utils import (
     get_testament,
     BIBLE_JSON_ROOT,
 )
+from model_config import DEFAULT_LLM_MODEL
 from rag_pipeline import BibleRAG, MODE_INSTRUCTIONS, DEFAULT_MODE
 from queue_manager import RequestQueue
 import database
@@ -436,7 +437,7 @@ Create a modern-day parable that illustrates the biblical truth found in these v
                 # Stream the response
                 print("[AI] Generating parable (streaming)...")
                 stream = ollama.generate(
-                    model=rag.llm_model if rag else 'gemma3:4b',
+                    model=rag.llm_model if rag else DEFAULT_LLM_MODEL,
                     prompt=prompt,
                     stream=True,
                     options={'temperature': 0.8},
@@ -777,7 +778,7 @@ Keep the tone encouraging and insightful.
                 # Stream the response
                 print("[AI] Generating Bible study (streaming)...")
                 stream = ollama.generate(
-                    model=rag.llm_model if rag else 'gemma3:4b',
+                    model=rag.llm_model if rag else DEFAULT_LLM_MODEL,
                     prompt=prompt,
                     stream=True,
                     options={'temperature': 0.7},
@@ -883,7 +884,7 @@ Write a heartfelt, comforting prayer for them.
                 # Stream the response
                 print("[AI] Generating prayer (streaming)...")
                 stream = ollama.generate(
-                    model=rag.llm_model if rag else 'gemma3:4b',
+                    model=rag.llm_model if rag else DEFAULT_LLM_MODEL,
                     prompt=prompt,
                     stream=True,
                     options={'temperature': 0.8},

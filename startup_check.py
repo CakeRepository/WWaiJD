@@ -7,6 +7,7 @@ import sys
 import subprocess
 import os
 from pathlib import Path
+from model_config import DEFAULT_EMBED_MODEL, DEFAULT_LLM_MODEL
 
 
 def check_python_version() -> bool:
@@ -56,7 +57,7 @@ def check_ollama_models() -> bool:
     """
     Check if the required Ollama models are available.
 
-    Verifies the presence of 'embeddinggemma' and 'gemma3:4b'.
+    Verifies the presence of the configured embedding and generation models.
 
     Args:
         None
@@ -69,22 +70,24 @@ def check_ollama_models() -> bool:
         models_list = ollama.list()
         model_names = [model['name'] for model in models_list.get('models', [])]
         
-        has_gemma_embed = any('embeddinggemma' in name.lower() for name in model_names)
-        has_gemma3 = any('gemma3:4b' in name.lower() for name in model_names)
+        embed_model = DEFAULT_EMBED_MODEL.lower()
+        llm_model = DEFAULT_LLM_MODEL.lower()
+        has_gemma_embed = any(embed_model in name.lower() for name in model_names)
+        has_llm_model = any(llm_model in name.lower() for name in model_names)
         
         if not has_gemma_embed:
-            print("⚠️  Embedding Gemma model not found")
-            print("   Run: ollama pull embeddinggemma")
+            print(f"⚠️  {DEFAULT_EMBED_MODEL} model not found")
+            print(f"   Run: ollama pull {DEFAULT_EMBED_MODEL}")
         else:
-            print("✅ Gemma embeddings model found")
+            print(f"✅ {DEFAULT_EMBED_MODEL} model found")
         
-        if not has_gemma3:
-            print("⚠️  Gemma3:4b model not found")
-            print("   Run: ollama pull gemma3:4b")
+        if not has_llm_model:
+            print(f"⚠️  {DEFAULT_LLM_MODEL} model not found")
+            print(f"   Run: ollama pull {DEFAULT_LLM_MODEL}")
         else:
-            print("✅ Gemma3:4b model found")
+            print(f"✅ {DEFAULT_LLM_MODEL} model found")
         
-        return has_gemma_embed and has_gemma3
+        return has_gemma_embed and has_llm_model
     except Exception as e:
         print(f"⚠️  Could not check Ollama models: {e}")
         return False

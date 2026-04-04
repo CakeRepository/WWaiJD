@@ -1,12 +1,13 @@
 """
 RAG Pipeline for What Would AI Jesus Do
-Retrieves relevant Bible passages and generates responses using Gemma3:4b
+Retrieves relevant Bible passages and generates responses using the configured Ollama model
 """
 
 import os
 import chromadb
 import ollama
 from typing import List, Dict, Optional, Generator, Any, Union
+from model_config import DEFAULT_EMBED_MODEL, DEFAULT_LLM_MODEL
 
 # Focus modes allow the caller to steer tone and structure without changing the UX copy.
 MODE_INSTRUCTIONS = {
@@ -17,8 +18,6 @@ MODE_INSTRUCTIONS = {
     'blessing': 'Respond briefly with encouragement plus a short closing prayer rooted in the cited verses.'
 }
 DEFAULT_MODE = 'balanced'
-DEFAULT_EMBED_MODEL = 'embeddinggemma'
-DEFAULT_LLM_MODEL = 'gemma3:4b'
 DEFAULT_EMBED_KEEP_ALIVE = os.getenv('WWAIJD_EMBED_KEEP_ALIVE', '0s')
 DEFAULT_LLM_KEEP_ALIVE = os.getenv('WWAIJD_LLM_KEEP_ALIVE', '120s')
 
@@ -41,8 +40,10 @@ class BibleRAG:
         Args:
             db_path: Path to the ChromaDB database directory. Defaults to "chroma_db".
             top_k: Number of relevant passages to retrieve for each query. Defaults to 5.
-            embedding_model: Name of the Ollama embedding model. Defaults to "embeddinggemma".
-            llm_model: Name of the Ollama generation model. Defaults to "gemma3:4b".
+            embedding_model: Name of the Ollama embedding model. Defaults to the configured
+                WWAIJD_EMBED_MODEL value.
+            llm_model: Name of the Ollama generation model. Defaults to the configured
+                WWAIJD_LLM_MODEL value.
             embed_keep_alive: Duration to keep the embedding model loaded in VRAM (e.g., '5m', 300).
                 Defaults to '0s' (immediate unload) to save resources.
             llm_keep_alive: Duration to keep the LLM loaded in VRAM. Defaults to '120s'.
@@ -250,7 +251,7 @@ Response:"""
         prompt = self._build_prompt(query, passages, selected_mode, version=version)
         
         try:
-            # Generate response using Gemma3:4b
+            # Generate response using the configured Ollama LLM.
             response = ollama.generate(
                 model=self.llm_model,
                 prompt=prompt,
@@ -327,7 +328,7 @@ Response:"""
         prompt = self._build_prompt(query, passages, selected_mode, version=version)
         
         try:
-            # Generate streaming response using Gemma3:4b
+            # Generate streaming response using the configured Ollama LLM.
             stream = ollama.generate(
                 model=self.llm_model,
                 prompt=prompt,

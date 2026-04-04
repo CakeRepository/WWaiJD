@@ -12,8 +12,8 @@ After installing Ollama, run these commands in your terminal:
 # Pull the Gemma embedding model (for creating vector embeddings)
 ollama pull embeddinggemma
 
-# Pull the Qwen3-VL:4b model (for generating responses)
-ollama pull qwen3-vl:4b
+# Pull the Gemma 4 e2b model (for generating responses)
+ollama pull gemma4:e2b
 ```
 
 **Note:** These models are large and may take some time to download.
@@ -111,7 +111,7 @@ You can also select different Bible versions (KJV, ESV, NIV, etc.) to see passag
 ### Slow responses
 - The first request may be slower as models load into memory
 - Subsequent requests should be faster
-- Larger models (like qwen3-vl:4b) require more RAM
+- Larger models (like gemma4:e2b) require more RAM
 
 ## Bible Data Source
 
@@ -138,7 +138,7 @@ Available versions include: KJV, ESV, NIV, NLT, NASB, NKJV, CSB, ASV, WEB, and m
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
 │  RAG        │─────▶│   ChromaDB   │      │   Ollama    │
 │  Pipeline   │      │  (Vectors)   │      │   Gemma     │
-│             │◀─────┤              │◀─────┤   Qwen3-VL  │
+│             │◀─────┤              │◀─────┤ Gemma 4 e2b │
 └─────────────┘      └──────────────┘      └─────────────┘
 ```
 
@@ -146,7 +146,7 @@ Available versions include: KJV, ESV, NIV, NLT, NASB, NKJV, CSB, ASV, WEB, and m
 2. Flask server receives the question
 3. RAG pipeline generates query embedding using Gemma
 4. ChromaDB retrieves relevant Bible passages
-5. Qwen3-VL generates a response based on the passages
+5. Gemma 4 e2b generates a response based on the passages
 6. Response is displayed to the user with source references
 
 ## Files Overview
