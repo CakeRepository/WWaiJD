@@ -169,6 +169,18 @@ document.addEventListener('DOMContentLoaded', function () {
         currentTool = tool;
         const config = TOOL_CONFIG[tool];
 
+        // Toggle visibility of prayer sharing checkbox
+        const prayerContainer = document.getElementById('prayerPublicContainer');
+        const prayerCheck = document.getElementById('prayerPublicCheck');
+        if (prayerContainer) {
+            if (tool === 'prayer') {
+                prayerContainer.style.display = 'flex';
+            } else {
+                prayerContainer.style.display = 'none';
+                if (prayerCheck) prayerCheck.checked = false;
+            }
+        }
+
         // Update buttons
         toolButtons.forEach(btn => {
             const isActive = btn.dataset.tool === tool;
@@ -281,11 +293,12 @@ document.addEventListener('DOMContentLoaded', function () {
     async function generatePrayer(request) {
         // Use streaming endpoint for faster responses
         setStreamingState(true);
+        const isPublic = document.getElementById('prayerPublicCheck')?.checked || false;
         try {
             const response = await fetch('/api/prayer-stream', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ request })
+                body: JSON.stringify({ request: request, public: isPublic })
             });
 
         if (!response.ok) {

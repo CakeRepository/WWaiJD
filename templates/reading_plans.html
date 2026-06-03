@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Spiritual Growth Reading Plans | WWAIJD</title>
+    <meta name="description" content="Browse multi-day Bible reading plans and spiritual study tracks to deepen your faith, find peace, and build a daily study habit.">
+    <link rel="canonical" href="https://wwaijd.org/plans">
+
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .plans-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            color: var(--text-color);
+        }
+        .plans-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+        .plans-header h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        .plans-header p {
+            font-size: 1.15rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media (min-width: 768px) {
+            .plans-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .plan-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            text-decoration: none;
+            color: var(--text-color);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            position: relative;
+            overflow: hidden;
+        }
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            border-color: var(--accent);
+        }
+        .plan-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+        .plan-desc {
+            font-size: 1rem;
+            line-height: 1.6;
+            opacity: 0.85;
+            margin-bottom: 1.5rem;
+        }
+        .plan-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            font-weight: 600;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.2rem;
+        }
+        .plan-length {
+            color: var(--accent);
+        }
+        .plan-progress {
+            opacity: 0.8;
+            font-style: italic;
+        }
+        .progress-bar-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(139, 90, 60, 0.08);
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="plans-container">
+        <header class="plans-header">
+            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1.5rem; display: inline-block; font-weight: 600;">← Back to WWAIJD</a>
+            <h1>Spiritual Growth Plans</h1>
+            <p>Commit to a multi-day journey of study and reflection. Deepen your understanding on crucial life topics.</p>
+        </header>
+
+        <div class="plans-grid">
+            {% for slug, plan in plans.items() %}
+            <a href="/plans/{{ slug }}" class="plan-card" data-slug="{{ slug }}">
+                <div>
+                    <h2 class="plan-title">{{ plan.title }}</h2>
+                    <p class="plan-desc">{{ plan.description }}</p>
+                </div>
+                <div class="plan-meta">
+                    <span class="plan-length">📅 {{ plan.days|length }} Days</span>
+                    <span class="plan-progress" id="progress-text-{{ slug }}">Not started</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-fill-{{ slug }}"></div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const planCards = document.querySelectorAll('.plan-card');
+            planCards.forEach(card => {
+                const slug = card.dataset.slug;
+                const completedStr = localStorage.getItem('wwaijd-plan-' + slug + '-completed') || '';
+                const completedDays = completedStr ? completedStr.split(',') : [];
+                
+                // Get plan total length
+                const totalDays = slug === 'anxiety' || slug === 'relationships' || slug === 'grief' || slug === 'purpose' ? 5 : 5;
+                const count = completedDays.length;
+                
+                const progressText = document.getElementById('progress-text-' + slug);
+                const progressFill = document.getElementById('progress-fill-' + slug);
+                
+                if (count > 0) {
+                    const percent = Math.min(100, Math.round((count / totalDays) * 100));
+                    progressFill.style.width = percent + '%';
+                    if (percent === 100) {
+                        progressText.textContent = '🎉 Completed!';
+                    } else {
+                        progressText.textContent = count + ' / ' + totalDays + ' Days';
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

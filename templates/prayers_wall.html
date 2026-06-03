@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community Prayer Wall | What Would AI Jesus Do? (WWAIJD)</title>
+    <meta name="description" content="View, share, and support others by praying for community prayer requests. Join in mutual spiritual encouragement anonymously.">
+    <link rel="canonical" href="https://wwaijd.org/prayers">
+
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .prayers-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            color: var(--text-color);
+        }
+        .prayers-header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+        }
+        .prayers-header h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        .prayers-header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        .prayers-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        .prayer-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .prayer-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+        .prayer-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+        .prayer-body {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+            white-space: pre-wrap;
+        }
+        .prayer-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.2rem;
+            margin-top: auto;
+        }
+        .date-badge {
+            font-size: 0.85rem;
+            opacity: 0.6;
+        }
+        .pray-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .pray-button:hover {
+            background: rgba(139, 90, 60, 0.1);
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+        .pray-button.clicked {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            animation: pulse-ring 0.4s ease-out;
+        }
+        .pray-count {
+            display: inline-block;
+            transition: transform 0.2s ease;
+        }
+        .pray-count.bump {
+            transform: scale(1.4);
+            font-weight: bold;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        .cta-box {
+            margin-top: 4.5rem;
+            text-align: center;
+            background: rgba(139, 90, 60, 0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+        }
+        .cta-box h2 {
+            font-size: 1.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            padding: 0.8rem 2.2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1.2rem;
+            transition: transform 0.2s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="prayers-container">
+        <header class="prayers-header">
+            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1.5rem; display: inline-block; font-weight: 600;">← Ask AI Jesus</a>
+            <h1>Community Prayer Wall</h1>
+            <p>Carry each other's burdens, and in this way you will fulfill the law of Christ. Read shared requests and join in prayer.</p>
+        </header>
+
+        <div class="prayers-list">
+            {% for prayer in prayers %}
+            <article class="prayer-card" id="card-{{ prayer.id }}">
+                <div>
+                    <h2 class="prayer-title">{{ prayer.title }}</h2>
+                    <p class="prayer-body">"{{ prayer.request }}"</p>
+                </div>
+                <div class="prayer-actions">
+                    <span class="date-badge">Submitted {{ prayer.created_at[:10] }}</span>
+                    <button class="pray-button" onclick="prayFor('{{ prayer.id }}', this)" aria-label="Pray for this request">
+                        <span>🙏 Prayed</span>
+                        <span class="pray-count" id="count-{{ prayer.id }}">{{ prayer.pray_count }}</span>
+                    </button>
+                </div>
+            </article>
+            {% else %}
+            <div style="text-align: center; padding: 4rem; opacity: 0.7;">
+                <p>No prayer requests are listed on the wall yet. Be the first to share one!</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="cta-box">
+            <h2>Need prayer?</h2>
+            <p>Generate a customized, biblically grounded prayer with AI Jesus and opt to share it on the wall.</p>
+            <a href="/" class="cta-btn">Submit a Prayer Request</a>
+        </div>
+    </div>
+
+    <script>
+        function prayFor(prayerId, button) {
+            // Prevent multiple clicks in same session
+            if (button.classList.contains('clicked')) return;
+            
+            button.classList.add('clicked');
+            const countSpan = document.getElementById('count-' + prayerId);
+            
+            fetch('/api/prayer/' + prayerId + '/pray', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    countSpan.textContent = data.pray_count;
+                    countSpan.classList.add('bump');
+                    setTimeout(() => {
+                        countSpan.classList.remove('bump');
+                    }, 250);
+                }
+            })
+            .catch(err => {
+                console.error('Error incrementing prayer count:', err);
+                button.classList.remove('clicked');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Daily Devotional & Verse of the Day | WWAIJD</title>
+    <meta name="description" content="Read today's Verse of the Day with a compassionate Bible devotional reflection and guided prayer from AI Jesus. Start your daily study habit.">
+    <link rel="canonical" href="https://wwaijd.org/devotional">
+
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .devo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            color: var(--text-color);
+        }
+        .devo-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .devo-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        .devo-date {
+            font-size: 1.1rem;
+            opacity: 0.75;
+            font-weight: 500;
+        }
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(243, 200, 102, 0.15);
+            border: 1px solid rgba(243, 200, 102, 0.3);
+            color: #d49510;
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-top: 1rem;
+            box-shadow: 0 4px 12px rgba(243, 200, 102, 0.08);
+        }
+        .devo-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            margin-bottom: 2.5rem;
+        }
+        .verse-section {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .verse-section h2 {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+        .verse-text {
+            font-family: 'Georgia', serif;
+            font-size: 1.4rem;
+            line-height: 1.7;
+            font-style: italic;
+            margin: 0 auto 1rem auto;
+            max-width: 600px;
+            color: var(--text-color);
+        }
+        .verse-ref {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-decoration: none;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+        .verse-ref:hover {
+            color: var(--accent-dark);
+            text-decoration: underline;
+        }
+        .reflection-section {
+            line-height: 1.8;
+            font-size: 1.12rem;
+            opacity: 0.95;
+            margin-bottom: 2.5rem;
+        }
+        .reflection-section p {
+            margin-bottom: 1.2rem;
+        }
+        .prayer-section {
+            background: rgba(139, 90, 60, 0.04);
+            border-left: 4px solid var(--accent);
+            border-radius: 4px 12px 12px 4px;
+            padding: 1.8rem;
+            line-height: 1.7;
+            font-size: 1.08rem;
+            font-style: italic;
+        }
+        .prayer-section h3 {
+            font-style: normal;
+            font-size: 1.15rem;
+            color: var(--accent);
+            margin-top: 0;
+            margin-bottom: 0.6rem;
+        }
+        .actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+        .btn-link {
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="devo-container">
+        <header class="devo-header">
+            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1.2rem; display: inline-block; font-weight: 600;">← Back to WWAIJD</a>
+            <h1>Daily Devotional</h1>
+            <div class="devo-date">{{ today_formatted }}</div>
+            
+            <div class="streak-badge" id="streakBadge" style="display: none;">
+                🔥 <span id="streakCount">1</span>-day study streak
+            </div>
+        </header>
+
+        <main class="devo-card">
+            <section class="verse-section">
+                <h2>Verse of the Day</h2>
+                <blockquote class="verse-text">"{{ devotional.verse_text }}"</blockquote>
+                <a href="/bible/{{ devotional.verse_ref.split(' ')[0] }}/{{ devotional.verse_ref.split(' ')[1].split(':')[0] }}#{{ devotional.verse_ref.split(':')[1] }}" class="verse-ref">
+                    — {{ devotional.verse_ref }}
+                </a>
+            </section>
+
+            <section class="reflection-section">
+                {{ devotional.reflection.replace('\n\n', '</p><p>') | safe }}
+            </section>
+
+            <section class="prayer-section">
+                <h3>Closing Prayer</h3>
+                <p style="margin: 0;">{{ devotional.prayer }}</p>
+            </section>
+        </main>
+
+        <div class="actions-row">
+            <a href="/plans" class="primary-button btn-link">Browse Study Plans</a>
+            <a href="/prayers" class="ghost-button btn-link">Visit Prayer Wall</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const todayStr = "{{ devotional.date_str }}"; // YYYY-MM-DD
+            
+            let lastRead = localStorage.getItem('wwaijd-last-read');
+            let streak = parseInt(localStorage.getItem('wwaijd-streak') || '0');
+            
+            if (lastRead !== todayStr) {
+                if (lastRead) {
+                    const lastReadDate = new Date(lastRead + 'T00:00:00');
+                    const todayDate = new Date(todayStr + 'T00:00:00');
+                    
+                    // Difference in days
+                    const diffTime = Math.abs(todayDate - lastReadDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        streak += 1;
+                    } else if (diffDays > 1) {
+                        streak = 1; // Reset streak
+                    }
+                } else {
+                    streak = 1; // First streak
+                }
+                
+                localStorage.setItem('wwaijd-last-read', todayStr);
+                localStorage.setItem('wwaijd-streak', streak.toString());
+            }
+            
+            if (streak > 0) {
+                document.getElementById('streakCount').textContent = streak;
+                document.getElementById('streakBadge').style.display = 'inline-flex';
+            }
+        });
+    </script>
+</body>
+</html>

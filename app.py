@@ -5,12 +5,13 @@ Main web server that connects the frontend to the RAG pipeline
 
 import os
 import sys
+import re
 
 # Force unbuffered output to prevent "hit enter" issue on some servers
 os.environ['PYTHONUNBUFFERED'] = '1'
 sys.stdout.reconfigure(line_buffering=True) if hasattr(sys.stdout, 'reconfigure') else None
 
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template, abort, url_for
+from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template, abort, url_for, redirect
 from waitress import serve
 from pathlib import Path
 import json
@@ -650,6 +651,23 @@ def generate_prayer():
                     'error': result['prayer']
                 }), 500
 
+            # Handle public sharing
+            is_public = data.get('public', False)
+            title = data.get('title', '').strip()
+            if is_public:
+                try:
+                    # Provide a default title if none specified
+                    if not title:
+                        title = "Prayer Request"
+                        if len(req_text) > 30:
+                            title = f"Prayer for {req_text[:27]}..."
+                        else:
+                            title = f"Prayer for {req_text}"
+                    prayer_id = database.save_public_prayer(title, req_text)
+                    result['public_id'] = prayer_id
+                except Exception as db_err:
+                    print(f"Error saving public prayer: {db_err}", flush=True)
+
             return jsonify(result)
         finally:
             request_queue.leave(req_id)
@@ -895,6 +913,21 @@ Write a heartfelt, comforting prayer for them.
                     if chunk.get('response'):
                         yield f"event: chunk\ndata: {json.dumps({'text': chunk['response']})}\n\n"
                     if chunk.get('done'):
+                        # Handle public sharing
+                        is_public = data.get('public', False)
+                        title = data.get('title', '').strip()
+                        if is_public:
+                            try:
+                                if not title:
+                                    title = "Prayer Request"
+                                    if len(req_text) > 30:
+                                        title = f"Prayer for {req_text[:27]}..."
+                                    else:
+                                        title = f"Prayer for {req_text}"
+                                database.save_public_prayer(title, req_text)
+                            except Exception as db_err:
+                                print(f"Error saving public prayer in stream: {db_err}", flush=True)
+
                         yield f"event: done\ndata: {json.dumps({'done': True})}\n\n"
                         print("[OK] Prayer generated")
                         break
@@ -994,7 +1027,7 @@ def get_random_verse():
     
     try:
         # Get the verse text
-        verses = get_verses_for_chapter(book, chapter, version, BIBLE_DATA_DIR)
+        verses = get_verses_for_chapter(version, book, chapter, BIBLE_DATA_DIR)
         verse_text = None
         for v_num, text in verses:
             if int(v_num) == verse_num:
@@ -1419,10 +1452,13 @@ def bible_chapter(version, book, chapter):
         
         # Format content as HTML
         passage_html = []
+        safe_book = proper_book_name.replace(' ', '%20')
         for v_num, v_text in verses:
             passage_html.append(
                 f'<div class="verse-row" id="{v_num}">'
-                f'<span class="verse-number">{v_num}</span> '
+                f'<a href="/bible/{version}/{safe_book}/{chapter_num}/{v_num}" class="verse-link" title="Read {proper_book_name} {chapter_num}:{v_num}">'
+                f'<span class="verse-number">{v_num}</span>'
+                f'</a> '
                 f'<span class="verse-text">{v_text}</span>'
                 f'</div>'
             )
@@ -1600,10 +1636,18 @@ def bible_verse(version, book, chapter, verse):
 
 # Common Bible topics for SEO
 BIBLE_TOPICS = [
-    "Love", "Forgiveness", "Faith", "Hope", "Peace", "Patience",
-    "Wisdom", "Strength", "Courage", "Grace", "Mercy", "Salvation",
-    "Anxiety", "Fear", "Healing", "Joy", "Marriage", "Money",
-    "Prayer", "Family", "Friendship", "Trust", "Worry", "Anger"
+    "Adultery", "Anger", "Anxiety", "Backsliding", "Baptism", "Bereavement", "Bitterness", "Blessing",
+    "Career", "Charity", "Children", "Comfort", "Compassion", "Confession", "Courage", "Covetousness",
+    "Death", "Debt", "Depression", "Devotion", "Discipline", "Divorce", "Doubt", "Enemies", "Envy",
+    "Eternity", "Faith", "Family", "Fasting", "Fear", "Fellowship", "Forgiveness", "Friendship",
+    "Generosity", "Giving", "Glory", "Gossip", "Grace", "Gratitude", "Grief", "Guilt", "Happiness",
+    "Healing", "Heaven", "Hell", "Holiness", "Honesty", "Hope", "Humility", "Idol", "Integrity",
+    "Jealousy", "Joy", "Judgment", "Justice", "Kindness", "Love", "Lust", "Marriage", "Mercy",
+    "Money", "Mourning", "Obedience", "Overcoming", "Parenting", "Patience", "Peace", "Persecution",
+    "Perseverance", "Pride", "Prayer", "Purpose", "Redemption", "Repentance", "Respect", "Resurrection",
+    "Sabbath", "Sacrifice", "Salvation", "Satan", "Scripture", "Self-control", "Sickness", "Sin",
+    "Soul", "Strength", "Suffering", "Temptation", "Thanksgiving", "Tithe", "Trials", "Trust",
+    "Truth", "Understanding", "Vanity", "Wisdom", "Work", "Worry", "Worship", "Youth"
 ]
 
 @app.route('/topics')
@@ -1627,65 +1671,86 @@ def topic_page(slug):
         except Exception as e:
             print(f"Error retrieving passages for topic {topic_name}: {e}")
 
+    # Check database cache for summary
+    overview = None
+    try:
+        overview = database.get_topic_overview(topic_name)
+    except Exception as e:
+        print(f"Warning: Could not fetch topic overview cache: {e}")
+
+    # If cache miss and rag is running and we have passages, generate overview
+    if not overview and rag and passages:
+        try:
+            print(f"[LLM] Caching overview for topic: {topic_name}...", flush=True)
+            context_text = "\n".join([f"- {p['reference']}: {p['text']}" for p in passages[:5]])
+            prompt = (
+                f"You are AI Jesus. Write a warm, compassionate, and concise overview (about 100-150 words) "
+                f"summarizing what the Bible teaches about: \"{topic_name}\".\n\n"
+                f"Relevant Scriptures:\n{context_text}\n\n"
+                f"Please write a devotional summary that encourages the reader, references the key themes of "
+                f"these verses, and speaks with gentle spiritual wisdom. Keep the tone encouraging, concise, "
+                f"and structured in 1-2 paragraphs. Do not mention that you were given passages or list them raw.\n\n"
+                f"Overview:"
+            )
+            response = ollama.generate(
+                model=rag.llm_model,
+                prompt=prompt,
+                options={'temperature': 0.7},
+                keep_alive=rag.llm_keep_alive
+            )
+            overview = response['response'].strip()
+            # Cache it
+            database.save_topic_overview(topic_name, overview)
+        except Exception as e:
+            print(f"Error generating LLM topic overview: {e}", flush=True)
+
     canonical_url = url_for('topic_page', slug=slug, _external=True)
 
     return render_template(
         'topic.html',
         topic_name=topic_name,
+        overview=overview,
         passages=passages,
         version=DEFAULT_VERSION,
         canonical_url=canonical_url
     )
 
 @app.route('/sitemap.xml')
-
-
-def sitemap():
-    """
-    Generate dynamic XML sitemap for SEO.
-
-    Includes main pages and all Bible books/chapters to help search engines
-    index the content.
-
-    Returns:
-        Response: XML sitemap content.
-    """
+def sitemap_index():
+    """Generate XML sitemap index pointing to sub-sitemaps for crawl budget optimization."""
     base_url = 'https://wwaijd.org'
     today = datetime.now().strftime('%Y-%m-%d')
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
     
-    # Start XML
+    sitemaps = [
+        '/sitemap_main.xml',
+        '/sitemap_topics.xml',
+        '/sitemap_questions.xml',
+        '/sitemap_bible.xml'
+    ]
+    for sm in sitemaps:
+        xml.append('  <sitemap>')
+        xml.append(f'    <loc>{base_url}{sm}</loc>')
+        xml.append(f'    <lastmod>{today}</lastmod>')
+        xml.append('  </sitemap>')
+    xml.append('</sitemapindex>')
+    return Response('\n'.join(xml), mimetype='application/xml')
+
+@app.route('/sitemap_main.xml')
+def sitemap_main():
+    """Sitemap for landing, bible index, topics index, and browse questions directory."""
+    base_url = 'https://wwaijd.org'
+    today = datetime.now().strftime('%Y-%m-%d')
     xml = ['<?xml version="1.0" encoding="UTF-8"?>']
     xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
     
-    # Main pages
     main_pages = [
         {'loc': '/', 'priority': '1.0', 'changefreq': 'daily'},
         {'loc': '/bible', 'priority': '0.9', 'changefreq': 'weekly'},
         {'loc': '/topics', 'priority': '0.9', 'changefreq': 'weekly'},
+        {'loc': '/questions', 'priority': '0.9', 'changefreq': 'daily'},
     ]
-    
-    # Add topic pages
-    for topic in BIBLE_TOPICS:
-        slug = topic.lower().replace(' ', '-')
-        main_pages.append({
-            'loc': f'/topics/{slug}',
-            'priority': '0.8',
-            'changefreq': 'monthly'
-        })
-
-    # Add recent community questions
-    try:
-        shares = database.get_recent_shared_conversations(limit=50)
-        for share in shares:
-            main_pages.append({
-                'loc': f'/q/{share["id"]}',
-                'priority': '0.7',
-                'changefreq': 'yearly'
-            })
-    except Exception as e:
-        print(f"Warning: Could not fetch recent shares for sitemap: {e}")
-
-
     for page in main_pages:
         xml.append('  <url>')
         xml.append(f'    <loc>{base_url}{page["loc"]}</loc>')
@@ -1693,45 +1758,342 @@ def sitemap():
         xml.append(f'    <changefreq>{page["changefreq"]}</changefreq>')
         xml.append(f'    <priority>{page["priority"]}</priority>')
         xml.append('  </url>')
+    xml.append('</urlset>')
+    return Response('\n'.join(xml), mimetype='application/xml')
+
+@app.route('/sitemap_topics.xml')
+def sitemap_topics():
+    """Sitemap for all expanded Bible topics."""
+    base_url = 'https://wwaijd.org'
+    today = datetime.now().strftime('%Y-%m-%d')
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
     
-    # Bible books and chapters
+    for topic in BIBLE_TOPICS:
+        slug = topic.lower().replace(' ', '-')
+        xml.append('  <url>')
+        xml.append(f'    <loc>{base_url}/topics/{slug}</loc>')
+        xml.append(f'    <lastmod>{today}</lastmod>')
+        xml.append('    <changefreq>monthly</changefreq>')
+        xml.append('    <priority>0.8</priority>')
+        xml.append('  </url>')
+    xml.append('</urlset>')
+    return Response('\n'.join(xml), mimetype='application/xml')
+
+@app.route('/sitemap_questions.xml')
+def sitemap_questions():
+    """Sitemap for shared QA conversation pages."""
+    base_url = 'https://wwaijd.org'
+    today = datetime.now().strftime('%Y-%m-%d')
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    
     try:
-        # Iterate through all available versions
-        # If BIBLE_INDICES is empty, try to build at least the default one
-        indices_to_process = BIBLE_INDICES if BIBLE_INDICES else {DEFAULT_VERSION: build_bible_index(BIBLE_DATA_DIR)}
+        shares = database.get_recent_shared_conversations(limit=10000)
+        for share in shares:
+            xml.append('  <url>')
+            xml.append(f'    <loc>{base_url}/q/{share["id"]}</loc>')
+            date_str = share.get('created_at', today)[:10]
+            xml.append(f'    <lastmod>{date_str}</lastmod>')
+            xml.append('    <changefreq>monthly</changefreq>')
+            xml.append('    <priority>0.7</priority>')
+            xml.append('  </url>')
+    except Exception as e:
+        print(f"Warning: Could not fetch shares for sitemap: {e}", flush=True)
         
+    xml.append('</urlset>')
+    return Response('\n'.join(xml), mimetype='application/xml')
+
+@app.route('/sitemap_bible.xml')
+def sitemap_bible():
+    """Sitemap for primary Bible version books and chapters."""
+    base_url = 'https://wwaijd.org'
+    today = datetime.now().strftime('%Y-%m-%d')
+    xml = ['<?xml version="1.0" encoding="UTF-8"?>']
+    xml.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    
+    try:
+        # Index books & chapters for key versions if present
+        main_versions = ['kjv', 'esv', 'niv', 'nlt']
+        indices_to_process = {}
+        for mv in main_versions:
+            if mv in BIBLE_INDICES:
+                indices_to_process[mv] = BIBLE_INDICES[mv]
+        
+        if not indices_to_process:
+            indices_to_process = BIBLE_INDICES if BIBLE_INDICES else {DEFAULT_VERSION: build_bible_index(BIBLE_DATA_DIR)}
+            
         for version_code, bible_index in indices_to_process.items():
             is_default = (version_code == DEFAULT_VERSION)
             
             for testament_data in bible_index:
                 for book_data in testament_data['books']:
                     book_name = book_data['name']
-                    # Use the actual chapters list from the index
                     for chapter_data in book_data['chapters']:
                         chapter_num = chapter_data['number']
-                        # URL encode book name
                         safe_book = book_name.replace(' ', '%20')
                         
-                        # Generate URL for this version
                         xml.append('  <url>')
                         if is_default:
-                            # Default version gets the clean short URL
                             xml.append(f'    <loc>{base_url}/bible/{safe_book}/{chapter_num}</loc>')
                         else:
-                            # Other versions get the version-prefixed URL
                             xml.append(f'    <loc>{base_url}/bible/{version_code}/{safe_book}/{chapter_num}</loc>')
-                            
                         xml.append(f'    <lastmod>{today}</lastmod>')
                         xml.append('    <changefreq>yearly</changefreq>')
                         xml.append('    <priority>0.6</priority>')
                         xml.append('  </url>')
-                        
     except Exception as e:
         print(f"Warning: Could not generate Bible URLs for sitemap: {e}", flush=True)
-    
+        
     xml.append('</urlset>')
-    
     return Response('\n'.join(xml), mimetype='application/xml')
+
+@app.route('/questions')
+@app.route('/questions/page/<int:page>')
+def questions_directory(page=1):
+    """Serve the paginated directory of community questions for SEO."""
+    limit = 24
+    try:
+        shares, total_count = database.get_shared_conversations_paginated(page=page, limit=limit)
+    except Exception as e:
+        print(f"Error fetching questions for page {page}: {e}", flush=True)
+        shares, total_count = [], 0
+
+    import math
+    total_pages = math.ceil(total_count / limit) if total_count > 0 else 1
+
+    # Safe page boundaries
+    if page < 1:
+        return redirect(url_for('questions_directory', page=1))
+    if page > total_pages and total_pages > 0:
+        return redirect(url_for('questions_directory', page=total_pages))
+
+    return render_template(
+        'questions_index.html',
+        shares=shares,
+        page=page,
+        total_pages=total_pages,
+        total_count=total_count
+    )
+
+@app.route('/prayers')
+def prayers_wall():
+    """Serve the Community Prayer Wall page."""
+    try:
+        prayers = database.get_public_prayers(limit=50)
+    except Exception as e:
+        print(f"Error fetching public prayers: {e}", flush=True)
+        prayers = []
+    return render_template('prayers_wall.html', prayers=prayers)
+
+@app.route('/api/prayer/<prayer_id>/pray', methods=['POST'])
+def increment_prayer(prayer_id):
+    """Increment the prayer count for a specific request."""
+    try:
+        new_count = database.increment_prayer_count(prayer_id)
+        return jsonify({'success': True, 'pray_count': new_count})
+    except Exception as e:
+        print(f"Error incrementing prayer count: {e}", flush=True)
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/devotional')
+def daily_devotional():
+    """Serve the daily devotional page with LLM-generated reflections."""
+    today = datetime.now()
+    date_str = today.strftime('%Y-%m-%d')
+    
+    try:
+        devotional = database.get_daily_devotional(date_str)
+    except Exception as e:
+        print(f"Warning: Could not fetch daily devotional cache: {e}", flush=True)
+        devotional = None
+        
+    if not devotional:
+        import random
+        day_of_year = today.timetuple().tm_yday
+        random.seed(day_of_year)
+        book, chapter_num, verse_num = random.choice(INSPIRING_VERSES)
+        
+        verse_text = "The Lord is my shepherd; I shall not want."
+        try:
+            verses = get_verses_for_chapter(DEFAULT_VERSION, book, chapter_num, BIBLE_DATA_DIR)
+            for v_num_str, text in verses:
+                if int(v_num_str) == verse_num:
+                    verse_text = text
+                    break
+        except Exception as e:
+            print(f"Error fetching verse for devotional: {e}", flush=True)
+            book, chapter_num, verse_num = "Psalm", 23, 1
+            
+        verse_ref = f"{book} {chapter_num}:{verse_num}"
+        
+        reflection = ""
+        prayer_text = ""
+        if rag:
+            try:
+                print(f"[LLM] Generating daily devotional for {date_str}...", flush=True)
+                prompt = (
+                    f"You are AI Jesus. Write a daily devotional reflection (about 120-150 words) "
+                    f"for today's Verse of the Day: {verse_ref} - \"{verse_text}\".\n\n"
+                    f"Provide spiritual encouragement, explain how this verse applies to our daily struggles, "
+                    f"and close with loving wisdom. Keep the tone warm, comforting, and structured in 2 short paragraphs."
+                )
+                response = ollama.generate(
+                    model=rag.llm_model,
+                    prompt=prompt,
+                    options={'temperature': 0.7},
+                    keep_alive=rag.llm_keep_alive
+                )
+                reflection = response['response'].strip()
+                
+                prompt_prayer = (
+                    f"Write a short, comforting prayer (about 40-60 words) closing the devotional for today's "
+                    f"verse: {verse_ref}. End with 'Amen.'."
+                )
+                response_prayer = ollama.generate(
+                    model=rag.llm_model,
+                    prompt=prompt_prayer,
+                    options={'temperature': 0.7},
+                    keep_alive=rag.llm_keep_alive
+                )
+                prayer_text = response_prayer['response'].strip()
+                
+                database.save_daily_devotional(date_str, verse_ref, verse_text, reflection, prayer_text)
+            except Exception as e:
+                print(f"Error generating LLM devotional: {e}", flush=True)
+                reflection = "May the peace of God, which surpasses all understanding, guard your heart and mind today."
+                prayer_text = "Dear Lord, guide us and fill us with your peace today. Amen."
+        else:
+            reflection = "May the peace of God, which surpasses all understanding, guard your heart and mind today."
+            prayer_text = "Dear Lord, guide us and fill us with your peace today. Amen."
+            
+        devotional = {
+            'date_str': date_str,
+            'verse_ref': verse_ref,
+            'verse_text': verse_text,
+            'reflection': reflection,
+            'prayer': prayer_text
+        }
+        
+    return render_template(
+        'devotional.html',
+        devotional=devotional,
+        today_formatted=today.strftime('%A, %B %d, %Y')
+    )
+
+READING_PLANS = {
+    'anxiety': {
+        'title': 'Overcoming Anxiety & Fear',
+        'description': 'A 5-day reading plan to find peace, courage, and trust in times of worry.',
+        'days': [
+            {'day': 1, 'ref': 'Psalm 23', 'focus': 'The Shepherd\'s Care'},
+            {'day': 2, 'ref': 'Philippians 4:6-7', 'focus': 'Prayer & Peace'},
+            {'day': 3, 'ref': 'Matthew 6:25-34', 'focus': 'Do Not Worry'},
+            {'day': 4, 'ref': 'Joshua 1:9', 'focus': 'Be Strong & Courageous'},
+            {'day': 5, 'ref': 'Isaiah 41:10', 'focus': 'I Will Strengthen You'}
+        ]
+    },
+    'relationships': {
+        'title': 'Loving Your Neighbor',
+        'description': 'A 5-day reading plan focused on patience, forgiveness, and unconditional love.',
+        'days': [
+            {'day': 1, 'ref': '1 Corinthians 13:4-7', 'focus': 'What Love Is'},
+            {'day': 2, 'ref': 'Ephesians 4:31-32', 'focus': 'Kindness & Forgiveness'},
+            {'day': 3, 'ref': 'Luke 6:27-36', 'focus': 'Loving Your Enemies'},
+            {'day': 4, 'ref': '1 John 4:7-12', 'focus': 'Love Comes From God'},
+            {'day': 5, 'ref': 'Colossians 3:12-14', 'focus': 'Clothed in Love'}
+        ]
+    },
+    'grief': {
+        'title': 'Comfort in Mourning & Loss',
+        'description': 'A 5-day reading plan for finding hope, consolation, and reassurance in times of grief.',
+        'days': [
+            {'day': 1, 'ref': 'Psalm 34:18', 'focus': 'Near to the Brokenhearted'},
+            {'day': 2, 'ref': 'Revelation 21:3-4', 'focus': 'No More Tears'},
+            {'day': 3, 'ref': 'John 11:25-26', 'focus': 'The Resurrection & Life'},
+            {'day': 4, 'ref': '2 Corinthians 1:3-4', 'focus': 'God of All Comfort'},
+            {'day': 5, 'ref': 'Psalm 147:3', 'focus': 'Heal the Brokenhearted'}
+        ]
+    },
+    'purpose': {
+        'title': 'Discovering God\'s Plan',
+        'description': 'A 5-day reading plan to find wisdom, guidance, and spiritual direction for your life path.',
+        'days': [
+            {'day': 1, 'ref': 'Jeremiah 29:11', 'focus': 'Plans for Hope & Future'},
+            {'day': 2, 'ref': 'Proverbs 3:5-6', 'focus': 'Trust in the Lord'},
+            {'day': 3, 'ref': 'Romans 8:28', 'focus': 'Called According to Purpose'},
+            {'day': 4, 'ref': 'Psalm 119:105', 'focus': 'Lamp Unto My Feet'},
+            {'day': 5, 'ref': 'Ephesians 2:10', 'focus': 'Created for Good Works'}
+        ]
+    }
+}
+
+@app.route('/plans')
+def reading_plans():
+    """List available multi-day reading plans."""
+    return render_template('reading_plans.html', plans=READING_PLANS)
+
+@app.route('/plans/<slug>')
+def reading_plan_detail(slug):
+    """View details of a specific reading plan and render dynamic contents."""
+    plan = READING_PLANS.get(slug)
+    if not plan:
+        abort(404)
+        
+    enriched_days = []
+    for day in plan['days']:
+        verse_text = ""
+        ref_pattern = re.compile(r'([1-3]?\s*[A-Za-z\s]+)\s+(\d+):(\d+)(?:-(\d+))?')
+        match = ref_pattern.match(day['ref'])
+        
+        chap_only_pattern = re.compile(r'^([1-3]?\s*[A-Za-z\s]+)\s+(\d+)$')
+        match_chap = chap_only_pattern.match(day['ref'])
+        
+        if match:
+            book = match.group(1).strip()
+            chapter_num = int(match.group(2))
+            verse_start = int(match.group(3))
+            
+            # Extract end verse securely (handling cases with and without group 4)
+            verse_end = verse_start
+            if len(match.groups()) >= 4 and match.group(4):
+                try:
+                    verse_end = int(match.group(4))
+                except (ValueError, TypeError):
+                    verse_end = verse_start
+            
+            try:
+                verses = get_verses_for_chapter(DEFAULT_VERSION, book, chapter_num, BIBLE_DATA_DIR)
+                selected = []
+                for v_num_str, text in verses:
+                    v_num = int(v_num_str)
+                    if verse_start <= v_num <= verse_end:
+                        selected.append(f"[{v_num}] {text}")
+                verse_text = " ".join(selected)
+            except Exception as e:
+                print(f"Error fetching verse for plan: {e}", flush=True)
+        elif match_chap:
+            book = match_chap.group(1).strip()
+            chapter_num = int(match_chap.group(2))
+            try:
+                verses = get_verses_for_chapter(DEFAULT_VERSION, book, chapter_num, BIBLE_DATA_DIR)
+                selected = [f"[{v_num}] {text}" for v_num, text in verses[:3]]
+                verse_text = " ".join(selected) + " ..."
+            except Exception as e:
+                print(f"Error fetching chapter for plan: {e}", flush=True)
+                
+        enriched_days.append({
+            'day': day['day'],
+            'ref': day['ref'],
+            'focus': day['focus'],
+            'text': verse_text
+        })
+        
+    return render_template(
+        'reading_plan_detail.html',
+        plan={**plan, 'days': enriched_days},
+        slug=slug
+    )
 
 
 @app.route('/api/share', methods=['POST'])

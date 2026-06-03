@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Community Bible Questions Archive - Page {{ page }} | WWAIJD</title>
+    <meta name="description" content="Browse spiritual and Bible questions asked by the community, with answers and scripture references from AI Jesus. Free Christian study resources.">
+    <link rel="canonical" href="https://wwaijd.org/questions{% if page > 1 %}/page/{{ page }}{% endif %}">
+
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .questions-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            color: var(--text-color);
+        }
+        .questions-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .questions-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        .questions-header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        .questions-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        @media (min-width: 768px) {
+            .questions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        .question-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+        .question-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-color: var(--accent);
+        }
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            line-height: 1.4;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: auto;
+        }
+        .mode-badge {
+            background: rgba(139, 90, 60, 0.12);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: capitalize;
+            font-weight: 500;
+        }
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 3.5rem;
+            font-size: 1rem;
+        }
+        .page-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .page-btn:hover {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .page-current {
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        .cta-box {
+            margin-top: 4rem;
+            text-align: center;
+            background: rgba(139, 90, 60, 0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 2.5rem 1.5rem;
+        }
+        .cta-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 1rem;
+            transition: transform 0.2s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="questions-container">
+        <header class="questions-header">
+            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1.5rem; display: inline-block; font-weight: 600;">← Ask AI Jesus</a>
+            <h1>Bible Questions Archive</h1>
+            <p>Explore what the Bible says about various real-life and theological situations asked by seekers worldwide.</p>
+        </header>
+
+        <div class="questions-grid">
+            {% for share in shares %}
+            <a href="/q/{{ share.id }}" class="question-card">
+                <div class="question-text">"{{ share.question }}"</div>
+                <div class="card-meta">
+                    <span class="mode-badge">{{ share.mode }} focus</span>
+                    <span class="date-str">{{ share.created_at[:10] }}</span>
+                </div>
+            </a>
+            {% else %}
+            <div style="text-align: center; grid-column: 1 / -1; padding: 3rem; opacity: 0.7;">
+                <p>No community questions have been shared yet. Be the first to ask and share!</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if total_pages > 1 %}
+        <div class="pagination">
+            {% if page > 1 %}
+            <a href="/questions/page/{{ page - 1 }}" class="page-btn">← Previous</a>
+            {% endif %}
+            <span class="page-current">Page {{ page }} of {{ total_pages }}</span>
+            {% if page < total_pages %}
+            <a href="/questions/page/{{ page + 1 }}" class="page-btn">Next →</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="cta-box">
+            <h2>Have a specific question?</h2>
+            <p>Ask AI Jesus today and receive an immediate answer grounded in scripture.</p>
+            <a href="/" class="cta-btn">Ask a Question</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -68,7 +68,14 @@ def check_ollama_models() -> bool:
     try:
         import ollama
         models_list = ollama.list()
-        model_names = [model['name'] for model in models_list.get('models', [])]
+        model_names = []
+        # Support both legacy dictionary response and new ListResponse object response
+        if hasattr(models_list, 'models'):
+            model_names = [m.model for m in models_list.models]
+        elif isinstance(models_list, dict):
+            model_names = [m.get('name', m.get('model', '')) for m in models_list.get('models', [])]
+        else:
+            model_names = [getattr(m, 'model', getattr(m, 'name', '')) for m in models_list]
         
         embed_model = DEFAULT_EMBED_MODEL.lower()
         llm_model = DEFAULT_LLM_MODEL.lower()

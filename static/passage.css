@@ -378,3 +378,24 @@ body.night-mode .version-option.active {
     color: #fff;
 }
 
+/* Verse Link styling for SEO crawling & direct verse comparison */
+.verse-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-flex;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.verse-link:hover {
+    transform: scale(1.15);
+}
+
+.verse-link:hover .verse-number {
+    color: var(--accent-dark);
+    opacity: 1;
+}
+
+body.night-mode .verse-link:hover .verse-number {
+    color: var(--accent-dark);
+}
+

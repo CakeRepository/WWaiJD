@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>What the Bible says about {{ topic_name }} | WWAIJD</title>
-    <meta name="description" content="Discover key Bible verses and passages about {{ topic_name|lower }}.">
+    <meta name="description" content="{% if overview %}{{ overview[:155] }}...{% else %}Discover key Bible verses and passages about {{ topic_name|lower }}.{% endif %}">
     <link rel="canonical" href="{{ canonical_url }}">
 
     <link rel="stylesheet" href="/static/style.css">
@@ -51,6 +51,13 @@
             <a href="/topics" style="color: var(--accent); text-decoration: none; margin-bottom: 1rem; display: inline-block;">← All Topics</a>
             <h1 style="text-transform: capitalize;">What the Bible says about: {{ topic_name }}</h1>
         </header>
+
+        {% if overview %}
+        <div class="topic-overview" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.8rem; margin-bottom: 2.5rem; border-left: 4px solid var(--accent); line-height: 1.7; font-size: 1.1rem; color: var(--text-color);">
+            <h2 style="margin-top: 0; font-size: 1.4rem; color: var(--accent); margin-bottom: 0.8rem;">Devotional Guidance</h2>
+            <div class="overview-text" style="opacity: 0.95;">{{ overview }}</div>
+        </div>
+        {% endif %}
 
         <div class="passages-list">
             {% for passage in passages %}
