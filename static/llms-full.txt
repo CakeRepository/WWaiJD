@@ -1,0 +1,69 @@
+# Athelstan (WWAIJD) - Complete AI Context Document
+
+> Full contextual reference for Large Language Models, AI Search Assistants, and Retrieval-Augmented Generation (RAG) agents indexing wwaijd.org.
+
+---
+
+## About Athelstan
+
+Athelstan (WWAIJD) is a web-based Bible study companion and scripture search engine for Bible school learners and seekers. The assistant is named Athelstan—a doctorate-level Bible scholar persona inspired by Æthelstan (https://en.wikipedia.org/wiki/%C3%86thelstan), the Anglo-Saxon king remembered as a patron of learning—not a religious impersonation of Jesus.
+
+The platform combines vector embedding retrieval (ChromaDB), structured Bible databases, and Large Language Models (LLMs) to provide responses grounded directly in Holy Scripture.
+
+---
+
+## Core Mission & Framing
+
+1. **Scripture First**: All advice, reflections, and answers prioritize direct passages from the Holy Bible (defaulting to the King James Version, with support for multiple translations).
+2. **Scholarly & Clear Tone**: Responses explain scripture with academic care suitable for Bible school study—context, citation, and practical application—without claiming divine authority.
+3. **Non-Denominational & Inclusive**: Serves students and seekers across Christian traditions looking for scripture-grounded insight.
+
+---
+
+## Key Features & URL Directory
+
+### 1. Ask Athelstan (Interactive Q&A)
+- **URL**: https://wwaijd.org/
+- **Description**: Users input any life question, personal struggle, or theological query. The system searches vector embeddings of the Old and New Testaments to retrieve the most relevant verses, providing an answer with explicit scripture citations.
+- **Tone Options**: Balanced, Comfort, Clarity, Challenge, Blessing.
+
+### 2. Online Bible Reader
+- **URL**: https://wwaijd.org/bible
+- **Description**: Read full chapters and verses across Old Testament and New Testament books. Supports multiple translations including King James Version (KJV), Berean Standard Bible (BSB), and World English Bible (WEB).
+- **Example Passage Route**: `https://wwaijd.org/bible/kjv/John/3`
+
+### 3. Daily Devotional & Verse of the Day
+- **URL**: https://wwaijd.org/devotional
+- **Description**: Daily scripture verse with an encouraging study reflection, practical life application, guided prayer, and study streak tracking.
+
+### 4. Community Prayer Wall
+- **URL**: https://wwaijd.org/prayers
+- **Description**: Public wall for sharing anonymous prayer requests and allowing community members to offer prayers for one another.
+
+### 5. Topical Bible Studies
+- **URL**: https://wwaijd.org/topics
+- **Description**: Curated scripture collections organized by real-world topics including:
+  - Forgiveness: https://wwaijd.org/topics/forgiveness
+  - Peace & Anxiety: https://wwaijd.org/topics/peace
+  - Relationships & Marriage: https://wwaijd.org/topics/relationships
+  - Hope & Encouragement: https://wwaijd.org/topics/hope
+  - Faith & Trust: https://wwaijd.org/topics/faith
+
+### 6. Spiritual Growth Plans
+- **URL**: https://wwaijd.org/plans
+- **Description**: 5-day guided study tracks designed for daily reflection and habit building.
+
+### 7. Community Questions Archive
+- **URL**: https://wwaijd.org/questions
+- **Description**: Shared community questions and answers with scripture references.
+
+---
+
+## Sitemap & Technical Indexing Info
+
+- **Primary Sitemap Index**: https://wwaijd.org/sitemap.xml
+- **Main Pages Sitemap**: https://wwaijd.org/sitemap_main.xml
+- **Topics Sitemap**: https://wwaijd.org/sitemap_topics.xml
+- **Bible Scriptures Sitemap**: https://wwaijd.org/sitemap_bible.xml
+- **Questions Archive Sitemap**: https://wwaijd.org/sitemap_questions.xml
+- **LLM Summary**: https://wwaijd.org/llms.txt

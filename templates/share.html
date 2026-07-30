@@ -12,10 +12,75 @@
     <meta name="rating" content="General">
 
     <meta name="robots" content="index, follow">
-    <title>{{ title }}</title>
+    <title>{{ title }} | Athelstan</title>
     <meta name="description" content="{{ description }}">
-    <meta name="keywords" content="bible question, AI Jesus, christian advice, bible study, {{ question }}">
+    <meta name="keywords" content="bible question, Athelstan, christian advice, bible study, {{ question }}">
     <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="Athelstan">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:title" content="{{ title }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ canonical_url }}">
+    <meta name="twitter:title" content="{{ title }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Schema.org JSON-LD Structured Data (QAPage) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "QAPage",
+          "@id": "{{ canonical_url }}#webpage",
+          "url": "{{ canonical_url }}",
+          "name": "{{ title|replace('\"', '\\\"') }}",
+          "mainEntity": {
+            "@type": "Question",
+            "name": "{{ question|replace('\"', '\\\"') }}",
+            "text": "{{ question|replace('\"', '\\\"') }}",
+            "answerCount": 1,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "{{ description|replace('\"', '\\\"') }}",
+              "url": "{{ canonical_url }}"
+            }
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "{{ canonical_url }}#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://wwaijd.org/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Questions Archive",
+              "item": "https://wwaijd.org/questions"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "{{ question[:30]|replace('\"', '\\\"') }}...",
+              "item": "{{ canonical_url }}"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -119,8 +184,8 @@
 
             <div class="flow-box" style="text-align: center; margin-top: 2rem;">
                 <h2>Have your own question?</h2>
-                <p style="color: var(--text-muted); margin-top: 0.5rem;">Ask AI Jesus for biblical guidance on any topic.</p>
-                <a href="/" class="nav-item is-primary" style="display: inline-block; margin-top: 1rem;">Ask a Question &rarr;</a>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Ask Athelstan for biblical guidance on any topic.</p>
+                <a href="/" class="nav-item is-primary" style="display: inline-block; margin-top: 1rem;">Ask Athelstan &rarr;</a>
             </div>
         </main>
 

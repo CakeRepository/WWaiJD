@@ -4,9 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>What the Bible says about {{ topic_name }} | WWAIJD</title>
-    <meta name="description" content="{% if overview %}{{ overview[:155] }}...{% else %}Discover key Bible verses and passages about {{ topic_name|lower }}.{% endif %}">
+    <title>What the Bible says about {{ topic_name }} | Athelstan</title>
+    <meta name="description" content="{% if overview %}{{ overview[:155] }}...{% else %}Discover key Bible verses, scripture passages, and spiritual devotional guidance about {{ topic_name|lower }}.{% endif %}">
+    <meta name="keywords" content="bible verses about {{ topic_name|lower }}, scripture on {{ topic_name|lower }}, what does the bible say about {{ topic_name|lower }}, {{ topic_name|lower }} in the bible, KJV {{ topic_name|lower }}">
     <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="Athelstan">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:title" content="What the Bible says about {{ topic_name }} | WWAIJD">
+    <meta property="og:description" content="{% if overview %}{{ overview[:155] }}...{% else %}Discover key Bible verses and passages about {{ topic_name|lower }}.{% endif %}">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ canonical_url }}">
+    <meta name="twitter:title" content="What the Bible says about {{ topic_name }} | WWAIJD">
+    <meta name="twitter:description" content="{% if overview %}{{ overview[:155] }}...{% else %}Discover key Bible verses and passages about {{ topic_name|lower }}.{% endif %}">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "ItemPage",
+          "@id": "{{ canonical_url }}#webpage",
+          "url": "{{ canonical_url }}",
+          "name": "What the Bible says about {{ topic_name }}",
+          "description": "{% if overview %}{{ overview[:155]|replace('\"', '\\\"') }}...{% else %}Key Bible verses and devotional passages about {{ topic_name|lower }}.{% endif %}"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "{{ canonical_url }}#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://wwaijd.org/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Topics",
+              "item": "https://wwaijd.org/topics"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "{{ topic_name }}",
+              "item": "{{ canonical_url }}"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/script.js"></script>
@@ -52,11 +108,11 @@
         <header class="site-header flow-box">
             <a href="/" class="header-brand">
                 <span class="header-brand-icon">✝️</span>
-                <span>What Would AI Jesus Do?</span>
+                <span>Athelstan</span>
             </a>
 
             <nav class="header-nav">
-                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/" class="nav-item is-primary">💬 Ask Athelstan</a>
                 <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
                 <a href="/devotional" class="nav-item">🔥 Devotional</a>
                 <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
@@ -97,7 +153,7 @@
         </div>
 
         <div class="flow-box" style="margin-top: 3rem; text-align: center;">
-             <a href="/?q=What+does+the+Bible+say+about+{{ topic_name|urlencode }}%3F" class="nav-item is-primary" style="display: inline-block;">Ask AI Jesus about {{ topic_name }} &rarr;</a>
+             <a href="/?q=What+does+the+Bible+say+about+{{ topic_name|urlencode }}%3F" class="nav-item is-primary" style="display: inline-block;">Ask Athelstan about {{ topic_name }} &rarr;</a>
         </div>
 
         <footer class="site-footer flow-box" style="margin-top: 3rem;">
@@ -109,7 +165,7 @@
                 <a href="/bible" class="footer-link">Read the Bible</a>
             </div>
             <div class="copyright">
-                &copy; 2025 What Would AI Jesus Do
+                &copy; 2025 Athelstan
             </div>
         </footer>
     </div>

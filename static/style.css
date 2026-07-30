@@ -213,24 +213,231 @@ body {
 }
 
 .theme-toggle-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--card-highlight);
-    color: var(--text-main);
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    display: none; /* Replaced by lower-left ambient book dock */
 }
 
-.theme-toggle-btn:hover {
-    background: rgba(243, 200, 102, 0.15);
-    border-color: var(--accent);
+/* Lower-left ambient controls (sound + paperwhite/dynamic book) */
+.ui-ambient-dock {
+    position: fixed;
+    left: 18px;
+    bottom: 18px;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 18px;
+    background: rgba(9, 17, 34, 0.88);
+    border: 1px solid rgba(243, 200, 102, 0.28);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    pointer-events: auto;
+}
+
+.ui-ambient-dock-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+    padding: 0;
+}
+
+.ui-ambient-dock-btn:hover {
+    background: rgba(243, 200, 102, 0.16);
+    border-color: rgba(243, 200, 102, 0.45);
     transform: translateY(-1px);
+}
+
+.ui-ambient-dock-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.ui-ambient-sound-btn.is-muted {
+    opacity: 0.55;
+}
+
+.ui-ambient-sound-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ui-ambient-sound-btn .sound-icon-off {
+    display: none;
+}
+
+.ui-ambient-sound-btn.is-muted .sound-icon-on {
+    display: none;
+}
+
+.ui-ambient-sound-btn.is-muted .sound-icon-off {
+    display: block;
+}
+
+/* Animated book: closed = Dynamic UI, open = Paperwhite */
+.ui-ambient-book-btn .book-3d {
+    width: 26px;
+    height: 22px;
+    position: relative;
+    perspective: 420px;
+    transform-style: preserve-3d;
+    display: block;
+}
+
+.ui-ambient-book-btn .book-spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 1px 0 0 1px;
+    background: linear-gradient(180deg, #d4b56a 0%, #8b6914 100%);
+    z-index: 5;
+    box-shadow: 0 0 6px rgba(243, 200, 102, 0.35);
+}
+
+.ui-ambient-book-btn .book-back,
+.ui-ambient-book-btn .book-pages,
+.ui-ambient-book-btn .book-front {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    right: 0;
+    bottom: 0;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    border-radius: 0 3px 3px 0;
+    backface-visibility: hidden;
+}
+
+.ui-ambient-book-btn .book-back {
+    background: linear-gradient(135deg, #1e2f54 0%, #152038 100%);
+    border: 1px solid rgba(243, 200, 102, 0.35);
+    z-index: 1;
+}
+
+.ui-ambient-book-btn .book-pages {
+    background: linear-gradient(180deg, #f7f2e8 0%, #ebe4d6 100%);
+    border: 1px solid rgba(180, 160, 120, 0.4);
+    z-index: 2;
+    transform: rotateY(-2deg);
+}
+
+.ui-ambient-book-btn .book-pages::before {
+    content: '';
+    position: absolute;
+    inset: 4px 4px 4px 6px;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent 0 3px,
+        rgba(140, 120, 90, 0.2) 3px 4px
+    );
+    border-radius: 1px;
+    opacity: 0;
+    transition: opacity 0.45s ease 0.15s;
+}
+
+.ui-ambient-book-btn .book-front {
+    background: linear-gradient(135deg, #2a3f6e 0%, #1a2744 55%, #24385f 100%);
+    border: 1px solid rgba(243, 200, 102, 0.5);
+    z-index: 4;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: transform 0.75s cubic-bezier(0.4, 0.05, 0.2, 1);
+    transform: rotateY(0deg);
+}
+
+.ui-ambient-book-btn .book-front::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 5px;
+    bottom: 5px;
+    border: 1px solid rgba(243, 200, 102, 0.28);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Open book = Paperwhite reading mode (cover swings open) */
+.ui-ambient-book-btn.is-open .book-front {
+    transform: rotateY(-155deg);
+}
+
+.ui-ambient-book-btn.is-open .book-pages {
+    transform: rotateY(-8deg);
+}
+
+.ui-ambient-book-btn.is-open .book-pages::before {
+    opacity: 0.85;
+}
+
+.ui-ambient-book-btn.is-animating .book-front,
+.ui-ambient-book-btn.is-animating .book-pages {
+    transition-duration: 0.75s;
+}
+
+body.paperwhite-mode .ui-ambient-dock {
+    background: rgba(255, 255, 255, 0.94);
+    border-color: #dcd6c8;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+}
+
+body.paperwhite-mode .ui-ambient-dock-btn {
+    background: #f7f4ee;
+    border-color: #dcd6c8;
+    color: #231f1b;
+}
+
+body.paperwhite-mode .ui-ambient-dock-btn:hover {
+    background: #ebe6db;
+    border-color: #b86e00;
+    transform: translateY(-1px);
+}
+
+body.paperwhite-mode .ui-ambient-sound-btn {
+    display: none;
+}
+
+body.paperwhite-mode .ui-ambient-book-btn .book-back,
+body.paperwhite-mode .ui-ambient-book-btn .book-front {
+    background: linear-gradient(135deg, #5c4a32 0%, #3d3224 100%);
+    border-color: #8b7355;
+}
+
+body.paperwhite-mode .ui-ambient-book-btn .book-front::after {
+    border-color: rgba(232, 210, 170, 0.35);
+}
+
+body.paperwhite-mode .ui-ambient-book-btn .book-front,
+body.paperwhite-mode .ui-ambient-book-btn .book-pages {
+    transition: transform 0.75s cubic-bezier(0.4, 0.05, 0.2, 1) !important;
+}
+
+@media (max-width: 768px) {
+    .ui-ambient-dock {
+        left: 12px;
+        bottom: 12px;
+        padding: 6px 8px;
+        gap: 8px;
+    }
+
+    .ui-ambient-dock-btn {
+        width: 40px;
+        height: 40px;
+    }
 }
 
 a {
@@ -2431,12 +2638,6 @@ body.paperwhite-mode #askButton {
     color: #ffffff !important;
 }
 
-body.paperwhite-mode .voice-button {
-    background: #f3eee3 !important;
-    color: #231f1b !important;
-    border-color: #dcd6c8 !important;
-}
-
 body.paperwhite-mode .passages-toggle-btn {
     background: #f7f4ed !important;
     border-color: #e2ddd3 !important;
@@ -2671,20 +2872,6 @@ body.paperwhite-mode .ai-followups {
     40% { transform: scale(1.2); opacity: 1; }
 }
 
-/* Voice Recognition Active State */
-.voice-button.is-listening {
-    background: rgba(239, 68, 68, 0.25) !important;
-    border-color: rgba(239, 68, 68, 0.6) !important;
-    color: #ef4444 !important;
-    animation: pulseRing 1.5s infinite;
-}
-
-@keyframes pulseRing {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
 /* Additional Paperwhite Theme Overrides */
 body.paperwhite-mode .chat-tone-pills {
     background: #f3eee3 !important;
@@ -2865,20 +3052,6 @@ body.paperwhite-mode .scroll-bottom-btn {
     40% { transform: scale(1.2); opacity: 1; }
 }
 
-/* Voice Recognition Active State */
-.voice-button.is-listening {
-    background: rgba(239, 68, 68, 0.25) !important;
-    border-color: rgba(239, 68, 68, 0.6) !important;
-    color: #ef4444 !important;
-    animation: pulseRing 1.5s infinite;
-}
-
-@keyframes pulseRing {
-    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
 /* Additional Paperwhite Theme Overrides */
 body.paperwhite-mode .chat-tone-pills {
     background: #f3eee3 !important;
@@ -2941,7 +3114,7 @@ body.paperwhite-mode #listenButton {
     display: none !important;
 }
 
-body.paperwhite-mode button,
+body.paperwhite-mode button:not(.ui-ambient-dock-btn),
 body.paperwhite-mode a,
 body.paperwhite-mode .starter-pill,
 body.paperwhite-mode .followup-chip-btn,
@@ -2956,7 +3129,7 @@ body.paperwhite-mode .chat-bubble {
     transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
-body.paperwhite-mode button:active,
+body.paperwhite-mode button:not(.ui-ambient-dock-btn):active,
 body.paperwhite-mode a:active,
 body.paperwhite-mode .starter-pill:active,
 body.paperwhite-mode .followup-chip-btn:active,

@@ -1,5 +1,5 @@
 """
-What Would AI Jesus Do - Flask Application
+Athelstan - Flask Application
 Main web server that connects the frontend to the RAG pipeline
 """
 
@@ -207,7 +207,9 @@ def index():
     except Exception as e:
         print(f"Error fetching recent shares: {e}")
 
-    return render_template('index.html', recent_shares=recent_shares)
+    initial_query = request.args.get('q') or request.args.get('question') or request.args.get('query') or ''
+
+    return render_template('index.html', recent_shares=recent_shares, initial_query=initial_query)
 
 
 @app.route('/api/stats', methods=['GET'])
@@ -245,6 +247,28 @@ def robots():
         Response: The robots.txt file content.
     """
     return send_from_directory('static', 'robots.txt')
+
+
+@app.route('/llms.txt')
+def llms_txt():
+    """
+    Serve llms.txt for AI search crawlers (llmstxt standard).
+
+    Returns:
+        Response: The llms.txt file content as text/markdown.
+    """
+    return send_from_directory('static', 'llms.txt', mimetype='text/markdown; charset=utf-8')
+
+
+@app.route('/llms-full.txt')
+def llms_full_txt():
+    """
+    Serve full AI context documentation for AI crawlers.
+
+    Returns:
+        Response: The llms-full.txt file content as text/markdown.
+    """
+    return send_from_directory('static', 'llms-full.txt', mimetype='text/markdown; charset=utf-8')
 
 
 @app.route('/img/<path:path>')
@@ -427,7 +451,7 @@ def generate_parable_stream():
                     for i, passage in enumerate(passages[:3], 1):
                         context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
 
-                prompt = f"""You are AI Jesus, a master storyteller. A user wants a parable about: "{topic}".
+                prompt = f"""You are Athelstan, a doctorate-level Bible scholar and teacher. A student wants a parable-style teaching about: "{topic}".
 
 {context}
 
@@ -531,14 +555,15 @@ def ask_question_stream():
                 yield f"event: passages\ndata: {json.dumps({'passages': passages, 'mode': mode, 'version': version})}\n\n"
                 
                 # Stream the response
-                print("[AI] Generating AI Jesus response (streaming)...")
+                print("[AI] Generating Athelstan response (streaming)...")
                 for chunk_data in rag.generate_response_stream(question, passages, mode=mode, version=version):
+                    if chunk_data.get('chunk'):
+                        # Send text chunk
+                        yield f"event: chunk\ndata: {json.dumps({'text': chunk_data['chunk']})}\n\n"
+                    
                     if chunk_data.get('error'):
                         yield f"event: error\ndata: {json.dumps({'error': chunk_data.get('chunk', 'Error occurred')})}\n\n"
                         break
-                    elif chunk_data.get('chunk'):
-                        # Send text chunk
-                        yield f"event: chunk\ndata: {json.dumps({'text': chunk_data['chunk']})}\n\n"
                     
                     if chunk_data.get('done'):
                         yield f"event: done\ndata: {json.dumps({'done': True, 'mode': mode})}\n\n"
@@ -783,7 +808,7 @@ def generate_study_stream():
                 for i, passage in enumerate(passages, 1):
                     context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
                     
-                prompt = f"""You are AI Jesus, a wise teacher. Create a short Bible study on the topic: "{topic}".
+                prompt = f"""You are Athelstan, a doctorate-level Bible scholar. Create a short Bible study on the topic: "{topic}".
         
 {context}
 
@@ -891,7 +916,7 @@ def generate_prayer_stream():
                     for i, passage in enumerate(passages[:3], 1):
                         context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
                 
-                prompt = f"""You are AI Jesus. A user has asked for prayer: "{req_text}".
+                prompt = f"""You are Athelstan, a doctorate-level Bible scholar. A student has asked for a scripture-rooted prayer: "{req_text}".
         
 {context}
 
@@ -1687,7 +1712,7 @@ def topic_page(slug):
             print(f"[LLM] Caching overview for topic: {topic_name}...", flush=True)
             context_text = "\n".join([f"- {p['reference']}: {p['text']}" for p in passages[:5]])
             prompt = (
-                f"You are AI Jesus. Write a warm, compassionate, and concise overview (about 100-150 words) "
+                f"You are Athelstan, a doctorate-level Bible scholar. Write a warm, clear, concise overview (about 100-150 words) "
                 f"summarizing what the Bible teaches about: \"{topic_name}\".\n\n"
                 f"Relevant Scriptures:\n{context_text}\n\n"
                 f"Please write a devotional summary that encourages the reader, references the key themes of "
@@ -1936,7 +1961,7 @@ def daily_devotional():
             try:
                 print(f"[LLM] Generating daily devotional for {date_str}...", flush=True)
                 prompt = (
-                    f"You are AI Jesus. Write a daily devotional reflection (about 120-150 words) "
+                    f"You are Athelstan, a doctorate-level Bible scholar. Write a daily study reflection (about 120-150 words) "
                     f"for today's Verse of the Day: {verse_ref} - \"{verse_text}\".\n\n"
                     f"Provide spiritual encouragement, explain how this verse applies to our daily struggles, "
                     f"and close with loving wisdom. Keep the tone warm, comforting, and structured in 2 short paragraphs."
@@ -2210,8 +2235,8 @@ def shared_page(share_id):
         answer_html = linkify_bible_references(answer_html, data.get('version', DEFAULT_VERSION))
         
         # Metadata
-        title = f"{data['question']} - AI Jesus Answer | WWAIJD"
-        description = f"AI Jesus answers: {data['question']}. Read the biblical perspective and scripture references."
+        title = f"{data['question']} - Athelstan Answer | WWAIJD"
+        description = f"Athelstan answers: {data['question']}. Read the biblical perspective and scripture references."
         canonical_url = url_for('shared_page', share_id=share_id, _external=True)
         
         # Schema.org
@@ -2229,7 +2254,7 @@ def shared_page(share_id):
                     "dateCreated": data['created_at'],
                     "author": {
                         "@type": "Organization",
-                        "name": "What Would AI Jesus Do"
+                        "name": "Athelstan"
                     }
                 }
             }
@@ -2308,7 +2333,7 @@ def main():
     This is the entry point for the production server.
     """
     print("=" * 60, flush=True)
-    print("What Would AI Jesus Do - Web Application", flush=True)
+    print("Athelstan - Web Application", flush=True)
     print("=" * 60, flush=True)
     
     if not rag:

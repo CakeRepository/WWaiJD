@@ -1,22 +1,47 @@
-# robots.txt for What Would AI Jesus Do (wwaijd.org)
-# Bible study and spiritual guidance application
+# robots.txt for Athelstan / WWAIJD (wwaijd.org)
+# AI-Powered Bible Study & Spiritual Guidance Platform
 
 User-agent: *
 Allow: /
 Allow: /static/
-Allow: /api/bible/
+Allow: /bible
+Allow: /topics
+Allow: /questions
+Allow: /devotional
+Allow: /plans
+Allow: /prayers
 
-# Prioritize main pages
-Allow: /static/bible.html
-Allow: /static/passage.html
-
-# Sitemap location
-Sitemap: https://wwaijd.org/sitemap.xml
-
-# Crawl delay to be respectful
-Crawl-delay: 1
-
-# Disallow admin or development paths (if any)
+# Disallow internal API write endpoints from search crawlers
+Disallow: /api/ask
+Disallow: /api/ask-stream
+Disallow: /api/prayer
+Disallow: /api/study
+Disallow: /api/quiz
 Disallow: /tmp/
 Disallow: /__pycache__/
 Disallow: /chroma_db/
+
+# Explicitly Allow Major AI Crawlers & LLM Search Indexers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemap Index Location
+Sitemap: https://wwaijd.org/sitemap.xml
+
+# LLM Context Discovery File (https://llmstxt.org/)
+LLM-Text: https://wwaijd.org/llms.txt

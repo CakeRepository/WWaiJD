@@ -1,31 +1,137 @@
 // Main application logic
 document.addEventListener('DOMContentLoaded', function () {
-    // Paperwhite Theme Switcher
+    // Paperwhite Theme Switcher + lower-left ambient dock
+    function ensureAmbientDock() {
+        let dock = document.getElementById('uiAmbientDock');
+        if (dock) return dock;
+
+        dock = document.createElement('div');
+        dock.id = 'uiAmbientDock';
+        dock.className = 'ui-ambient-dock';
+        dock.setAttribute('role', 'toolbar');
+        dock.setAttribute('aria-label', 'Display and sound controls');
+        dock.innerHTML = `
+            <button type="button" id="ambientSoundBtn" class="ui-ambient-dock-btn ui-ambient-sound-btn" title="Mute ambient sound" aria-pressed="false" aria-label="Mute ambient sound">
+                <svg class="sound-icon-on" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7"/>
+                    <path d="M18 6a8 8 0 0 1 0 12"/>
+                </svg>
+                <svg class="sound-icon-off" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                    <path d="M22 9l-6 6M16 9l6 6"/>
+                </svg>
+            </button>
+            <button type="button" id="ambientBookBtn" class="ui-ambient-dock-btn ui-ambient-book-btn" title="Switch to Paperwhite reading mode" aria-pressed="false" aria-label="Switch to Paperwhite reading mode">
+                <span class="book-3d" aria-hidden="true">
+                    <span class="book-back"></span>
+                    <span class="book-pages"></span>
+                    <span class="book-front"></span>
+                    <span class="book-spine"></span>
+                </span>
+            </button>
+        `;
+        document.body.appendChild(dock);
+
+        const soundBtn = document.getElementById('ambientSoundBtn');
+        const bookBtn = document.getElementById('ambientBookBtn');
+
+        // Sound mute only matters when the dynamic hope experience is present
+        if (!document.getElementById('hopeCanvas') && soundBtn) {
+            soundBtn.hidden = true;
+        }
+
+        if (soundBtn) {
+            soundBtn.addEventListener('click', () => {
+                const muted = !window.isAmbientSoundMuted();
+                localStorage.setItem('wwaijd_ambient_sound', muted ? 'muted' : 'on');
+                updateAmbientSoundButton(muted);
+            });
+        }
+
+        if (bookBtn) {
+            bookBtn.addEventListener('click', () => window.toggleTheme());
+        }
+
+        return dock;
+    }
+
+    function updateAmbientSoundButton(muted) {
+        const btn = document.getElementById('ambientSoundBtn');
+        if (!btn) return;
+        btn.classList.toggle('is-muted', muted);
+        btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+        btn.title = muted ? 'Unmute ambient sound' : 'Mute ambient sound';
+        btn.setAttribute('aria-label', muted ? 'Unmute ambient sound' : 'Mute ambient sound');
+    }
+
+    window.isAmbientSoundMuted = function () {
+        return localStorage.getItem('wwaijd_ambient_sound') === 'muted';
+    };
+
+    function updateThemeToggleButton(isPaperwhite, animate) {
+        const bookBtn = document.getElementById('ambientBookBtn');
+        if (!bookBtn) return;
+
+        if (animate) {
+            bookBtn.classList.add('is-animating');
+            // Force reflow so opening/closing always plays
+            void bookBtn.offsetWidth;
+        }
+
+        bookBtn.classList.toggle('is-open', isPaperwhite);
+        bookBtn.setAttribute('aria-pressed', isPaperwhite ? 'true' : 'false');
+
+        if (isPaperwhite) {
+            bookBtn.title = 'Switch to Dynamic UI';
+            bookBtn.setAttribute('aria-label', 'Switch to Dynamic UI (close book)');
+        } else {
+            bookBtn.title = 'Switch to Paperwhite reading mode';
+            bookBtn.setAttribute('aria-label', 'Switch to Paperwhite reading mode (open book)');
+        }
+
+        if (animate) {
+            window.setTimeout(() => bookBtn.classList.remove('is-animating'), 800);
+        }
+
+        // Keep legacy header buttons in sync if present (hidden via CSS)
+        document.querySelectorAll('.theme-toggle-btn').forEach((btn) => {
+            btn.innerHTML = isPaperwhite ? '✨ Dynamic UI' : '📖 Paperwhite';
+            btn.setAttribute('aria-label', isPaperwhite
+                ? 'Switch to Dynamic UI Mode'
+                : 'Switch to Kindle Paperwhite Reader Mode');
+        });
+    }
+
     function initPaperwhiteTheme() {
+        ensureAmbientDock();
         const savedTheme = localStorage.getItem('wwaijd_theme');
         const isPaperwhite = savedTheme === 'paperwhite';
         if (isPaperwhite) {
             document.body.classList.add('paperwhite-mode');
         }
-        updateThemeToggleButton(isPaperwhite);
-    }
-
-    function updateThemeToggleButton(isPaperwhite) {
-        const btn = document.getElementById('themeToggleBtn');
-        if (!btn) return;
-        if (isPaperwhite) {
-            btn.innerHTML = '✨ Dynamic UI';
-            btn.setAttribute('aria-label', 'Switch to Dynamic UI Mode');
-        } else {
-            btn.innerHTML = '📖 Paperwhite';
-            btn.setAttribute('aria-label', 'Switch to Kindle Paperwhite Reader Mode');
-        }
+        updateThemeToggleButton(isPaperwhite, false);
+        updateAmbientSoundButton(window.isAmbientSoundMuted());
     }
 
     window.toggleTheme = function () {
-        const isPaperwhite = document.body.classList.toggle('paperwhite-mode');
-        localStorage.setItem('wwaijd_theme', isPaperwhite ? 'paperwhite' : 'ui');
-        updateThemeToggleButton(isPaperwhite);
+        const bookBtn = document.getElementById('ambientBookBtn');
+        const willBePaperwhite = !document.body.classList.contains('paperwhite-mode');
+
+        // Play open/close first, then apply theme mid-animation
+        if (bookBtn) {
+            bookBtn.classList.add('is-animating');
+            bookBtn.classList.toggle('is-open', willBePaperwhite);
+        }
+
+        window.setTimeout(() => {
+            const isPaperwhite = document.body.classList.toggle('paperwhite-mode');
+            localStorage.setItem('wwaijd_theme', isPaperwhite ? 'paperwhite' : 'ui');
+            if (isPaperwhite && window.speechSynthesis && window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+            updateThemeToggleButton(isPaperwhite, false);
+        }, 280);
     };
 
     initPaperwhiteTheme();
@@ -62,7 +168,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchCard = document.querySelector('.search-card');
     const streamStatusText = document.getElementById('streamStatusText');
     const streamMeter = document.getElementById('streamMeter');
-    const voiceButton = document.getElementById('voiceButton');
 
     // Queue Elements
     const queueDisplay = document.getElementById('queueDisplay');
@@ -88,9 +193,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const TOOL_CONFIG = {
         ask: {
-            heading: 'Ask your Bible question',
-            placeholder: 'Ask your question... (e.g., What should I do when someone wrongs me?)',
-            buttonText: 'Ask',
+            heading: 'Ask Athelstan your Bible question',
+            placeholder: 'Ask Athelstan a question... (e.g., What does the Bible say about baptism?)',
+            buttonText: 'Ask Athelstan',
             endpoint: '/api/ask-stream'
         },
         study: {
@@ -126,27 +231,275 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const MODE_COPY = {
-        balanced: 'Balanced tone with gentle guidance.',
-        comfort: 'Softer encouragement with reminders of God\'s nearness.',
-        clarity: 'Direct, practical next steps.',
-        challenge: 'Loving conviction that calls for change.',
-        blessing: 'Brief encouragement with a closing blessing.'
+        balanced: 'A soft lean toward balanced, gentle guidance—Athelstan still chooses the form.',
+        comfort: 'A soft lean toward encouragement and God\'s nearness.',
+        clarity: 'A soft lean toward practical next steps when they help.',
+        challenge: 'A soft lean toward loving conviction for growth.',
+        blessing: 'A soft lean toward encouragement; a short blessing may close when it fits.'
     };
 
-    questionPills.forEach((pill) => {
+    // Chat Thread & Scroll Elements
+    const chatMessages = document.getElementById('chatMessages');
+    const chatWelcomeCard = document.getElementById('chatWelcomeCard');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+    const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+    const clearInputBtn = document.getElementById('clearInputBtn');
+    let activeAiBubbleObj = null;
+    let askAbortController = null;
+
+    function startNewChat() {
+        if (askAbortController) {
+            askAbortController.abort();
+            askAbortController = null;
+        }
+        if (window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+        }
+        lastResponseData = null;
+        activeAiBubbleObj = null;
+        setStreamingState(false);
+        hideError();
+        hideQueue();
+        hideLoading();
+        if (chatMessages) {
+            chatMessages.innerHTML = '';
+            if (chatWelcomeCard) {
+                chatWelcomeCard.style.display = 'flex';
+                chatMessages.appendChild(chatWelcomeCard);
+            }
+        }
+        if (scrollToBottomBtn) scrollToBottomBtn.style.display = 'none';
+        if (input) {
+            input.value = '';
+            input.focus();
+            if (typeof autoResizeInput === 'function') {
+                autoResizeInput();
+            } else {
+                input.dispatchEvent(new Event('input'));
+            }
+        }
+    }
+
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', startNewChat);
+    }
+
+    if (chatMessages && scrollToBottomBtn) {
+        chatMessages.addEventListener('scroll', () => {
+            const isScrolledUp = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight > 120;
+            scrollToBottomBtn.style.display = isScrolledUp ? 'inline-flex' : 'none';
+        });
+
+        scrollToBottomBtn.addEventListener('click', () => {
+            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+        });
+    }
+
+    function scrollToChatBottom() {
+        if (!chatMessages) return;
+        setTimeout(() => {
+            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+        }, 40);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function appendUserBubble(text) {
+        if (!chatMessages) return;
+        if (chatWelcomeCard) chatWelcomeCard.style.display = 'none';
+
+        const userBubble = document.createElement('div');
+        userBubble.className = 'chat-bubble user-bubble';
+        userBubble.innerHTML = `
+            <div class="user-bubble-content">${escapeHtml(text)}</div>
+        `;
+        chatMessages.appendChild(userBubble);
+        scrollToChatBottom();
+    }
+
+    function createAiBubble(mode, questionText) {
+        if (!chatMessages) return null;
+        if (chatWelcomeCard) chatWelcomeCard.style.display = 'none';
+
+        const bubbleId = 'ai-bubble-' + Date.now();
+        const modeLabel = (mode || currentMode || 'balanced').charAt(0).toUpperCase() + (mode || currentMode || 'balanced').slice(1);
+
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'chat-bubble ai-bubble';
+        aiBubble.id = bubbleId;
+        aiBubble.innerHTML = `
+            <div class="ai-bubble-header">
+                <div class="ai-avatar-badge">
+                    <span class="avatar-sparkle">✨</span>
+                    <span class="avatar-title">Athelstan</span>
+                </div>
+                <span class="mode-pill">${modeLabel} focus</span>
+            </div>
+            <div class="ai-bubble-body answer-text">
+                <div class="typing-dots"><span></span><span></span><span></span></div>
+            </div>
+            <div class="ai-passages-drawer" style="display: none;">
+                <button type="button" class="passages-toggle-btn">
+                    <span>📖 Scripture References (<span class="passages-count">0</span>)</span>
+                    <span class="drawer-arrow">▼</span>
+                </button>
+                <div class="passages-drawer-content passages-container" style="display: none;"></div>
+            </div>
+            <div class="ai-bubble-actions" style="display: none;">
+                <button type="button" class="ghost-button copy-msg-btn">📋 Copy</button>
+                <button type="button" class="ghost-button share-msg-btn">🔗 Share</button>
+                <button type="button" class="ghost-button listen-msg-btn">🔊 Listen</button>
+            </div>
+            <div class="ai-followups" style="display: none;"></div>
+        `;
+
+        chatMessages.appendChild(aiBubble);
+        scrollToChatBottom();
+
+        const toggleBtn = aiBubble.querySelector('.passages-toggle-btn');
+        const drawerContent = aiBubble.querySelector('.passages-drawer-content');
+        const arrow = aiBubble.querySelector('.drawer-arrow');
+
+        if (toggleBtn && drawerContent) {
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = drawerContent.style.display === 'none';
+                drawerContent.style.display = isHidden ? 'grid' : 'none';
+                if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+            });
+        }
+
+        activeAiBubbleObj = {
+            element: aiBubble,
+            body: aiBubble.querySelector('.ai-bubble-body'),
+            drawer: aiBubble.querySelector('.ai-passages-drawer'),
+            drawerContent: drawerContent,
+            countSpan: aiBubble.querySelector('.passages-count'),
+            actions: aiBubble.querySelector('.ai-bubble-actions'),
+            copyBtn: aiBubble.querySelector('.copy-msg-btn'),
+            shareBtn: aiBubble.querySelector('.share-msg-btn'),
+            listenBtn: aiBubble.querySelector('.listen-msg-btn'),
+            followups: aiBubble.querySelector('.ai-followups')
+        };
+
+        return activeAiBubbleObj;
+    }
+
+    function renderBubblePassages(container, passages, version) {
+        if (!container) return;
+        container.innerHTML = '';
+
+        passages.forEach(passage => {
+            const item = document.createElement('div');
+            item.className = 'passage-item bubble-passage-item';
+
+            const ref = document.createElement('div');
+            ref.className = 'passage-reference';
+            ref.textContent = passage.reference || buildFallbackReference(passage);
+
+            const text = document.createElement('div');
+            text.className = 'passage-text';
+            text.textContent = passage.text;
+
+            const actions = document.createElement('div');
+            actions.className = 'passage-actions';
+
+            if (passage.source_path) {
+                const link = document.createElement('a');
+                link.href = buildPassageViewerUrl(passage);
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = 'View in Bible';
+                actions.appendChild(link);
+            }
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.textContent = 'Copy Reference';
+            copyBtn.addEventListener('click', () => copyToClipboard(ref.textContent));
+            actions.appendChild(copyBtn);
+
+            item.appendChild(ref);
+            item.appendChild(text);
+            item.appendChild(actions);
+            container.appendChild(item);
+        });
+    }
+
+    function renderBubbleFollowups(container, promptText) {
+        if (!container) return;
+        container.innerHTML = '';
+        container.style.display = 'flex';
+
+        const followups = [
+            { icon: '❤️', text: 'God\'s Love', query: `How does God's love apply to this situation?` },
+            { icon: '🕊️', text: 'Pray for Love & Peace', query: `Please write a prayer filled with love & comfort for: ${promptText.slice(0, 60)}` },
+            { icon: '🤝', text: 'How to Show Love', query: `How can I show Christ's love to others in this situation?` },
+            { icon: '📖', text: 'Verses on Love', query: `What scriptures speak about God's love regarding this?` }
+        ];
+
+        followups.forEach(f => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'followup-chip-btn';
+            btn.innerHTML = `<span>${f.icon}</span> ${f.text}`;
+            btn.addEventListener('click', () => {
+                input.value = f.query;
+                autoResizeInput();
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    function toggleSpeechSynthesis(text, btnElement) {
+        if (!window.speechSynthesis) return;
+
+        if (document.body.classList.contains('paperwhite-mode')) {
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+            }
+            if (btnElement) btnElement.textContent = '🔊 Listen';
+            return;
+        }
+
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            if (btnElement) btnElement.textContent = '🔊 Listen';
+            return;
+        }
+
+        const cleanText = text.replace(/<[^>]*>?/gm, '').replace(/\*/g, '');
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = 0.95;
+        utterance.pitch = 1.0;
+
+        utterance.onend = () => {
+            if (btnElement) btnElement.textContent = '🔊 Listen';
+        };
+
+        if (btnElement) btnElement.textContent = '⏸️ Stop';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    document.querySelectorAll('.question-pill, .starter-pill').forEach((pill) => {
         pill.addEventListener('click', () => {
-            // If not in ask mode, switch to it
             if (currentTool !== 'ask') {
                 switchTool('ask');
             }
 
             const preset = (pill.dataset.question || pill.textContent || '').trim();
-            if (!preset) {
-                return;
-            }
+            if (!preset) return;
             input.value = preset;
-            input.focus();
-            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            autoResizeInput();
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
         });
     });
 
@@ -166,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (searchCard) searchCard.classList.remove('is-focused');
     });
 
-    // Auto-resize textarea
+    // Auto-resize textarea & Clear button handling
     function autoResizeInput() {
         input.style.height = 'auto';
         input.rows = 1;
@@ -174,16 +527,38 @@ document.addEventListener('DOMContentLoaded', function () {
         if (input.value) {
             input.style.height = input.scrollHeight + 'px';
         } else {
-            // Measure placeholder height
             const v = input.value;
             input.value = input.placeholder;
             const h = input.scrollHeight;
             input.value = v;
             input.style.height = h + 'px';
         }
+
+        if (clearInputBtn) {
+            clearInputBtn.style.display = input.value.trim() ? 'inline-flex' : 'none';
+        }
     }
 
     input.addEventListener('input', autoResizeInput);
+
+    if (clearInputBtn) {
+        clearInputBtn.addEventListener('click', () => {
+            input.value = '';
+            clearInputBtn.style.display = 'none';
+            autoResizeInput();
+            input.focus();
+        });
+    }
+
+    // Enter key sends message, Shift+Enter inserts newline
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (input.value.trim()) {
+                form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        }
+    });
 
     // Tool Switcher Logic
     toolButtons.forEach(button => {
@@ -199,7 +574,6 @@ document.addEventListener('DOMContentLoaded', function () {
         currentTool = tool;
         const config = TOOL_CONFIG[tool];
 
-        // Toggle visibility of prayer sharing checkbox
         const prayerContainer = document.getElementById('prayerPublicContainer');
         const prayerCheck = document.getElementById('prayerPublicCheck');
         if (prayerContainer) {
@@ -211,32 +585,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Update buttons
         toolButtons.forEach(btn => {
             const isActive = btn.dataset.tool === tool;
             btn.classList.toggle('is-active', isActive);
             btn.setAttribute('aria-selected', isActive);
         });
 
-        // Update UI
         if (searchHeading) searchHeading.textContent = config.heading;
         input.placeholder = config.placeholder;
         buttonText.textContent = config.buttonText;
 
-        // Clear input and focus
         input.value = '';
         autoResizeInput();
         input.focus();
 
-        // Hide previous results
         hideResponse();
         hideError();
 
-        // Hide quiz
         if (quizContainer) quizContainer.style.display = 'none';
-        if (currentTool === 'quiz') {
-             // For quiz, we want to show the container when starting
-        }
     }
 
     form.addEventListener('submit', async function (e) {
@@ -245,7 +611,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const value = input.value.trim();
         if (!value) return;
 
-        // Show loading state
+        appendUserBubble(value);
+
+        input.value = '';
+        autoResizeInput();
+
         showLoading();
         hideResponse();
         hideError();
@@ -253,8 +623,7 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             if (currentTool === 'ask') {
                 persistRecentQuestion(value);
-                persistNotes(); // autosave any notes before streaming
-                // Use streaming endpoint
+                persistNotes();
                 await askQuestionStream(value);
             } else if (currentTool === 'study') {
                 await generateStudy(value);
@@ -277,7 +646,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function askQuestionStream(question) {
         const version = document.getElementById('versionSelector').value;
-        // Handle streaming response from the server
+        if (askAbortController) {
+            askAbortController.abort();
+        }
+        askAbortController = new AbortController();
+        const signal = askAbortController.signal;
         setStreamingState(true);
         try {
             const response = await fetch('/api/ask-stream', {
@@ -285,7 +658,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ question: question, mode: currentMode, version: version })
+                body: JSON.stringify({ question: question, mode: currentMode, version: version }),
+                signal
             });
 
             if (!response.ok) {
@@ -294,13 +668,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             await streamResponse(response, { mode: currentMode, question: question, version: version });
+        } catch (err) {
+            if (err && err.name === 'AbortError') {
+                return;
+            }
+            throw err;
         } finally {
+            if (askAbortController && askAbortController.signal === signal) {
+                askAbortController = null;
+            }
             setStreamingState(false);
         }
     }
 
     async function generateStudy(topic) {
-        // Use streaming endpoint for faster responses
         setStreamingState(true);
         try {
             const response = await fetch('/api/study-stream', {
@@ -321,7 +702,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     async function generatePrayer(request) {
-        // Use streaming endpoint for faster responses
         setStreamingState(true);
         const isPublic = document.getElementById('prayerPublicCheck')?.checked || false;
         try {
@@ -331,19 +711,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify({ request: request, public: isPublic })
             });
 
-        if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to generate prayer');
-        }
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to generate prayer');
+            }
 
-        await streamResponse(response, { mode: 'prayer', question: `Prayer for: ${request}` });
-    } finally {
-        setStreamingState(false);
-    }
+            await streamResponse(response, { mode: 'prayer', question: `Prayer for: ${request}` });
+        } finally {
+            setStreamingState(false);
+        }
     }
 
     async function generateParable(topic) {
-        // Use streaming endpoint
         setStreamingState(true);
         try {
             const response = await fetch('/api/parable-stream', {
@@ -379,19 +758,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const data = await response.json();
             
-            // Display results
-            responseSection.classList.remove('is-hidden');
+            const currentBubble = createAiBubble('search', `Search: ${query}`);
+            if (currentBubble) {
+                currentBubble.body.innerHTML = `<p>Found <strong>${data.count}</strong> relevant passages for: <em>${query}</em></p>`;
+                if (data.passages && data.passages.length > 0) {
+                    currentBubble.countSpan.textContent = data.passages.length;
+                    currentBubble.drawer.style.display = 'block';
+                    currentBubble.drawerContent.style.display = 'grid';
+                    renderBubblePassages(currentBubble.drawerContent, data.passages);
+                }
+            }
+
+            displayPassages(data.passages);
             hideError();
             hideLoading();
-            
-            // Update answer text to show summary
-            answerText.innerHTML = `<p>Found <strong>${data.count}</strong> relevant passages for: <em>${query}</em></p>`;
-            
-            displayPassages(data.passages);
-            
-            setTimeout(() => {
-                responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 80);
+            scrollToChatBottom();
 
         } finally {
             setStreamingState(false);
@@ -416,9 +797,6 @@ document.addEventListener('DOMContentLoaded', function () {
             currentQuizData = data;
 
             renderQuiz(data);
-
-            // Hide normal response section
-            responseSection.classList.add('is-hidden');
             hideLoading();
 
         } finally {
@@ -426,71 +804,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    function renderQuiz(data) {
-        if (!quizContainer || !quizQuestionArea) return;
-
-        quizContainer.style.display = 'block';
-        quizFeedback.style.display = 'none';
-        nextQuizBtn.style.display = 'none';
-
-        let html = `<div class="quiz-question">${data.question}</div>`;
-        html += `<div class="quiz-options">`;
-
-        data.options.forEach((opt, idx) => {
-            html += `<button type="button" class="quiz-option" data-index="${idx}">${opt}</button>`;
-        });
-
-        html += `</div>`;
-
-        quizQuestionArea.innerHTML = html;
-
-        // Add listeners
-        const options = quizQuestionArea.querySelectorAll('.quiz-option');
-        options.forEach(btn => {
-            btn.addEventListener('click', () => handleQuizAnswer(parseInt(btn.dataset.index)));
-        });
-
-        setTimeout(() => {
-            quizContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 80);
-    }
-
-    function handleQuizAnswer(selectedIndex) {
-        if (!currentQuizData) return;
-
-        const options = quizQuestionArea.querySelectorAll('.quiz-option');
-        const correctIndex = currentQuizData.correct_index;
-
-        // Disable all buttons
-        options.forEach(btn => btn.disabled = true);
-
-        // Highlight correct and incorrect
-        options[correctIndex].classList.add('correct');
-        if (selectedIndex !== correctIndex) {
-            options[selectedIndex].classList.add('incorrect');
-        }
-
-        // Show feedback
-        const isCorrect = selectedIndex === correctIndex;
-        quizFeedback.innerHTML = `
-            <h3>${isCorrect ? 'Correct! 🎉' : 'Not quite.'}</h3>
-            <p>${currentQuizData.explanation}</p>
-            <p><small>Reference: ${currentQuizData.reference}</small></p>
-        `;
-        quizFeedback.style.display = 'block';
-
-        // Show next button
-        nextQuizBtn.style.display = 'inline-block';
-        nextQuizBtn.onclick = () => {
-             // Trigger another quiz generation with same topic if present
-             const topic = input.value.trim();
-             showLoading();
-             generateQuiz(topic);
-        };
-    }
-
     async function streamResponse(response, context = {}) {
-        // Unified SSE handler for all streaming endpoints
         const reader = response.body?.getReader();
         if (!reader) {
             throw new Error('Streaming is not supported in this browser.');
@@ -502,15 +816,12 @@ document.addEventListener('DOMContentLoaded', function () {
         let passages = [];
         let finished = false;
 
-        answerText.innerHTML = '<span class="typing-cursor"></span>';
-        responseSection.classList.remove('is-hidden');
+        const currentBubble = createAiBubble(context.mode || currentMode, context.question);
+
+        if (answerText) answerText.innerHTML = '<span class="typing-cursor"></span>';
         hideError();
         hideLoading();
         setStreamingState(true);
-
-        setTimeout(() => {
-            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 80);
 
         while (!finished) {
             const { done, value } = await reader.read();
@@ -537,52 +848,76 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (eventType === 'queue_update') {
                     handleQueueUpdate(data.position);
                 } else if (eventType === 'passages') {
-                    hideQueue(); // Queue finished
+                    hideQueue();
                     passages = data.passages || [];
+                    if (passages.length > 0 && currentBubble) {
+                        currentBubble.countSpan.textContent = passages.length;
+                        currentBubble.drawer.style.display = 'block';
+                        renderBubblePassages(currentBubble.drawerContent, passages, data.version);
+                    }
                     displayPassages(passages, data.version);
-                    setTimeout(() => {
-                        passagesContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    }, 80);
                 } else if (eventType === 'chunk') {
-                    hideQueue(); // Ensure queue is hidden
+                    hideQueue();
                     accumulatedAnswer += data.text || '';
-                    answerText.innerHTML = renderMarkdown(accumulatedAnswer) + '<span class="typing-cursor"></span>';
+                    const formattedHtml = renderMarkdown(accumulatedAnswer) + '<span class="typing-cursor"></span>';
+                    
+                    if (currentBubble) {
+                        currentBubble.body.innerHTML = formattedHtml;
+                    }
+                    if (answerText) answerText.innerHTML = formattedHtml;
                     setupBibleRefHoverPreviews();
+                    scrollToChatBottom();
                 } else if (eventType === 'done') {
                     finished = true;
                     break;
                 } else if (eventType === 'error') {
-                    throw new Error(data.error || 'Streaming failed');
+                    const errText = data.error || 'Streaming failed';
+                    if (!accumulatedAnswer) {
+                        accumulatedAnswer = `⚠️ *${errText}*`;
+                    }
+                    finished = true;
+                    break;
                 }
             }
         }
 
-        // Finalize output
         hideQueue();
-        answerText.innerHTML = renderMarkdown(accumulatedAnswer);
+        const finalHtml = renderMarkdown(accumulatedAnswer);
+        
+        if (currentBubble) {
+            currentBubble.body.innerHTML = finalHtml;
+            currentBubble.actions.style.display = 'flex';
+            
+            currentBubble.copyBtn.addEventListener('click', () => copyToClipboard(accumulatedAnswer));
+            currentBubble.shareBtn.addEventListener('click', () => shareConversation(context.question || '', accumulatedAnswer));
+            currentBubble.listenBtn.addEventListener('click', () => toggleSpeechSynthesis(accumulatedAnswer, currentBubble.listenBtn));
+
+            renderBubbleFollowups(currentBubble.followups, context.question || accumulatedAnswer);
+        }
+
+        if (answerText) answerText.innerHTML = finalHtml;
         setupBibleRefHoverPreviews();
         setStreamingState(false);
-        
-        // Save for sharing
+        scrollToChatBottom();
+
         lastResponseData = {
             question: context.question || input.value,
             answer: accumulatedAnswer,
             passages: passages,
             mode: currentMode
         };
-        
+
         if (shareAnswerButton) {
             shareAnswerButton.textContent = 'Share';
             shareAnswerButton.disabled = false;
         }
 
-    // Reset Listen button state
-    if (listenButton) {
-        listenButton.textContent = 'Listen 🔊';
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
+        if (listenButton) {
+            listenButton.textContent = 'Listen 🔊';
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
         }
-    }
     }
 
     function setStreamingState(isActive) {
@@ -1296,6 +1631,14 @@ document.addEventListener('DOMContentLoaded', function () {
         listenButton.addEventListener('click', () => {
             if (!answerText) return;
 
+            if (document.body.classList.contains('paperwhite-mode')) {
+                if (window.speechSynthesis && window.speechSynthesis.speaking) {
+                    window.speechSynthesis.cancel();
+                }
+                listenButton.textContent = 'Listen 🔊';
+                return;
+            }
+
             if (window.speechSynthesis.speaking) {
                 window.speechSynthesis.cancel();
                 listenButton.textContent = 'Listen 🔊';
@@ -1470,7 +1813,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Mobile Navigation Logic
+    // Header & Mobile Navigation Logic
     const navItems = document.querySelectorAll('.nav-item');
     const sections = {
         '#top': document.body,
@@ -1480,6 +1823,14 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     function updateActiveNav() {
+        // Only manage active state dynamically for anchor links starting with '#'
+        const anchorNavItems = Array.from(navItems).filter(item => {
+            const href = item.getAttribute('href');
+            return href && href.startsWith('#');
+        });
+
+        if (anchorNavItems.length === 0) return;
+
         let current = '';
         const scrollPosition = window.scrollY + window.innerHeight / 3;
 
@@ -1489,13 +1840,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Default to top if nothing selected or near top
         if (window.scrollY < 100) current = '#top';
 
-        navItems.forEach(item => {
-            item.classList.remove('active');
+        anchorNavItems.forEach(item => {
             if (item.getAttribute('href') === current) {
-                item.classList.add('active');
+                item.classList.add('is-active');
+            } else {
+                item.classList.remove('is-active');
             }
         });
     }
@@ -1505,27 +1856,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initial check
     updateActiveNav();
 
-    // Handle nav clicks for smooth scrolling and focus
+    // Handle nav clicks for smooth scrolling ONLY on anchor links starting with '#'
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
-            e.preventDefault();
             const targetId = item.getAttribute('href');
-            const targetSection = sections[targetId];
-            
-            if (targetSection) {
-                if (targetId === '#top') {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    targetSection.scrollIntoView({ behavior: 'smooth' });
-                }
-                
-                // Special handling for "Ask" to focus input
-                if (targetId === '#study-cta') {
-                    setTimeout(() => {
-                        input.focus();
-                    }, 500); // Wait for scroll
+            if (!targetId) return;
+
+            // Only prevent default and smooth scroll if it's an anchor link (#)
+            if (targetId.startsWith('#')) {
+                const targetSection = sections[targetId];
+                if (targetSection) {
+                    e.preventDefault();
+                    if (targetId === '#top') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                        targetSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                    
+                    if (targetId === '#study-cta' && input) {
+                        setTimeout(() => {
+                            input.focus();
+                        }, 500);
+                    }
                 }
             }
+            // For normal page links like '/', '/bible', '/devotional', '/prayers', '/plans', '/topics',
+            // do NOT call e.preventDefault(); let normal browser navigation occur.
         });
     });
 
@@ -1539,68 +1895,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 heroSection.classList.add('collapsed');
             }
         });
-    }
-
-    // Voice Input Logic
-    if (voiceButton) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-
-            let isListening = false;
-
-            voiceButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (isListening) {
-                    recognition.stop();
-                } else {
-                    try {
-                        recognition.start();
-                    } catch (err) {
-                        console.warn('Recognition start error:', err);
-                    }
-                }
-            });
-
-            recognition.onstart = () => {
-                isListening = true;
-                voiceButton.classList.add('is-listening');
-                input.placeholder = 'Listening...';
-            };
-
-            recognition.onend = () => {
-                isListening = false;
-                voiceButton.classList.remove('is-listening');
-                // Restore placeholder based on current tool
-                const toolConfig = TOOL_CONFIG[currentTool];
-                if (toolConfig) {
-                    input.placeholder = toolConfig.placeholder;
-                }
-            };
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                input.value = transcript;
-                autoResizeInput();
-
-                // Optional: Auto-submit or just focus?
-                // Let's just focus for now so user can review
-                input.focus();
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                isListening = false;
-                voiceButton.classList.remove('is-listening');
-            };
-        } else {
-            // Hide button if not supported
-            voiceButton.style.display = 'none';
-        }
     }
 
     // ========================================
@@ -1760,4 +2054,26 @@ document.addEventListener('DOMContentLoaded', function () {
             window.location.href = '/bible';
         }
     });
+
+    // Auto-trigger question from URL query parameter (e.g. ?q=... or ?question=...)
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlQuery = urlParams.get('q') || urlParams.get('question') || urlParams.get('query');
+        const initialQuery = urlQuery || (input ? input.value : '');
+        if (initialQuery) {
+            const trimmedQuery = initialQuery.trim();
+            if (trimmedQuery && input && form) {
+                if (currentTool !== 'ask') {
+                    switchTool('ask');
+                }
+                input.value = trimmedQuery;
+                autoResizeInput();
+                setTimeout(() => {
+                    form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }, 150);
+            }
+        }
+    } catch (queryErr) {
+        console.warn('Could not parse query param:', queryErr);
+    }
 });

@@ -1,5 +1,5 @@
 """
-RAG Pipeline for What Would AI Jesus Do
+RAG Pipeline for Athelstan
 Retrieves relevant Bible passages and generates responses using the configured Ollama model
 """
 
@@ -9,13 +9,13 @@ import ollama
 from typing import List, Dict, Optional, Generator, Any, Union
 from model_config import DEFAULT_EMBED_MODEL, DEFAULT_LLM_MODEL
 
-# Focus modes allow the caller to steer tone and structure without changing the UX copy.
+# Focus modes are soft leanings — Athelstan chooses form and length within the persona.
 MODE_INSTRUCTIONS = {
-    'balanced': 'Respond with a balanced mix of empathy and clear guidance. Keep the tone warm and concise.',
-    'comfort': 'Respond with extra gentleness and reassurance. Emphasize God\'s nearness and peace.',
-    'clarity': 'Respond with direct, practical steps and short sentences. Provide a concise roadmap.',
-    'challenge': 'Respond with loving conviction, calling the reader toward obedience and change.',
-    'blessing': 'Respond briefly with encouragement plus a short closing prayer rooted in the cited verses.'
+    'balanced': 'Lean toward a balanced mix of empathy and clear guidance.',
+    'comfort': 'Lean toward gentleness and reassurance; emphasize God\'s nearness and peace when fitting.',
+    'clarity': 'Lean toward clear, practical next steps when the question calls for them.',
+    'challenge': 'Lean toward loving conviction that invites obedience and growth.',
+    'blessing': 'Lean toward encouragement; a short closing prayer rooted in the cited verses is welcome when it fits.'
 }
 DEFAULT_MODE = 'balanced'
 DEFAULT_EMBED_KEEP_ALIVE = os.getenv('WWAIJD_EMBED_KEEP_ALIVE', '0s')
@@ -77,12 +77,27 @@ class BibleRAG:
             Optional[List[float]]: The embedding vector if successful, None otherwise.
         """
         try:
-            response = ollama.embeddings(
-                model=self.embedding_model,
-                prompt=query,
-                keep_alive=self.embed_keep_alive
-            )
-            return response['embedding']
+            try:
+                response = ollama.embeddings(
+                    model=self.embedding_model,
+                    prompt=query,
+                    keep_alive=self.embed_keep_alive
+                )
+                if isinstance(response, dict) and 'embedding' in response:
+                    return response['embedding']
+                elif hasattr(response, 'embedding'):
+                    return response.embedding
+            except Exception:
+                res = ollama.embed(
+                    model=self.embedding_model,
+                    input=query,
+                    keep_alive=self.embed_keep_alive
+                )
+                if isinstance(res, dict) and 'embeddings' in res and res['embeddings']:
+                    return res['embeddings'][0]
+                elif hasattr(res, 'embeddings') and res.embeddings:
+                    return res.embeddings[0]
+            return None
         except Exception as e:
             print(f"Error generating query embedding: {e}")
             return None
@@ -202,20 +217,21 @@ class BibleRAG:
         for i, passage in enumerate(passages, 1):
             context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
         
-        return f"""You are AI Jesus, a wise and compassionate guide who provides advice based on Biblical teachings from the {version_name} Bible. A person has asked you a question, and you have been given relevant Bible passages to help answer.
+        return f"""You are Athelstan, a doctorate-level Bible scholar and teacher for a Bible school. You are inspired by Æthelstan—patron of learning—not a religious persona or impersonation of Jesus. Speak as a warm, wise teacher: academically grounded, pastoral when needed, never claiming to be Jesus or divine.
 
 Question: {query}
 
 {context}
 
-Guidance: {tone_instruction}
+Tone leaning (optional guidance, not a rigid template): {tone_instruction}
 
-Based on these Biblical passages, provide a thoughtful response in the voice of Jesus. Please:
-- Reference the specific Bible passages that inform your answer (e.g., cite book and verse inline).
-- Stay grounded in the provided passages; avoid inventing references.
-- Offer practical guidance that can be acted on today.
-- Keep the answer under about 180 words unless brevity would harm clarity.
-- If passages seem weakly related, briefly acknowledge that and invite the reader to explore the cited verses.
+You have agency over how you respond. Choose the shape that best serves this question—brief counsel, a short teaching, a pastoral word, a comparison of texts, Q&A-style clarity, or something else that fits. Vary length and structure as needed; do not force a fixed outline.
+
+Hard boundaries:
+- Ground every claim in the passages above; cite book and verse inline.
+- Do not invent references or quote verses that are not provided.
+- If the match feels weak, say so briefly and still help the reader with what is given.
+- Stay in character as Athelstan the scholar-teacher.
 
 Response:"""
     
@@ -256,8 +272,8 @@ Response:"""
                 model=self.llm_model,
                 prompt=prompt,
                 options={
-                    'temperature': 0.7,
-                    'top_p': 0.9,
+                    'temperature': 0.85,
+                    'top_p': 0.92,
                 },
                 keep_alive=self.llm_keep_alive
             )
@@ -317,9 +333,9 @@ Response:"""
 
         if not passages:
             yield {
-                'answer': "I couldn't find relevant passages to answer your question. Please try rephrasing it.",
+                'chunk': "I couldn't find relevant passages to answer your question. Please try rephrasing your prompt.",
                 'passages': [],
-                'error': True,
+                'error': False,
                 'done': True,
                 'mode': selected_mode
             }
@@ -334,8 +350,8 @@ Response:"""
                 prompt=prompt,
                 stream=True,
                 options={
-                    'temperature': 0.7,
-                    'top_p': 0.9,
+                    'temperature': 0.85,
+                    'top_p': 0.92,
                 },
                 keep_alive=self.llm_keep_alive
             )
@@ -361,7 +377,8 @@ Response:"""
         except Exception as e:
             print(f"Error in streaming response: {e}")
             yield {
-                'error': str(e),
+                'chunk': f"\n\n*(Error generating AI response: {str(e)}. Please ensure Ollama backend is running.)*",
+                'error': True,
                 'done': True,
                 'mode': selected_mode
             }
@@ -395,7 +412,7 @@ Response:"""
         for i, passage in enumerate(passages, 1):
             context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
             
-        prompt = f"""You are AI Jesus, a wise teacher. Create a short Bible study on the topic: "{topic}".
+        prompt = f"""You are Athelstan, a doctorate-level Bible scholar. Create a short Bible study on the topic: "{topic}".
         
 {context}
 
@@ -446,7 +463,7 @@ Keep the tone encouraging and insightful.
             for i, passage in enumerate(passages[:3], 1):
                 context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
         
-        prompt = f"""You are AI Jesus. A user has asked for prayer: "{request}".
+        prompt = f"""You are Athelstan, a doctorate-level Bible scholar. A student has asked for a scripture-rooted prayer: "{request}".
         
 {context}
 
@@ -495,7 +512,7 @@ Write a heartfelt, comforting prayer for them.
             for i, passage in enumerate(passages[:3], 1):
                 context += f"{i}. {passage['reference']}:\n\"{passage['text']}\"\n\n"
 
-        prompt = f"""You are AI Jesus, a master storyteller. A user wants a parable about: "{topic}".
+        prompt = f"""You are Athelstan, a doctorate-level Bible scholar and teacher. A student wants a parable-style teaching about: "{topic}".
 
 {context}
 
@@ -592,7 +609,7 @@ def main():
     Prints the answer and source passages.
     """
     print("=" * 60)
-    print("Testing What Would AI Jesus Do RAG Pipeline")
+    print("Testing Athelstan RAG Pipeline")
     print("=" * 60)
     
     # Initialize RAG

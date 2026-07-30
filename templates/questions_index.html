@@ -4,9 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Community Bible Questions Archive - Page {{ page }} | WWAIJD</title>
-    <meta name="description" content="Browse spiritual and Bible questions asked by the community, with answers and scripture references from AI Jesus. Free Christian study resources.">
+    <title>Community Bible Questions Archive - Page {{ page }} | Athelstan</title>
+    <meta name="description" content="Browse spiritual and Bible questions asked by the community, with answers and scripture references from Athelstan. Free Christian study resources.">
+    <meta name="keywords" content="bible questions, christian Q&A, bible answers, ask bible assistant, spiritual questions, scripture search">
     <link rel="canonical" href="https://wwaijd.org/questions{% if page > 1 %}/page/{{ page }}{% endif %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="Athelstan">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wwaijd.org/questions{% if page > 1 %}/page/{{ page }}{% endif %}">
+    <meta property="og:title" content="Community Bible Questions Archive | Athelstan">
+    <meta property="og:description" content="Browse spiritual and Bible questions asked by the community, with answers and scripture references from Athelstan.">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wwaijd.org/questions{% if page > 1 %}/page/{{ page }}{% endif %}">
+    <meta name="twitter:title" content="Community Bible Questions Archive | Athelstan">
+    <meta name="twitter:description" content="Browse spiritual and Bible questions asked by the community, with answers and scripture references from Athelstan.">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          "@id": "https://wwaijd.org/questions#webpage",
+          "url": "https://wwaijd.org/questions",
+          "name": "Community Bible Questions Archive",
+          "description": "Archive of spiritual and Bible questions answered with scripture."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://wwaijd.org/questions#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://wwaijd.org/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Questions Archive",
+              "item": "https://wwaijd.org/questions"
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/script.js"></script>
@@ -77,11 +127,11 @@
         <header class="site-header flow-box">
             <a href="/" class="header-brand">
                 <span class="header-brand-icon">✝️</span>
-                <span>What Would AI Jesus Do?</span>
+                <span>Athelstan</span>
             </a>
 
             <nav class="header-nav">
-                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/" class="nav-item is-primary">💬 Ask Athelstan</a>
                 <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
                 <a href="/devotional" class="nav-item">🔥 Devotional</a>
                 <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
@@ -129,8 +179,8 @@
 
         <div class="flow-box" style="margin-top: 3rem; text-align: center;">
             <h2>Have a specific question?</h2>
-            <p style="color: var(--text-muted); margin-top: 0.5rem;">Ask AI Jesus today and receive an immediate answer grounded in scripture.</p>
-            <a href="/" class="nav-item is-primary" style="display: inline-block; margin-top: 1rem;">Ask a Question &rarr;</a>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Ask Athelstan today and receive an immediate answer grounded in scripture.</p>
+            <a href="/" class="nav-item is-primary" style="display: inline-block; margin-top: 1rem;">Ask Athelstan &rarr;</a>
         </div>
 
         <footer class="site-footer flow-box" style="margin-top: 3rem;">
@@ -142,7 +192,7 @@
                 <a href="/devotional" class="footer-link">Daily Devotional</a>
             </div>
             <div class="copyright">
-                &copy; 2025 What Would AI Jesus Do
+                &copy; 2025 Athelstan
             </div>
         </footer>
     </div>

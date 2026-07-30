@@ -1,9 +1,9 @@
-# What Would AI Jesus Do - Setup Script
+# Athelstan - Setup Script
 # This script helps you get started quickly on Windows
 
 Write-Host ""
 Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host "  What Would AI Jesus Do - Quick Setup" -ForegroundColor Yellow
+Write-Host "  Athelstan - Quick Setup" -ForegroundColor Yellow
 Write-Host "===============================================" -ForegroundColor Cyan
 Write-Host ""
 

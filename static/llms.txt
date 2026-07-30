@@ -1,0 +1,29 @@
+# Athelstan (WWAIJD)
+
+> Athelstan is a free, non-denominational AI-powered Bible study platform. Named for a doctorate-level scripture scholar inspired by Æthelstan (https://en.wikipedia.org/wiki/%C3%86thelstan)—patron of learning—it provides scripture-grounded answers to life questions, interactive Bible passage reading, daily devotionals, community prayer support, and topical scripture guides.
+
+## Overview & Core Capabilities
+
+- [Ask Athelstan](https://wwaijd.org/): Interactive Bible Q&A assistant retrieving relevant verses (RAG pipeline) with scholarly, scripture-grounded guidance.
+- [Read Holy Bible](https://wwaijd.org/bible): Full online access to Old Testament and New Testament scripture across multiple translations (KJV, BSB, WEB, etc.).
+- [Daily Devotional](https://wwaijd.org/devotional): Daily Verse of the Day with a reflection, guided prayer, and daily reading streak tracker.
+- [Community Prayer Wall](https://wwaijd.org/prayers): Anonymous community prayer requests wall where users can request and offer prayers.
+- [Spiritual Study Plans](https://wwaijd.org/plans): Multi-day guided reading modules focusing on hope, peace, faith, and spiritual growth.
+- [Bible Topics Index](https://wwaijd.org/topics): Categorized index of Bible verses organized by life themes (forgiveness, anxiety, relationships, hope, faith, etc.).
+- [Community Questions Archive](https://wwaijd.org/questions): Index of real spiritual questions answered with biblical references.
+
+## Key Resources & Links
+
+- Full AI Context File: [llms-full.txt](https://wwaijd.org/llms-full.txt)
+- Main XML Sitemap Index: [sitemap.xml](https://wwaijd.org/sitemap.xml)
+- Topics Sitemap: [sitemap_topics.xml](https://wwaijd.org/sitemap_topics.xml)
+- Bible Scriptures Sitemap: [sitemap_bible.xml](https://wwaijd.org/sitemap_bible.xml)
+- Questions Archive Sitemap: [sitemap_questions.xml](https://wwaijd.org/sitemap_questions.xml)
+
+## Primary Topics Covered
+
+- [Forgiveness](https://wwaijd.org/topics/forgiveness): Bible verses on mercy, releasing bitterness, and divine grace.
+- [Hope](https://wwaijd.org/topics/hope): Scripture on perseverance, trust in God, and strength through trials.
+- [Relationships](https://wwaijd.org/topics/relationships): Guidance on love, conflict resolution, family, and fellowship.
+- [Peace & Anxiety](https://wwaijd.org/topics/peace): Verses for overcoming fear, worry, and finding inner quietness in God.
+- [Faith & Purpose](https://wwaijd.org/topics/faith): Scripture on discovering God's plan and walking in faith.

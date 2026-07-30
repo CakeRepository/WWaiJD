@@ -1,5 +1,5 @@
 """
-Quick start script for What Would AI Jesus Do
+Quick start script for Athelstan
 Checks prerequisites and guides through setup
 """
 
@@ -7,6 +7,13 @@ import sys
 import subprocess
 import os
 from pathlib import Path
+
+# Force UTF-8 encoding on standard output/error to prevent Windows console Unicode crashes
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(line_buffering=True, encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(line_buffering=True, encoding='utf-8')
+
 from model_config import DEFAULT_EMBED_MODEL, DEFAULT_LLM_MODEL
 
 
@@ -164,7 +171,7 @@ def main():
         None
     """
     print("=" * 60)
-    print("What Would AI Jesus Do - Startup Check")
+    print("Athelstan - Startup Check")
     print("=" * 60)
     print()
     

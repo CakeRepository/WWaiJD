@@ -215,6 +215,7 @@ def _format_verse_range(start: str, end: str | None) -> str:
 def create_embedding(text: str) -> Optional[List[float]]:
     """
     Generate embeddings using the configured Ollama embedding model.
+    Supports both legacy ollama.embeddings and new ollama.embed formats.
 
     Args:
         text: The text content to embed.
@@ -224,8 +225,19 @@ def create_embedding(text: str) -> Optional[List[float]]:
         or None if generation fails.
     """
     try:
-        response = ollama.embeddings(model=DEFAULT_EMBED_MODEL, prompt=text)
-        return response['embedding']
+        try:
+            response = ollama.embeddings(model=DEFAULT_EMBED_MODEL, prompt=text)
+            if isinstance(response, dict) and 'embedding' in response:
+                return response['embedding']
+            elif hasattr(response, 'embedding'):
+                return response.embedding
+        except Exception:
+            res = ollama.embed(model=DEFAULT_EMBED_MODEL, input=text)
+            if isinstance(res, dict) and 'embeddings' in res and res['embeddings']:
+                return res['embeddings'][0]
+            elif hasattr(res, 'embeddings') and res.embeddings:
+                return res.embeddings[0]
+        return None
     except Exception as e:
         print(f"Error generating embedding: {e}")
         return None
@@ -237,16 +249,23 @@ def get_chunk_id(chunk, index):
 
 
 def get_existing_ids(db_path="chroma_db"):
-    """Get all existing chunk IDs from the database."""
+    """Get all existing chunk IDs from the database using pagination to avoid SQL variable limits."""
     if not Path(db_path).exists():
         return set()
     
     try:
         client = chromadb.PersistentClient(path=db_path)
         collection = client.get_collection("bible_verses")
-        # Get all IDs from the collection
-        results = collection.get(include=[])
-        return set(results['ids'])
+        count = collection.count()
+        existing_ids = set()
+        
+        batch_size = 5000
+        for offset in range(0, count, batch_size):
+            results = collection.get(include=[], limit=batch_size, offset=offset)
+            if results and 'ids' in results:
+                existing_ids.update(results['ids'])
+        
+        return existing_ids
     except Exception as e:
         print(f"[!] Could not read existing database: {e}")
         return set()
@@ -271,12 +290,16 @@ def check_status(db_path="chroma_db"):
         print(f"[OK] Database found at: {db_path}")
         print(f"     Total embedded chunks: {count:,}")
         
-        # Get version breakdown
-        results = collection.get(include=["metadatas"])
+        # Get version breakdown using paginated fetching
         versions = {}
-        for meta in results['metadatas']:
-            version = meta.get('version', 'unknown')
-            versions[version] = versions.get(version, 0) + 1
+        batch_size = 5000
+        for offset in range(0, count, batch_size):
+            results = collection.get(include=["metadatas"], limit=batch_size, offset=offset)
+            if results and 'metadatas' in results:
+                for meta in results['metadatas']:
+                    if meta:
+                        version = meta.get('version', 'unknown')
+                        versions[version] = versions.get(version, 0) + 1
         
         if versions:
             print("\n     Chunks by version:")
@@ -481,7 +504,7 @@ Examples:
     args = parser.parse_args()
     
     print("=" * 60)
-    print("What Would AI Jesus Do - Embeddings Builder")
+    print("Athelstan - Embeddings Builder")
     print("=" * 60)
     
     # Status check only
@@ -522,8 +545,14 @@ Examples:
     
     # Check if the configured embedding model is available
     try:
-        models = ollama.list()
-        model_names = [model['name'] for model in models.get('models', [])]
+        models_list = ollama.list()
+        if hasattr(models_list, 'models'):
+            model_names = [m.model for m in models_list.models]
+        elif isinstance(models_list, dict):
+            model_names = [m.get('name', m.get('model', '')) for m in models_list.get('models', [])]
+        else:
+            model_names = [getattr(m, 'model', getattr(m, 'name', '')) for m in models_list]
+
         if not any(DEFAULT_EMBED_MODEL.lower() in name.lower() for name in model_names):
             print(f"[!] Warning: {DEFAULT_EMBED_MODEL} model not found. Pulling it now...")
             print("   This may take a few minutes...")

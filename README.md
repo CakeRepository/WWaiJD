@@ -1,6 +1,6 @@
-# What Would AI Jesus Do (WWAIJD) ✝️
+# Athelstan (WWAIJD)
 
-An AI-powered application that provides moral and spiritual guidance based on the Bible using advanced RAG (Retrieval Augmented Generation) technology. Ask any question and receive compassionate, biblically-grounded wisdom with relevant scripture references.
+An AI-powered Bible school study companion that answers questions with scripture using RAG (Retrieval Augmented Generation). Ask Athelstan—a doctorate-level Bible scholar persona inspired by [Æthelstan](https://en.wikipedia.org/wiki/%C3%86thelstan)—and receive clear, biblically grounded guidance with verse citations.
 
 ## ✨ Features
 
@@ -158,7 +158,7 @@ wwaijd/
 2. **Embedding generation** → Question converted to vector using Gemma
 3. **Semantic search** → ChromaDB finds 5 most relevant Bible passages
 4. **Context building** → Passages formatted with references
-5. **AI response** → Gemma 4 e2b generates compassionate answer as "AI Jesus"
+5. **AI response** → Gemma 4 e2b generates a scholarly answer as Athelstan
 6. **Display** → Answer shown with scripture references for transparency
 
 ## 📚 Additional Documentation

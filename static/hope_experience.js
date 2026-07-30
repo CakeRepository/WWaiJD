@@ -1,6 +1,6 @@
 /**
- * WWAIJD - Living 3D WebGL Background Engine
- * Continuously renders a 3D universe of Hope, Sight, Light Petals, the Cross, and the Trinity.
+ * WWAIJD - Sacred Background Visual Engine
+ * Continuously renders a universe of Hope, Sight, Light Petals, the Cross, and the Trinity.
  * Powered by Three.js
  */
 
@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let lines = [];
     let agencyParticles = [];
     let trinityParticles = [];
+    let burstParticles = [];
+    let shockwaves = [];
+    let audioCtx = null;
     let cursorPosition3D = new THREE.Vector3(0, 0, -80);
     let targetCameraPos = new THREE.Vector3(0, 0, 45);
     let currentCameraPos = new THREE.Vector3(0, 0, 45);
@@ -30,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const petalCount = 45;
     const depthZ = -80;
 
-    let starsGroup, petalsGroup, crossGroup, trinityGroup;
+    let starsGroup, petalsGroup, heartsGroup, crossGroup, trinityGroup;
+    let hearts = [];
     let trinityLights = [];
     let clock = new THREE.Clock();
 
@@ -68,7 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 5. Build 3D Elements
         createStars();
-        createPetals(); // Floating light petals (inspired by floral background renders)
+        createPetals(); // Floating light petals
+        createFloatingHearts(); // Sacred 3D glowing love hearts
         createCross();
         createTrinityOrbits();
 
@@ -83,6 +88,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('mousedown', () => { mouse.isDown = true; });
         document.addEventListener('mouseup', () => { mouse.isDown = false; });
+        
+        document.addEventListener('click', (e) => {
+            if (document.body.classList.contains('paperwhite-mode')) return;
+            if (e.target.closest('.ui-ambient-dock')) return;
+            if (['INPUT', 'TEXTAREA', 'BUTTON', 'A', 'SELECT'].includes(e.target.tagName)) return;
+            triggerClickBurst(cursorPosition3D);
+            triggerShockwave(cursorPosition3D);
+            playHarmonicChime(528 + Math.floor(Math.random() * 4) * 132);
+        });
 
         // Bind Phase Buttons if present
         if (phaseBtns.length > 0) {
@@ -180,48 +194,243 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function createFloatingHearts() {
+        heartsGroup = new THREE.Group();
+        scene.add(heartsGroup);
+
+        const x = 0, y = 0;
+        const heartShape = new THREE.Shape();
+        heartShape.moveTo(x + 0.25, y + 0.25);
+        heartShape.bezierCurveTo(x + 0.25, y + 0.25, x + 0.2, y, x, y);
+        heartShape.bezierCurveTo(x - 0.3, y, x - 0.3, y + 0.35, x - 0.3, y + 0.35);
+        heartShape.bezierCurveTo(x - 0.3, y + 0.55, x - 0.15, y + 0.77, x + 0.25, y + 0.95);
+        heartShape.bezierCurveTo(x + 0.65, y + 0.77, x + 0.8, y + 0.55, x + 0.8, y + 0.35);
+        heartShape.bezierCurveTo(x + 0.8, y + 0.35, x + 0.8, y, x + 0.5, y);
+        heartShape.bezierCurveTo(x + 0.35, y, x + 0.25, y + 0.25, x + 0.25, y + 0.25);
+
+        const extrudeSettings = { depth: 0.15, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 0.05, bevelThickness: 0.05 };
+        const geom = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+        geom.center();
+
+        const heartColors = [0xff6b8b, 0xffa0b4, 0xf3c866, 0xff4d6d, 0xffccd5];
+
+        for (let i = 0; i < 30; i++) {
+            const mat = new THREE.MeshStandardMaterial({
+                color: heartColors[i % heartColors.length],
+                emissive: heartColors[i % heartColors.length],
+                emissiveIntensity: 0.35,
+                roughness: 0.2,
+                metalness: 0.3,
+                transparent: true,
+                opacity: 0.65 + Math.random() * 0.3
+            });
+
+            const heart = new THREE.Mesh(geom, mat);
+            heart.position.set(
+                (Math.random() - 0.5) * 150,
+                (Math.random() - 0.5) * 130,
+                depthZ + (Math.random() - 0.5) * 50
+            );
+
+            const scale = 1.2 + Math.random() * 1.5;
+            heart.scale.set(scale, scale, scale);
+
+            heart.userData = {
+                speedY: 0.12 + Math.random() * 0.2,
+                swaySpeed: 1.0 + Math.random() * 1.8,
+                swayOffset: Math.random() * Math.PI * 2,
+                pulseSpeed: 1.5 + Math.random() * 2.0,
+                rotSpeedZ: (Math.random() - 0.5) * 0.02,
+                baseScale: scale
+            };
+
+            heartsGroup.add(heart);
+            hearts.push(heart);
+        }
+    }
+
+    function createFloatingHearts() {
+        heartsGroup = new THREE.Group();
+        scene.add(heartsGroup);
+
+        const heartShape = new THREE.Shape();
+        heartShape.moveTo(0, 0.4);
+        heartShape.bezierCurveTo(0, 0.7, 0.4, 1.2, 0.9, 1.2);
+        heartShape.bezierCurveTo(1.5, 1.2, 1.5, 0.5, 1.5, 0.5);
+        heartShape.bezierCurveTo(1.5, -0.1, 0.8, -0.7, 0, -1.3);
+        heartShape.bezierCurveTo(-0.8, -0.7, -1.5, -0.1, -1.5, 0.5);
+        heartShape.bezierCurveTo(-1.5, 0.5, -1.5, 1.2, -0.9, 1.2);
+        heartShape.bezierCurveTo(-0.4, 1.2, 0, 0.7, 0, 0.4);
+
+        const extrudeSettings = {
+            depth: 0.35,
+            bevelEnabled: true,
+            bevelSegments: 3,
+            steps: 1,
+            bevelSize: 0.15,
+            bevelThickness: 0.15
+        };
+
+        const geom = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+        geom.center();
+
+        const heartColors = [0xff6b8b, 0xf3c866, 0xff4d6d, 0xffa07a, 0xec4899];
+
+        for (let i = 0; i < 28; i++) {
+            const mat = new THREE.MeshStandardMaterial({
+                color: heartColors[i % heartColors.length],
+                emissive: heartColors[i % heartColors.length],
+                emissiveIntensity: 0.35,
+                roughness: 0.3,
+                metalness: 0.4,
+                transparent: true,
+                opacity: 0.65 + Math.random() * 0.3,
+                side: THREE.DoubleSide
+            });
+
+            const heart = new THREE.Mesh(geom, mat);
+
+            heart.position.set(
+                (Math.random() - 0.5) * 170,
+                (Math.random() - 0.5) * 140,
+                depthZ + (Math.random() - 0.5) * 50
+            );
+
+            const s = 0.8 + Math.random() * 1.1;
+            heart.scale.set(s, s, s);
+
+            heart.userData = {
+                speedY: 0.12 + Math.random() * 0.22,
+                swaySpeed: 0.7 + Math.random() * 1.4,
+                swayOffset: Math.random() * Math.PI * 2,
+                rotSpeedX: (Math.random() - 0.5) * 0.015,
+                rotSpeedY: (Math.random() - 0.5) * 0.015,
+                rotSpeedZ: (Math.random() - 0.5) * 0.015
+            };
+
+            heartsGroup.add(heart);
+            hearts.push(heart);
+        }
+    }
+
     function createCross() {
         crossGroup = new THREE.Group();
         crossGroup.position.set(0, 5, depthZ);
+        // Tilt cross in 3D space to reveal depth, bevels, and light facets
+        crossGroup.rotation.y = 0.24;
+        crossGroup.rotation.x = -0.09;
         scene.add(crossGroup);
 
-        const crossMaterial = new THREE.MeshBasicMaterial({
-            color: 0xfdf5e3,
+        // 1. PBR Material for Cross Beams (Polished Gold-Ivory Marble/Metal)
+        const crossMaterial = new THREE.MeshStandardMaterial({
+            color: 0xfff7e6,
+            emissive: 0x2e1f0a,
+            roughness: 0.28,
+            metalness: 0.42,
             transparent: true,
-            opacity: 0.85
+            opacity: 0.95
         });
 
-        const haloMaterial = new THREE.MeshBasicMaterial({
+        // 2. Center Emblem Material (Luminous Solid Gold)
+        const emblemMaterial = new THREE.MeshStandardMaterial({
             color: 0xf3c866,
+            emissive: 0x4a3205,
+            roughness: 0.18,
+            metalness: 0.85,
             transparent: true,
-            opacity: 0.45,
-            side: THREE.DoubleSide
+            opacity: 0.95
         });
 
-        // Vertical beam
-        const verticalGeom = new THREE.BoxGeometry(1.6, 32, 1.6);
+        // 3. 3D Halo Ring Material
+        const haloMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf3c866,
+            emissive: 0xf3c866,
+            emissiveIntensity: 0.45,
+            roughness: 0.2,
+            metalness: 0.6,
+            transparent: true,
+            opacity: 0.65
+        });
+
+        // Vertical beam shape with bevels
+        const vShape = new THREE.Shape();
+        vShape.moveTo(-0.9, -14);
+        vShape.lineTo(0.9, -14);
+        vShape.lineTo(0.9, 20);
+        vShape.lineTo(-0.9, 20);
+        vShape.closePath();
+
+        const vExtrudeSettings = {
+            depth: 1.6,
+            bevelEnabled: true,
+            bevelSegments: 4,
+            steps: 1,
+            bevelSize: 0.4,
+            bevelThickness: 0.4
+        };
+
+        const verticalGeom = new THREE.ExtrudeGeometry(vShape, vExtrudeSettings);
+        verticalGeom.center();
         const verticalBeam = new THREE.Mesh(verticalGeom, crossMaterial);
         verticalBeam.position.y = 4;
         crossGroup.add(verticalBeam);
 
-        // Horizontal beam
-        const horizontalGeom = new THREE.BoxGeometry(18, 1.6, 1.6);
+        // Horizontal beam shape with bevels
+        const hShape = new THREE.Shape();
+        hShape.moveTo(-10, -0.9);
+        hShape.lineTo(10, -0.9);
+        hShape.lineTo(10, 0.9);
+        hShape.lineTo(-10, 0.9);
+        hShape.closePath();
+
+        const hExtrudeSettings = {
+            depth: 1.6,
+            bevelEnabled: true,
+            bevelSegments: 4,
+            steps: 1,
+            bevelSize: 0.4,
+            bevelThickness: 0.4
+        };
+
+        const horizontalGeom = new THREE.ExtrudeGeometry(hShape, hExtrudeSettings);
+        horizontalGeom.center();
         const horizontalBeam = new THREE.Mesh(horizontalGeom, crossMaterial);
-        horizontalBeam.position.y = 11;
+        horizontalBeam.position.set(0, 11, 0);
         crossGroup.add(horizontalBeam);
 
-        // Halo circle
-        const haloGeom = new THREE.RingGeometry(4.0, 4.4, 32);
+        // Central 3D Sculpted Gold Emblem
+        const emblemGeom = new THREE.CylinderGeometry(1.8, 1.8, 0.9, 32);
+        const emblem = new THREE.Mesh(emblemGeom, emblemMaterial);
+        emblem.rotation.x = Math.PI / 2;
+        emblem.position.set(0, 11, 1.0);
+        crossGroup.add(emblem);
+
+        // 3D Torus Halo Ring
+        const haloGeom = new THREE.TorusGeometry(5.4, 0.3, 16, 64);
         const halo = new THREE.Mesh(haloGeom, haloMaterial);
-        halo.position.set(0, 11, 0.1);
+        halo.position.set(0, 11, 0);
         crossGroup.add(halo);
+
+        // Dedicated 3D Directional & Point Lights for dynamic specular reflections
+        const keyLight = new THREE.DirectionalLight(0xfffae8, 2.5);
+        keyLight.position.set(30, 45, 70);
+        scene.add(keyLight);
+
+        const rimLight = new THREE.PointLight(0x4da3ff, 2.8, 140);
+        rimLight.position.set(-25, -15, depthZ - 10);
+        scene.add(rimLight);
+
+        const heartLight = new THREE.PointLight(0xf3c866, 3.2, 90);
+        heartLight.position.set(0, 16, depthZ + 8);
+        scene.add(heartLight);
 
         crossGroup.userData = {
             verticalBeam: verticalBeam,
             horizontalBeam: horizontalBeam,
+            emblem: emblem,
             halo: halo,
-            opacity: 0.85,
-            targetOpacity: 0.85
+            opacity: 0.95,
+            targetOpacity: 0.95
         };
     }
 
@@ -269,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function spawnAgencyParticles() {
-        if (activePhase === 0) return;
+        if (activePhase === 0 || document.body.classList.contains('paperwhite-mode')) return;
 
         const count = mouse.isDown ? 4 : 1;
         const geom = new THREE.SphereGeometry(0.25 + Math.random() * 0.2, 4, 4);
@@ -331,6 +540,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
         scene.add(mesh);
         trinityParticles.push(particle);
+    }
+
+    function playHarmonicChime(baseFreq = 528) {
+        if (document.body.classList.contains('paperwhite-mode')) return;
+        if (localStorage.getItem('wwaijd_ambient_sound') === 'muted') return;
+        if (typeof window.isAmbientSoundMuted === 'function' && window.isAmbientSoundMuted()) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const freqs = [baseFreq, baseFreq * 1.25, baseFreq * 1.5];
+            freqs.forEach((f, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(f, audioCtx.currentTime + idx * 0.04);
+                gain.gain.setValueAtTime(0.06, audioCtx.currentTime + idx * 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + idx * 0.04 + 1.1);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + idx * 0.04);
+                osc.stop(audioCtx.currentTime + idx * 0.04 + 1.15);
+            });
+        } catch (e) { }
+    }
+
+    function triggerClickBurst(pos) {
+        if (document.body.classList.contains('paperwhite-mode')) return;
+        const colors = [0xff6b8b, 0xf3c866, 0x6ce4d6, 0x4da3ff, 0xff4d6d, 0xffe8d6, 0xffd700];
+        const count = 32;
+
+        const heartShape = new THREE.Shape();
+        heartShape.moveTo(0, 0.4);
+        heartShape.bezierCurveTo(0, 0.7, 0.4, 1.2, 0.9, 1.2);
+        heartShape.bezierCurveTo(1.5, 1.2, 1.5, 0.5, 1.5, 0.5);
+        heartShape.bezierCurveTo(1.5, -0.1, 0.8, -0.7, 0, -1.3);
+        heartShape.bezierCurveTo(-0.8, -0.7, -1.5, -0.1, -1.5, 0.5);
+        heartShape.bezierCurveTo(-1.5, 0.5, -1.5, 1.2, -0.9, 1.2);
+        heartShape.bezierCurveTo(-0.4, 1.2, 0, 0.7, 0, 0.4);
+
+        const heartGeom = new THREE.ShapeGeometry(heartShape);
+        heartGeom.center();
+
+        for (let i = 0; i < count; i++) {
+            const isHeart = (i % 3 === 0);
+            const size = isHeart ? (0.5 + Math.random() * 0.6) : (0.25 + Math.random() * 0.45);
+            const geom = isHeart ? heartGeom : new THREE.SphereGeometry(size, 8, 8);
+            const colorHex = colors[Math.floor(Math.random() * colors.length)];
+            const mat = new THREE.MeshBasicMaterial({
+                color: colorHex,
+                transparent: true,
+                opacity: 0.95,
+                side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.position.copy(pos);
+            if (isHeart) {
+                mesh.scale.set(size, size, size);
+                mesh.rotation.z = Math.random() * Math.PI * 2;
+            }
+            
+            const theta = Math.random() * Math.PI * 2;
+            const phi = (Math.random() - 0.5) * Math.PI;
+            const speed = 8 + Math.random() * 24;
+            
+            const velocity = new THREE.Vector3(
+                Math.cos(phi) * Math.cos(theta) * speed,
+                Math.sin(phi) * speed + 5,
+                Math.cos(phi) * Math.sin(theta) * speed
+            );
+            
+            scene.add(mesh);
+            burstParticles.push({
+                mesh: mesh,
+                velocity: velocity,
+                age: 0,
+                maxAge: 35 + Math.random() * 30,
+                rotSpeedZ: isHeart ? (Math.random() - 0.5) * 0.1 : 0
+            });
+        }
+    }
+
+    function triggerShockwave(pos) {
+        if (document.body.classList.contains('paperwhite-mode')) return;
+        const ringGeom = new THREE.TorusGeometry(1, 0.25, 12, 48);
+        const ringMat = new THREE.MeshBasicMaterial({
+            color: 0xf3c866,
+            transparent: true,
+            opacity: 0.85,
+            side: THREE.DoubleSide
+        });
+        const mesh = new THREE.Mesh(ringGeom, ringMat);
+        mesh.position.copy(pos);
+        mesh.rotation.x = Math.PI / 3;
+        scene.add(mesh);
+        
+        shockwaves.push({
+            mesh: mesh,
+            scale: 1,
+            maxScale: 32,
+            opacity: 0.85
+        });
     }
 
     function updatePathways() {
@@ -401,6 +715,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // 1b. Animate Floating Sacred 3D Love Hearts
+        hearts.forEach(h => {
+            h.position.y += h.userData.speedY;
+            h.position.x += Math.sin(time * h.userData.swaySpeed + h.userData.swayOffset) * 0.12;
+            
+            h.rotation.x += h.userData.rotSpeedX;
+            h.rotation.y += h.userData.rotSpeedY;
+            h.rotation.z += h.userData.rotSpeedZ;
+
+            // Reset when floating out of top bound
+            if (h.position.y > 80) {
+                h.position.y = -80;
+                h.position.x = (Math.random() - 0.5) * 170;
+            }
+        });
+
         // 2. Animate Star Pulsing
         stars.forEach(star => {
             const scaleOffset = Math.sin(time * star.userData.pulseSpeed + star.userData.pulseOffset) * 0.15;
@@ -443,14 +773,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // 5. Constellation Pathways
         updatePathways();
 
-        // 6. Cross & Halo rotation
+        // 6. Cross & Halo 3D rotation, proximity reaction & parallax dynamics
         if (crossGroup && crossGroup.userData) {
             const crossData = crossGroup.userData;
+            
+            // Proximity magnet interaction with cursor position
+            const crossPos = new THREE.Vector3(0, 11, depthZ);
+            const distToCross = cursorPosition3D.distanceTo(crossPos);
+            const proximityFactor = Math.max(0, 1.0 - distToCross / 65);
+
             crossData.opacity = THREE.MathUtils.lerp(crossData.opacity, crossData.targetOpacity, 0.05);
             crossData.verticalBeam.material.opacity = crossData.opacity;
             crossData.horizontalBeam.material.opacity = crossData.opacity;
-            crossData.halo.material.opacity = crossData.opacity * 0.6;
-            crossData.halo.rotation.z += 0.005;
+            if (crossData.emblem) {
+                crossData.emblem.material.opacity = crossData.opacity;
+                crossData.emblem.material.emissiveIntensity = 0.45 + proximityFactor * 1.6;
+            }
+            crossData.halo.material.opacity = (crossData.opacity * 0.7) + proximityFactor * 0.3;
+
+            // Micro 3D rotation & mouse tilt + magnetic proximity pull
+            crossGroup.rotation.y = 0.24 + Math.sin(time * 0.4) * 0.04 + mouse.x * (0.12 + proximityFactor * 0.25);
+            crossGroup.rotation.x = -0.09 + Math.cos(time * 0.3) * 0.03 - mouse.y * (0.08 + proximityFactor * 0.18);
+            crossGroup.position.y = 5 + Math.sin(time * 0.7) * 0.6;
+            crossData.halo.rotation.z += 0.006 + proximityFactor * 0.025;
         }
 
         // 7. Trinity Orbits Animation
@@ -502,6 +847,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 p.mesh.geometry.dispose();
                 p.mesh.material.dispose();
                 trinityParticles.splice(i, 1);
+            }
+        }
+
+        // 8. Update click burst fireworks
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+            const p = burstParticles[i];
+            p.age++;
+            p.mesh.position.addScaledVector(p.velocity, delta);
+            p.velocity.multiplyScalar(0.93);
+            if (p.rotSpeedZ) p.mesh.rotation.z += p.rotSpeedZ;
+            p.mesh.material.opacity = (1.0 - (p.age / p.maxAge)) * 0.95;
+            const s = Math.max(0.01, 1.0 - (p.age / p.maxAge) * 0.6);
+            p.mesh.scale.set(s, s, s);
+            
+            if (p.age >= p.maxAge) {
+                scene.remove(p.mesh);
+                p.mesh.geometry.dispose();
+                p.mesh.material.dispose();
+                burstParticles.splice(i, 1);
+            }
+        }
+
+        // 9. Update shockwave expansion rings
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+            const sw = shockwaves[i];
+            sw.scale += delta * 28;
+            sw.mesh.scale.set(sw.scale, sw.scale, sw.scale);
+            sw.opacity = (1.0 - (sw.scale / sw.maxScale));
+            sw.mesh.material.opacity = Math.max(0, sw.opacity * 0.85);
+            
+            if (sw.scale >= sw.maxScale) {
+                scene.remove(sw.mesh);
+                sw.mesh.geometry.dispose();
+                sw.mesh.material.dispose();
+                shockwaves.splice(i, 1);
             }
         }
 
