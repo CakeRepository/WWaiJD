@@ -8,26 +8,21 @@ import os
 
 def generate_favicons():
     """
-    Generate various favicon sizes and an ICO file from the meta image.
-
-    Reads 'img/wwaijd-metaimage.png' and creates:
-    - favicon-16x16.png
-    - favicon-32x32.png
-    - apple-touch-icon.png (180x180)
-    - favicon.ico (containing 16x16, 32x32, 48x48 sizes)
-
-    The output files are saved to the 'static' directory.
-
-    Args:
-        None
-
-    Returns:
-        None
+    Generate various favicon sizes and an ICO file from the favicon square image source.
     """
     
-    # Input image
-    input_image = 'img/wwaijd-metaimage.png'
+    # Input image sources (prefer transparent PNG)
+    transparent_source = 'img/roman_cross_transparent.png'
+    favicon_source = 'img/roman_cross_favicon.png'
+    meta_source = 'img/wwaijd-metaimage.png'
     output_dir = 'static'
+    
+    if os.path.exists(transparent_source):
+        input_image = transparent_source
+    elif os.path.exists(favicon_source):
+        input_image = favicon_source
+    else:
+        input_image = meta_source
     
     if not os.path.exists(input_image):
         print(f"❌ Error: {input_image} not found!")

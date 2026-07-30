@@ -19,6 +19,7 @@
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/passage.css">
+    <script src="/static/script.js"></script>
 
     <!-- Schema.org Structured Data -->
     <script type="application/ld+json">
@@ -27,11 +28,11 @@
 </head>
 <body>
     <div class="passage-wrapper">
-        <header class="passage-header">
+        <header class="passage-header flow-box" style="margin-bottom: 24px;">
             <div class="header-top">
                 <a href="/" class="home-icon" title="Home">🏠</a>
-                <button id="nightModeToggle" class="night-toggle" type="button" title="Toggle reading mode">
-                    ☀️
+                <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                    📖 Paperwhite
                 </button>
             </div>
             <h1>{{ book }} {{ chapter }}:{{ verse }}</h1>
@@ -55,7 +56,7 @@
             </div>
         </header>
 
-        <main class="passage-card">
+        <main class="passage-card flow-box">
             <div class="passage-body">
                 <div class="verse-row" style="margin-bottom: 2rem;">
                     <span class="verse-number" style="font-size: 1.5rem; vertical-align: middle;">{{ verse }}</span>
@@ -63,10 +64,10 @@
                 </div>
 
                 {% if comparisons %}
-                <h3 style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">Compare Versions</h3>
+                <h3 style="margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem; color: var(--accent);">Compare Versions</h3>
                 <div class="comparisons-list">
                     {% for comp in comparisons %}
-                    <div class="compare-item" style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-color); border-radius: 8px;">
+                    <div class="compare-item" style="margin-bottom: 1rem; padding: 1rem; background: var(--panel-soft); border-radius: 8px; border: 1px solid var(--border);">
                         <strong style="color: var(--accent);">{{ comp.version_name }}</strong>
                         <p style="margin: 0.5rem 0 0 0;">{{ comp.text }}</p>
                     </div>
@@ -80,27 +81,12 @@
             </div>
         </main>
 
-        <footer class="passage-footer">
+        <footer class="passage-footer flow-box" style="margin-top: 24px;">
             <a href="/" class="back-link">← Return to What Would AI Jesus Do?</a>
         </footer>
     </div>
 
     <script>
-        const toggle = document.getElementById('nightModeToggle');
-        const html = document.documentElement;
-
-        if (localStorage.getItem('wwaijd-theme') === 'light') {
-            html.classList.add('light-mode');
-            toggle.textContent = '🌙';
-        }
-
-        toggle.addEventListener('click', () => {
-            html.classList.toggle('light-mode');
-            const isLight = html.classList.contains('light-mode');
-            localStorage.setItem('wwaijd-theme', isLight ? 'light' : 'dark');
-            toggle.textContent = isLight ? '🌙' : '☀️';
-        });
-
         function toggleVersionMenu(e) {
             e.stopPropagation();
             const dropdown = document.getElementById('versionDropdown');

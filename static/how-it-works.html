@@ -6,122 +6,114 @@
     <meta name="theme-color" content="#050c1f">
     <title>How it Works | What Would AI Jesus Do?</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="shortcut icon" href="/static/favicon.ico">
     <style>
+        .how-container {
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            color: var(--text-main);
+        }
         .content-section {
-            background: rgba(255, 255, 255, 0.03);
+            background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 32px;
-            margin-bottom: 24px;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
         }
         .content-section h2 {
             color: var(--accent);
-            margin-bottom: 16px;
-            font-size: 1.5rem;
+            margin-bottom: 12px;
+            font-size: 1.4rem;
             font-family: var(--font-serif);
         }
         .content-section p {
-            color: var(--text-muted);
-            margin-bottom: 16px;
+            color: var(--text-main);
+            margin-bottom: 12px;
             line-height: 1.7;
         }
         .content-section p:last-child {
             margin-bottom: 0;
         }
-        .header-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
-        }
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-muted);
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-        .back-link:hover {
-            color: var(--accent);
-            text-decoration: none;
-        }
-        .page-title {
-            margin-bottom: 32px; 
-            font-size: 2.5rem; 
-            text-align: center;
-            color: var(--text-main);
-        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="page-shell">
-            <header class="header-nav">
-                <a href="/" class="back-link">← Back to Home</a>
-            </header>
+    <div class="how-container">
+        <!-- Site Header Navigation Box -->
+        <header class="site-header flow-box">
+            <a href="/" class="header-brand">
+                <span class="header-brand-icon">✝️</span>
+                <span>What Would AI Jesus Do?</span>
+            </a>
 
-            <main>
-                <h1 class="page-title">How it Works</h1>
+            <nav class="header-nav">
+                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
+                <a href="/devotional" class="nav-item">🔥 Devotional</a>
+                <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
+                <a href="/plans" class="nav-item">📚 Plans</a>
+                <a href="/topics" class="nav-item">🏷️ Topics</a>
+            </nav>
 
-                <div class="content-section">
-                    <h2>The Mission</h2>
-                    <p>To help people explore the Bible using modern technology.</p>
-                </div>
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                📖 Paperwhite
+            </button>
+        </header>
 
-                <div class="content-section">
-                    <h2>The Technology</h2>
-                    <p>We use <strong>Gemma 4 (Effective 2B)</strong> running locally via <strong>Ollama</strong>.</p>
-                    <p>We use a technique called <strong>RAG (Retrieval-Augmented Generation)</strong>. Simply put: We search the Bible for verses relevant to your question, then ask the AI to answer using <em>only</em> those verses.</p>
-                </div>
+        <main>
+            <div class="flow-box" style="text-align: center; margin-bottom: 2rem;">
+                <h1>How it Works</h1>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Learn how we retrieve and ground responses directly in Scripture.</p>
+            </div>
 
-                <div class="content-section">
-                    <h2>Bible Versions</h2>
-                    <p>We support <strong>9+ Bible translations</strong> including KJV, ESV, NIV, NASB, NKJV, NLT, CSB, ASV, and WEB.</p>
-                    <p>You can switch between versions using the dropdown selector, and even compare the same verse across all translations.</p>
-                </div>
+            <div class="content-section flow-box">
+                <h2>The Mission</h2>
+                <p>To help people explore the Bible and find compassionate, scripture-grounded answers using modern AI.</p>
+            </div>
 
-                <div class="content-section">
-                    <h2>Features</h2>
-                    <p><strong>Ask Questions:</strong> Get scripture-based answers with multiple response styles (Balanced, Comfort, Clarity, Challenge, Blessing).</p>
-                    <p><strong>Bible Study:</strong> Generate focused studies on any topic.</p>
-                    <p><strong>Prayer Generator:</strong> Create personalized prayers based on your needs.</p>
-                    <p><strong>Bible Search:</strong> Find relevant passages using semantic search.</p>
-                    <p><strong>Verse of the Day:</strong> Daily inspiration with cross-version comparison.</p>
-                    <p><strong>Bible Reader:</strong> Read any book and chapter with reading history.</p>
-                </div>
+            <div class="content-section flow-box">
+                <h2>The Technology</h2>
+                <p>We use a technique called <strong>RAG (Retrieval-Augmented Generation)</strong>. When you ask a question, our system searches through the entire Holy Bible for verses relevant to your situation, then uses AI to summarize and present those exact passages with direct context.</p>
+            </div>
 
-                <div class="content-section">
-                    <h2>Keyboard Shortcuts</h2>
-                    <p><strong>Ctrl/Cmd + K:</strong> Focus the search box</p>
-                    <p><strong>1-5:</strong> Switch response modes</p>
-                    <p><strong>B:</strong> Open Bible reader</p>
-                    <p><strong>←/→:</strong> Navigate chapters (in Bible reader)</p>
-                    <p><strong>N:</strong> Toggle night mode (in Bible reader)</p>
-                </div>
+            <div class="content-section flow-box">
+                <h2>Bible Versions</h2>
+                <p>We support <strong>9+ Bible translations</strong> including KJV, ESV, NIV, NASB, NKJV, NLT, CSB, ASV, and WEB.</p>
+                <p>You can switch between versions using the dropdown selector, and even compare the same verse across all translations.</p>
+            </div>
 
-                <div class="content-section">
-                    <h2>Limitations</h2>
-                    <p>AI can hallucinate. It is not a replacement for a pastor or personal study. Always verify answers against scripture.</p>
-                </div>
-            </main>
+            <div class="content-section flow-box">
+                <h2>Core Features</h2>
+                <p><strong>Ask Questions:</strong> Get scripture-based answers with multiple response styles (Balanced, Comfort, Clarity, Challenge, Blessing).</p>
+                <p><strong>Read the Bible:</strong> Full book and chapter reader with verse comparisons.</p>
+                <p><strong>Daily Devotional:</strong> Inspired daily reflections with study streak tracking.</p>
+                <p><strong>Community Prayer Wall:</strong> Share and pray for anonymous community requests.</p>
+            </div>
 
-            <footer class="site-footer">
-                <div class="footer-links">
-                    <a href="/static/bible.html" class="footer-link">Read the Bible</a>
-                    <span class="separator">•</span>
-                    <a href="/static/how-it-works.html" class="footer-link">How it works</a>
-                    <span class="separator">•</span>
-                    <a href="https://buymeacoffee.com/wwaijd" target="_blank" rel="noopener noreferrer" class="footer-link">Buy us a coffee</a>
-                </div>
-                <div class="copyright">
-                    &copy; 2025 What Would AI Jesus Do
-                </div>
-            </footer>
-        </div>
+            <div class="content-section flow-box">
+                <h2>Keyboard Shortcuts</h2>
+                <p><strong>Ctrl/Cmd + K:</strong> Focus the search box</p>
+                <p><strong>1-5:</strong> Switch response modes</p>
+                <p><strong>B:</strong> Open Bible reader</p>
+            </div>
+        </main>
+
+        <footer class="site-footer flow-box" style="margin-top: 3rem;">
+            <div class="footer-links">
+                <a href="/" class="footer-link">Home</a>
+                <span class="separator">•</span>
+                <a href="/bible" class="footer-link">Read the Bible</a>
+                <span class="separator">•</span>
+                <a href="/devotional" class="footer-link">Daily Devotional</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 What Would AI Jesus Do
+            </div>
+        </footer>
     </div>
 </body>
 </html>

@@ -9,45 +9,28 @@
     <link rel="canonical" href="https://wwaijd.org/plans/{{ slug }}">
 
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
     <style>
         .plan-detail-container {
-            max-width: 800px;
+            max-width: 950px;
             margin: 0 auto;
-            padding: 3rem 1.5rem;
-            color: var(--text-color);
-        }
-        .plan-detail-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        .plan-detail-header h1 {
-            font-size: 2.4rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-        }
-        .plan-detail-desc {
-            font-size: 1.15rem;
-            opacity: 0.8;
-            max-width: 600px;
-            margin: 0 auto 1.5rem auto;
-            line-height: 1.6;
+            padding: 2rem 1rem;
+            color: var(--text-main);
         }
         .plan-progress-summary {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.2rem 2rem;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.2rem 1.8rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 2.5rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            margin-bottom: 2rem;
         }
         .progress-bar-wrapper {
             flex: 1;
-            margin-left: 2rem;
-            background: rgba(139, 90, 60, 0.08);
+            margin-left: 1.5rem;
+            background: var(--border);
             height: 10px;
             border-radius: 5px;
             overflow: hidden;
@@ -60,18 +43,18 @@
             transition: width 0.3s ease;
         }
         .day-row {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
             display: flex;
             gap: 1.5rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .day-row.completed {
-            border-color: rgba(108, 228, 214, 0.3);
-            background: rgba(108, 228, 214, 0.02);
+            border-color: rgba(108, 228, 214, 0.4);
+            background: rgba(108, 228, 214, 0.04);
         }
         .day-checkbox-wrapper {
             display: flex;
@@ -81,9 +64,9 @@
         .day-checkbox {
             appearance: none;
             -webkit-appearance: none;
-            width: 28px;
-            height: 28px;
-            border: 2px solid var(--border-color);
+            width: 26px;
+            height: 26px;
+            border: 2px solid var(--border);
             border-radius: 6px;
             outline: none;
             cursor: pointer;
@@ -91,10 +74,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
-            background: var(--card-bg);
-        }
-        .day-checkbox:hover {
-            border-color: var(--accent);
+            background: var(--panel-soft);
         }
         .day-checkbox:checked {
             background: var(--accent);
@@ -102,7 +82,7 @@
         }
         .day-checkbox:checked::after {
             content: "✓";
-            color: #fff;
+            color: #0b1020;
             font-size: 1.1rem;
             font-weight: bold;
         }
@@ -118,52 +98,67 @@
             margin-bottom: 0.8rem;
         }
         .day-number {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--accent);
         }
         .day-focus {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             margin-left: 10px;
-            opacity: 0.9;
         }
         .day-ref {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
-            background: rgba(139, 90, 60, 0.08);
+            background: var(--card-highlight);
             color: var(--accent);
             padding: 3px 10px;
-            border-radius: 4px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
         }
         .day-scripture {
-            font-family: 'Georgia', serif;
-            font-size: 1.1rem;
+            font-family: var(--font-serif);
+            font-size: 1.05rem;
             line-height: 1.7;
             font-style: italic;
-            border-left: 3px solid var(--border-color);
-            padding-left: 1.2rem;
+            border-left: 3px solid var(--border);
+            padding-left: 1rem;
             margin-top: 1rem;
-            opacity: 0.85;
-        }
-        .cta-footer {
-            margin-top: 3.5rem;
-            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="plan-detail-container">
-        <header class="plan-detail-header">
-            <a href="/plans" style="color: var(--accent); text-decoration: none; margin-bottom: 1.2rem; display: inline-block; font-weight: 600;">← All Reading Plans</a>
-            <h1>{{ plan.title }}</h1>
-            <p class="plan-detail-desc">{{ plan.description }}</p>
+        <!-- Site Header Navigation Box -->
+        <header class="site-header flow-box">
+            <a href="/" class="header-brand">
+                <span class="header-brand-icon">✝️</span>
+                <span>What Would AI Jesus Do?</span>
+            </a>
+
+            <nav class="header-nav">
+                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
+                <a href="/devotional" class="nav-item">🔥 Devotional</a>
+                <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
+                <a href="/plans" class="nav-item is-primary is-active">📚 Plans</a>
+                <a href="/topics" class="nav-item">🏷️ Topics</a>
+            </nav>
+
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                📖 Paperwhite
+            </button>
         </header>
 
-        <div class="plan-progress-summary">
+        <div class="flow-box" style="text-align: center; margin-bottom: 2rem;">
+            <h1>{{ plan.title }}</h1>
+            <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0;">{{ plan.description }}</p>
+        </div>
+
+        <div class="plan-progress-summary flow-box">
             <div>
                 <strong>Plan Progress:</strong>
-                <span id="progressPercent" style="margin-left: 10px; font-weight: bold;">0%</span>
+                <span id="progressPercent" style="margin-left: 10px; font-weight: bold; color: var(--accent);">0%</span>
             </div>
             <div class="progress-bar-wrapper">
                 <div class="progress-bar-fill" id="progressBar"></div>
@@ -172,7 +167,7 @@
 
         <main class="days-list">
             {% for day in plan.days %}
-            <article class="day-row" id="row-{{ day.day }}">
+            <article class="day-row flow-box" id="row-{{ day.day }}">
                 <div class="day-checkbox-wrapper">
                     <input type="checkbox" class="day-checkbox" id="check-{{ day.day }}" onclick="toggleDay('{{ day.day }}')" aria-label="Mark Day {{ day.day }} Completed">
                 </div>
@@ -191,8 +186,8 @@
                     {% endif %}
                     
                     <div style="margin-top: 1rem;">
-                        <a href="/?q=What+does+the+Bible+say+about+{{ plan.title|urlencode }}+specifically+regarding+{{ day.focus|urlencode }}+in+{{ day.ref|urlencode }}%3F" class="ghost-button" style="padding: 0.4rem 1rem; font-size: 0.88rem; font-weight: 600; text-decoration: none; display: inline-block;">
-                            Ask AI Jesus about Day {{ day.day }}
+                        <a href="/?q=What+does+the+Bible+say+about+{{ plan.title|urlencode }}+specifically+regarding+{{ day.focus|urlencode }}+in+{{ day.ref|urlencode }}%3F" class="nav-item is-primary" style="font-size: 0.85rem; padding: 6px 12px;">
+                            Ask AI Jesus about Day {{ day.day }} &rarr;
                         </a>
                     </div>
                 </div>
@@ -200,8 +195,17 @@
             {% endfor %}
         </main>
 
-        <footer class="cta-footer">
-            <a href="/plans" class="primary-button" style="text-decoration: none; font-weight: 600;">Return to Plans</a>
+        <footer class="site-footer flow-box" style="margin-top: 3rem;">
+            <div class="footer-links">
+                <a href="/plans" class="footer-link">← Return to All Plans</a>
+                <span class="separator">•</span>
+                <a href="/" class="footer-link">Home</a>
+                <span class="separator">•</span>
+                <a href="/bible" class="footer-link">Read the Bible</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 What Would AI Jesus Do
+            </div>
         </footer>
     </div>
 
@@ -222,7 +226,7 @@
                 const row = document.getElementById('row-' + day);
                 if (checkbox) {
                     checkbox.checked = true;
-                    row.classList.add('completed');
+                    if (row) row.classList.add('completed');
                 }
             });
             
@@ -235,17 +239,15 @@
             
             let completedStr = localStorage.getItem('wwaijd-plan-' + slug + '-completed') || '';
             let completedDays = completedStr ? completedStr.split(',') : [];
-            
-            // Clean empty strings
             completedDays = completedDays.filter(d => d);
             
             if (checkbox.checked) {
-                row.classList.add('completed');
+                if (row) row.classList.add('completed');
                 if (!completedDays.includes(dayNum)) {
                     completedDays.push(dayNum);
                 }
             } else {
-                row.classList.remove('completed');
+                if (row) row.classList.remove('completed');
                 completedDays = completedDays.filter(d => d !== dayNum);
             }
             
@@ -255,8 +257,10 @@
         
         function updateProgressBar(completedCount) {
             const percent = Math.min(100, Math.round((completedCount / totalDays) * 100));
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('progressPercent').textContent = percent + '%';
+            const bar = document.getElementById('progressBar');
+            const txt = document.getElementById('progressPercent');
+            if (bar) bar.style.width = percent + '%';
+            if (txt) txt.textContent = percent + '%';
         }
     </script>
 </body>

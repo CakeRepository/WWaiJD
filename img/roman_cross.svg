@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Drop Shadow & Divine Glow Filter -->
+    <filter id="divineGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="blur" />
+      <feComponentTransfer in="blur" result="glowAlpha">
+        <feFuncA type="linear" slope="0.6" />
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode in="glowAlpha" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Bevel & Shadow Filter -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1A0D00" flood-opacity="0.5" />
+    </filter>
+
+    <!-- Radiance Gradient -->
+    <radialGradient id="haloGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFF2AA" stop-opacity="0.4" />
+      <stop offset="50%" stop-color="#E5AA30" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#D48800" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Main Gold Gradients -->
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF5CF" />
+      <stop offset="35%" stop-color="#F7D369" />
+      <stop offset="70%" stop-color="#D89A23" />
+      <stop offset="100%" stop-color="#8C5706" />
+    </linearGradient>
+
+    <linearGradient id="goldDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B87D17" />
+      <stop offset="50%" stop-color="#734703" />
+      <stop offset="100%" stop-color="#3B2000" />
+    </linearGradient>
+
+    <linearGradient id="marbleFace" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#F5EFE6" />
+      <stop offset="85%" stop-color="#E2D4C3" />
+      <stop offset="100%" stop-color="#C5B299" />
+    </linearGradient>
+
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A2C976" />
+      <stop offset="60%" stop-color="#557A31" />
+      <stop offset="100%" stop-color="#2D4617" />
+    </linearGradient>
+
+    <!-- Light Rays Pattern -->
+    <linearGradient id="rayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE885" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#FFC024" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Halo (Transparent canvas, radiating light burst) -->
+  <circle cx="256" cy="240" r="220" fill="url(#haloGlow)" />
+
+  <!-- Subtle Sunburst Light Rays -->
+  <g opacity="0.4">
+    <path d="M256 30 L264 220 L248 220 Z" fill="url(#rayGrad)" />
+    <path d="M256 450 L264 260 L248 260 Z" fill="url(#rayGrad)" transform="rotate(180 256 256)" />
+    <path d="M460 240 L270 248 L270 232 Z" fill="url(#rayGrad)" transform="rotate(90 256 240)" />
+    <path d="M52 240 L242 248 L242 232 Z" fill="url(#rayGrad)" transform="rotate(-90 256 240)" />
+    <path d="M400 96 L268 230 L256 220 Z" fill="url(#rayGrad)" transform="rotate(45 256 240)" />
+    <path d="M112 384 L244 250 L256 260 Z" fill="url(#rayGrad)" transform="rotate(225 256 240)" />
+    <path d="M112 96 L244 230 L256 220 Z" fill="url(#rayGrad)" transform="rotate(-45 256 240)" />
+    <path d="M400 384 L268 250 L256 260 Z" fill="url(#rayGrad)" transform="rotate(135 256 240)" />
+  </g>
+
+  <!-- Main 3D Roman Cross Structure -->
+  <g filter="url(#dropShadow)">
+
+    <!-- Outer Gold Backing / Shadow Bevel -->
+    <path d="
+      M 216 48 
+      L 296 48 L 296 56 C 296 66, 304 74, 314 74 L 392 74 
+      L 392 154 L 384 154 C 374 154, 366 162, 366 172 L 366 200 
+      L 296 200 L 296 432 C 296 442, 304 450, 314 450 L 328 450 
+      L 328 472 L 184 472 L 184 450 L 198 450 C 208 450, 216 442, 216 432 
+      L 216 200 L 146 200 L 146 172 C 146 162, 138 154, 128 154 
+      L 120 154 L 120 74 L 198 74 C 208 74, 216 66, 216 56 Z"
+      fill="url(#goldDark)" />
+
+    <!-- 3D Extrusion Side Facets (Right & Bottom Depth) -->
+    <path d="
+      M 296 48 L 304 54 L 304 62 C 304 72, 312 80, 322 80 L 400 80 
+      L 400 160 L 392 160 C 382 160, 374 168, 374 178 L 374 208 L 304 208 
+      L 304 440 C 304 450, 312 458, 322 458 L 336 458 L 336 480 
+      L 192 480 L 192 458 L 206 458 C 216 458, 224 450, 224 440 
+      L 224 208 L 154 208 L 154 180 C 154 170, 146 162, 136 162 L 128 162 L 128 80 L 206 80 L 224 62 Z"
+      fill="#4A2A04" opacity="0.7" />
+
+    <!-- Front Gold Rim & Roman Flared Serifs -->
+    <path d="
+      M 218 52 
+      L 294 52 L 294 60 C 294 72, 304 80, 316 80 L 388 80 
+      L 388 150 L 380 150 C 368 150, 360 158, 360 170 L 360 196 
+      L 294 196 L 294 430 C 294 442, 304 450, 316 450 L 324 450 
+      L 324 468 L 188 468 L 188 450 L 196 450 C 208 450, 218 442, 218 430 
+      L 218 196 L 152 196 L 152 170 C 152 158, 144 150, 132 150 
+      L 124 150 L 124 80 L 196 80 C 208 80, 218 72, 218 60 Z"
+      fill="url(#goldLight)" />
+
+    <!-- Inset Roman Marble Body -->
+    <path d="
+      M 224 62 
+      L 288 62 L 288 72 C 288 82, 296 90, 306 90 L 378 90 
+      L 378 140 L 368 140 C 358 140, 350 148, 350 158 L 350 186 
+      L 288 186 L 288 422 C 288 432, 296 440, 306 440 L 314 440 
+      L 314 458 L 198 458 L 198 440 L 206 440 C 216 440, 224 432, 224 422 
+      L 224 186 L 162 186 L 162 158 C 162 148, 154 140, 144 140 
+      L 134 140 L 134 90 L 206 90 C 216 90, 224 82, 224 72 Z"
+      fill="url(#marbleFace)" />
+
+    <!-- Inner Golden Ridge (Central Bevel Line) -->
+    <path d="M 256 66 L 256 450 M 138 145 L 374 145" stroke="url(#goldLight)" stroke-width="3" opacity="0.6" stroke-linecap="round" />
+
+    <!-- Central Roman Chi-Rho / Golden Wreath Emblem at Intersection -->
+    <circle cx="256" cy="145" r="32" fill="url(#goldLight)" filter="url(#divineGlow)" />
+    <circle cx="256" cy="145" r="26" fill="url(#goldDark)" />
+    <circle cx="256" cy="145" r="22" fill="url(#marbleFace)" />
+
+    <!-- Alpha & Omega / Cross Accent Symbol in Center -->
+    <path d="M 256 129 L 256 161 M 240 145 L 272 145" stroke="url(#goldLight)" stroke-width="4" stroke-linecap="round" />
+    <circle cx="256" cy="145" r="4" fill="#FFF5CF" />
+
+    <!-- Intertwined Roman Olive Leaves (Symbol of Peace & Universal Love) -->
+    <g filter="url(#dropShadow)">
+      <!-- Left Vine -->
+      <path d="M 220 180 Q 200 160 215 135 Q 230 110 256 125" fill="none" stroke="url(#goldLight)" stroke-width="4" />
+      <path d="M 205 168 C 190 160 185 145 200 145 C 210 155 210 165 205 168 Z" fill="url(#leafGrad)" />
+      <path d="M 220 148 C 210 135 210 120 225 125 C 230 135 228 145 220 148 Z" fill="url(#leafGrad)" />
+
+      <!-- Right Vine -->
+      <path d="M 292 180 Q 312 160 297 135 Q 282 110 256 125" fill="none" stroke="url(#goldLight)" stroke-width="4" />
+      <path d="M 307 168 C 322 160 327 145 312 145 C 302 155 302 165 307 168 Z" fill="url(#leafGrad)" />
+      <path d="M 292 148 C 302 135 302 120 287 125 C 282 135 284 145 292 148 Z" fill="url(#leafGrad)" />
+    </g>
+
+    <!-- Bottom Olive Branch Accent -->
+    <g transform="translate(256, 380) scale(0.7)">
+      <path d="M -40 30 Q 0 0 40 30" fill="none" stroke="url(#goldLight)" stroke-width="3" />
+      <path d="M -30 20 C -45 10 -40 -5 -25 5 C -20 15 -22 22 -30 20 Z" fill="url(#leafGrad)" />
+      <path d="M 30 20 C 45 10 40 -5 25 5 C 20 15 22 22 30 20 Z" fill="url(#leafGrad)" />
+    </g>
+  </g>
+</svg>

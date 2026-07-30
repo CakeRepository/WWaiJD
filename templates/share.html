@@ -18,148 +18,115 @@
     <link rel="canonical" href="{{ canonical_url }}">
     
     <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
     <link rel="shortcut icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="article">
-    <meta property="og:url" content="{{ og_url }}">
-    <meta property="og:title" content="{{ og_title }}">
-    <meta property="og:description" content="{{ og_description }}">
-    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ twitter_url }}">
-    <meta name="twitter:title" content="{{ twitter_title }}">
-    <meta name="twitter:description" content="{{ twitter_description }}">
-    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
-    
-    <!-- Schema.org Structured Data -->
-    <script type="application/ld+json">
-    {{ schema_json | safe }}
-    </script>
-    
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/passage.css">
+    <script src="/static/script.js"></script>
     <style>
         .share-container {
-            max-width: 800px;
+            max-width: 950px;
             margin: 0 auto;
             padding: 2rem 1rem;
         }
         .question-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .question-text {
             font-size: 1.5rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--text-main);
             margin-bottom: 1rem;
         }
         .answer-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 2rem;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .answer-content {
             font-size: 1.1rem;
-            line-height: 1.6;
-            color: var(--text-secondary);
+            line-height: 1.7;
+            color: var(--text-main);
         }
         .passages-list {
             display: grid;
             gap: 1rem;
         }
         .passage-item {
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--panel-soft);
             padding: 1rem;
             border-radius: 8px;
-            border-left: 3px solid var(--accent-primary);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
         }
         .passage-ref {
             font-weight: bold;
-            color: var(--accent-primary);
+            color: var(--accent);
             margin-bottom: 0.5rem;
             display: block;
-        }
-        .cta-section {
-            text-align: center;
-            margin-top: 3rem;
-            padding: 2rem;
-            background: rgba(108, 228, 214, 0.05);
-            border-radius: 16px;
-        }
-        .cta-button {
-            display: inline-block;
-            background: var(--accent-primary);
-            color: #000;
-            padding: 0.8rem 2rem;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            margin-top: 1rem;
-            transition: transform 0.2s;
-        }
-        .cta-button:hover {
-            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
     <div class="passage-wrapper">
-        <header class="passage-header">
+        <header class="passage-header flow-box" style="margin-bottom: 24px;">
             <div class="header-top">
                 <a href="/" class="home-icon" title="Home">🏠</a>
+                <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                    📖 Paperwhite
+                </button>
             </div>
         </header>
 
         <main class="share-container">
-            <article class="question-card">
-                <h1 class="question-text">{{ question }}</h1>
-                <div class="meta-info">
-                    <span class="mode-badge">{{ mode }} focus</span>
+            <article class="question-card flow-box">
+                <h1 class="question-text">"{{ question }}"</h1>
+                <div class="meta-info" style="display: flex; gap: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                    <span class="mode-badge" style="background: var(--card-highlight); padding: 2px 8px; border-radius: 10px; color: var(--accent);">{{ mode }} focus</span>
                     <span class="date-badge">{{ date }}</span>
                 </div>
             </article>
 
-            <article class="answer-card">
+            <article class="answer-card flow-box">
                 <div class="answer-content">
                     {{ answer_html | safe }}
                 </div>
             </article>
 
             {% if passages %}
-            <section class="passages-card">
-                <h3>Biblical References</h3>
+            <section class="passages-card flow-box" style="margin-bottom: 1.5rem;">
+                <h3 style="color: var(--accent); margin-bottom: 1rem;">Biblical References</h3>
                 <div class="passages-list">
                     {% for passage in passages %}
                     <div class="passage-item">
                         <a href="/bible/{{ passage.book }}/{{ passage.chapter }}" class="passage-ref">{{ passage.reference }}</a>
-                        <div class="passage-text">{{ passage.text }}</div>
+                        <div class="passage-text" style="font-family: var(--font-serif);">{{ passage.text }}</div>
                     </div>
                     {% endfor %}
                 </div>
             </section>
             {% endif %}
 
-            <div class="cta-section">
+            <div class="flow-box" style="text-align: center; margin-top: 2rem;">
                 <h2>Have your own question?</h2>
-                <p>Ask AI Jesus for biblical guidance on any topic.</p>
-                <a href="/" class="cta-button">Ask a Question</a>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Ask AI Jesus for biblical guidance on any topic.</p>
+                <a href="/" class="nav-item is-primary" style="display: inline-block; margin-top: 1rem;">Ask a Question &rarr;</a>
             </div>
         </main>
 
-        <footer class="passage-footer" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-            <a href="/" class="back-link">← Return to What Would AI Jesus Do?</a>
+        <footer class="passage-footer flow-box" style="margin-top: 24px; display: flex; justify-content: center; gap: 15px;">
+            <a href="/" class="back-link">← Return to Home</a>
+            <span class="separator">•</span>
             <a href="/questions" class="back-link">📖 Browse All Questions</a>
         </footer>
     </div>

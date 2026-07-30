@@ -1,0 +1,207 @@
+/* Living 3D WebGL Background & Glassmorphism System */
+
+/* Fullscreen Background Canvas */
+.bg-3d-container {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1; /* Behind all content */
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#hopeCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    transition: filter 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+#hopeCanvas.is-blind {
+    filter: blur(20px) brightness(0.6);
+}
+
+/* Glassmorphism UI Overrides */
+body {
+    background: #040916 !important; /* Base dark background */
+}
+
+/* Glass panel styling for main cards */
+.search-focus, 
+.response-card, 
+.passages-card, 
+.focus-card, 
+.status-card, 
+.quiz-container, 
+.fundraiser-banner,
+.primary-hero {
+    background: rgba(9, 17, 34, 0.72) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(243, 200, 102, 0.2) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.search-focus:hover,
+.response-card:hover {
+    border-color: rgba(243, 200, 102, 0.35) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(243, 200, 102, 0.08) !important;
+}
+
+/* Inline 3D Hope Control Card */
+.hope-hero-card {
+    background: linear-gradient(135deg, rgba(243, 200, 102, 0.12) 0%, rgba(13, 25, 48, 0.75) 50%, rgba(108, 228, 214, 0.08) 100%);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(243, 200, 102, 0.3);
+    border-radius: 28px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.hope-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.hope-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: rgba(243, 200, 102, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(243, 200, 102, 0.4);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.hope-hero-card h2 {
+    font-family: var(--font-serif);
+    font-size: 2.2rem;
+    color: #ffffff;
+    margin: 8px 0;
+    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+}
+
+.hope-hero-card p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    max-width: 780px;
+    margin-bottom: 24px;
+}
+
+/* Atmosphere Selector Buttons */
+.hope-phase-selector {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hope-phase-btn {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    padding: 12px 22px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.hope-phase-btn:hover {
+    background: rgba(243, 200, 102, 0.18);
+    border-color: rgba(243, 200, 102, 0.4);
+    transform: translateY(-2px);
+}
+
+.hope-phase-btn.is-active {
+    background: linear-gradient(135deg, rgba(243, 200, 102, 0.3), rgba(242, 157, 66, 0.3));
+    border-color: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 6px 20px rgba(243, 200, 102, 0.25);
+    transform: translateY(-2px);
+}
+
+.hope-phase-icon {
+    font-size: 1.1rem;
+}
+
+/* Live Storyteller Callout box inside card */
+.hope-story-box {
+    margin-top: 20px;
+    padding: 20px 24px;
+    background: rgba(4, 9, 22, 0.6);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 16px 16px 0;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    line-height: 1.6;
+    transition: all 0.4s ease;
+}
+
+.hope-story-box strong {
+    color: var(--accent);
+}
+
+/* Floating stardust hint banner at page bottom */
+.hope-stardust-hint {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(9, 17, 34, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(108, 228, 214, 0.3);
+    padding: 10px 18px;
+    border-radius: 999px;
+    color: var(--accent-2);
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .hope-hero-card {
+        padding: 20px;
+    }
+    
+    .hope-hero-card h2 {
+        font-size: 1.7rem;
+    }
+    
+    .hope-phase-selector {
+        flex-direction: column;
+    }
+    
+    .hope-phase-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .hope-stardust-hint {
+        display: none;
+    }
+}

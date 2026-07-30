@@ -9,22 +9,23 @@
     <link rel="canonical" href="{{ canonical_url }}">
 
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
     <style>
         .topic-container {
-            max-width: 800px;
+            max-width: 950px;
             margin: 0 auto;
-            padding: 2rem;
-            color: var(--text-color);
+            padding: 2rem 1rem;
+            color: var(--text-main);
         }
         .passage-item {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
             padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
         }
         .passage-reference {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: bold;
             color: var(--accent);
             margin-bottom: 0.5rem;
@@ -35,46 +36,82 @@
             text-decoration: underline;
         }
         .passage-text {
-            line-height: 1.6;
+            line-height: 1.7;
             font-size: 1.05rem;
             margin-top: 0.5rem;
-            border-left: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 3px solid var(--border);
             padding-left: 1rem;
-            color: var(--text-color);
-            opacity: 0.9;
+            color: var(--text-main);
+            font-family: var(--font-serif);
         }
     </style>
 </head>
 <body>
     <div class="topic-container">
-        <header style="margin-bottom: 2rem;">
-            <a href="/topics" style="color: var(--accent); text-decoration: none; margin-bottom: 1rem; display: inline-block;">← All Topics</a>
-            <h1 style="text-transform: capitalize;">What the Bible says about: {{ topic_name }}</h1>
+        <!-- Site Header Navigation Box -->
+        <header class="site-header flow-box">
+            <a href="/" class="header-brand">
+                <span class="header-brand-icon">✝️</span>
+                <span>What Would AI Jesus Do?</span>
+            </a>
+
+            <nav class="header-nav">
+                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
+                <a href="/devotional" class="nav-item">🔥 Devotional</a>
+                <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
+                <a href="/plans" class="nav-item">📚 Plans</a>
+                <a href="/topics" class="nav-item is-primary is-active">🏷️ Topics</a>
+            </nav>
+
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                📖 Paperwhite
+            </button>
         </header>
 
+        <div class="flow-box" style="margin-bottom: 2rem;">
+            <a href="/topics" class="nav-item" style="display: inline-block; margin-bottom: 0.75rem;">← All Topics</a>
+            <h1 style="text-transform: capitalize; font-size: 2rem;">What the Bible says about {{ topic_name }}</h1>
+        </div>
+
         {% if overview %}
-        <div class="topic-overview" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.8rem; margin-bottom: 2.5rem; border-left: 4px solid var(--accent); line-height: 1.7; font-size: 1.1rem; color: var(--text-color);">
-            <h2 style="margin-top: 0; font-size: 1.4rem; color: var(--accent); margin-bottom: 0.8rem;">Devotional Guidance</h2>
-            <div class="overview-text" style="opacity: 0.95;">{{ overview }}</div>
+        <div class="topic-overview flow-box" style="margin-bottom: 2rem; border-left: 4px solid var(--accent);">
+            <h2 style="margin-top: 0; font-size: 1.3rem; color: var(--accent); margin-bottom: 0.8rem;">Devotional Guidance</h2>
+            <div class="overview-text" style="line-height: 1.7; font-size: 1.05rem;">{{ overview }}</div>
         </div>
         {% endif %}
 
         <div class="passages-list">
             {% for passage in passages %}
-            <div class="passage-item">
+            <div class="passage-item flow-box">
                 <a href="/bible/{{ version }}/{{ passage.book|urlencode }}/{{ passage.chapter }}#{{ passage.verses.split('-')[0] }}" class="passage-reference">
                     {{ passage.reference }}
                 </a>
                 <div class="passage-text">{{ passage.text }}</div>
             </div>
             {% else %}
-            <p>No passages found for this topic.</p>
+            <div class="flow-box">
+                <p>No passages found for this topic.</p>
+            </div>
             {% endfor %}
         </div>
 
-        <div style="margin-top: 3rem; text-align: center;">
-             <a href="/" class="primary-button" style="text-decoration: none; display: inline-block; padding: 0.8rem 1.5rem;">Ask AI Jesus about {{ topic_name }}</a>
+        <div class="flow-box" style="margin-top: 3rem; text-align: center;">
+             <a href="/?q=What+does+the+Bible+say+about+{{ topic_name|urlencode }}%3F" class="nav-item is-primary" style="display: inline-block;">Ask AI Jesus about {{ topic_name }} &rarr;</a>
         </div>
+
+        <footer class="site-footer flow-box" style="margin-top: 3rem;">
+            <div class="footer-links">
+                <a href="/topics" class="footer-link">Topics Index</a>
+                <span class="separator">•</span>
+                <a href="/" class="footer-link">Home</a>
+                <span class="separator">•</span>
+                <a href="/bible" class="footer-link">Read the Bible</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 What Would AI Jesus Do
+            </div>
+        </footer>
     </div>
 </body>
 </html>

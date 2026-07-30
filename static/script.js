@@ -1,5 +1,35 @@
 // Main application logic
 document.addEventListener('DOMContentLoaded', function () {
+    // Paperwhite Theme Switcher
+    function initPaperwhiteTheme() {
+        const savedTheme = localStorage.getItem('wwaijd_theme');
+        const isPaperwhite = savedTheme === 'paperwhite';
+        if (isPaperwhite) {
+            document.body.classList.add('paperwhite-mode');
+        }
+        updateThemeToggleButton(isPaperwhite);
+    }
+
+    function updateThemeToggleButton(isPaperwhite) {
+        const btn = document.getElementById('themeToggleBtn');
+        if (!btn) return;
+        if (isPaperwhite) {
+            btn.innerHTML = '✨ Dynamic UI';
+            btn.setAttribute('aria-label', 'Switch to Dynamic UI Mode');
+        } else {
+            btn.innerHTML = '📖 Paperwhite';
+            btn.setAttribute('aria-label', 'Switch to Kindle Paperwhite Reader Mode');
+        }
+    }
+
+    window.toggleTheme = function () {
+        const isPaperwhite = document.body.classList.toggle('paperwhite-mode');
+        localStorage.setItem('wwaijd_theme', isPaperwhite ? 'paperwhite' : 'ui');
+        updateThemeToggleButton(isPaperwhite);
+    };
+
+    initPaperwhiteTheme();
+
     const form = document.getElementById('questionForm');
     const input = document.getElementById('questionInput');
     const askButton = document.getElementById('askButton');
@@ -1007,17 +1037,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 throw new Error('Health check failed');
             }
             const ready = data.status === 'healthy' && data.rag_initialized;
-            healthBadge.textContent = ready ? 'Ready' : 'Setup needed';
+            healthBadge.textContent = ready ? 'Ready' : 'Connecting';
             healthBadge.classList.toggle('is-healthy', ready);
             healthBadge.classList.toggle('is-warning', !ready);
-            const passagesCount = typeof data.passages_count === 'number' ? data.passages_count : 'unknown';
             healthDetail.textContent = ready
-                ? `Vector database online | ${passagesCount} passages indexed`
-                : 'Run build_embeddings.py and restart to initialize study data.';
+                ? 'Scripture engine connected'
+                : 'Connecting to Scripture database...';
         } catch (err) {
-            healthBadge.textContent = 'Offline';
+            healthBadge.textContent = 'Connecting';
             healthBadge.classList.add('is-warning');
-            healthDetail.textContent = 'Could not reach the server. Is it running on port 5000?';
+            healthDetail.textContent = 'Connecting to Scripture database...';
         }
     }
 

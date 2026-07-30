@@ -7,9 +7,12 @@ import os
 import sys
 import re
 
-# Force unbuffered output to prevent "hit enter" issue on some servers
+# Force unbuffered output and UTF-8 encoding to prevent Windows unicode crashes
 os.environ['PYTHONUNBUFFERED'] = '1'
-sys.stdout.reconfigure(line_buffering=True) if hasattr(sys.stdout, 'reconfigure') else None
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(line_buffering=True, encoding='utf-8')
+if hasattr(sys.stderr, 'reconfigure'):
+    sys.stderr.reconfigure(line_buffering=True, encoding='utf-8')
 
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, render_template, abort, url_for, redirect
 from waitress import serve
@@ -2313,8 +2316,8 @@ def main():
         print("Please run 'python build_embeddings.py' first to create the vector database.", flush=True)
         print("=" * 60, flush=True)
     
-    print("\n🚀 Starting production server with Waitress...", flush=True)
-    print("📍 Open your browser to: http://localhost:5000", flush=True)
+    print("\n* Starting production server with Waitress...", flush=True)
+    print("* Open your browser to: http://localhost:5000", flush=True)
     print("\nPress Ctrl+C to stop the server", flush=True)
     print("=" * 60 + "\n", flush=True)
     

@@ -9,37 +9,39 @@
     <link rel="canonical" href="{{ url_for('topics_index', _external=True) }}">
 
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
     <style>
         .topics-container {
-            max-width: 800px;
+            max-width: 950px;
             margin: 0 auto;
-            padding: 2rem;
-            color: var(--text-color);
+            padding: 2rem 1rem;
+            color: var(--text-main);
         }
         .topics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
         }
         .topic-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.2rem;
             text-align: center;
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
-            color: var(--text-color);
+            color: var(--text-main);
             display: block;
         }
         .topic-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-soft);
             border-color: var(--accent);
+            text-decoration: none;
         }
         .topic-title {
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: bold;
             color: var(--accent);
             text-transform: capitalize;
@@ -48,19 +50,54 @@
 </head>
 <body>
     <div class="topics-container">
-        <header style="text-align: center; margin-bottom: 2rem;">
-            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1rem; display: inline-block;">← Back to WWAIJD</a>
-            <h1>Bible Topics & Themes</h1>
-            <p>Explore what the scriptures say about these common themes.</p>
+        <!-- Site Header Navigation Box -->
+        <header class="site-header flow-box">
+            <a href="/" class="header-brand">
+                <span class="header-brand-icon">✝️</span>
+                <span>What Would AI Jesus Do?</span>
+            </a>
+
+            <nav class="header-nav">
+                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
+                <a href="/devotional" class="nav-item">🔥 Devotional</a>
+                <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
+                <a href="/plans" class="nav-item">📚 Plans</a>
+                <a href="/topics" class="nav-item is-primary is-active">🏷️ Topics</a>
+            </nav>
+
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                📖 Paperwhite
+            </button>
         </header>
+
+        <div class="flow-box" style="text-align: center; margin-bottom: 2rem;">
+            <h1>Bible Topics & Themes</h1>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">Explore what the scriptures say about these key life themes.</p>
+        </div>
 
         <div class="topics-grid">
             {% for topic in topics %}
-            <a href="/topics/{{ topic|lower|replace(' ', '-') }}" class="topic-card">
+            <a href="/topics/{{ topic|lower|replace(' ', '-') }}" class="topic-card flow-box">
                 <div class="topic-title">{{ topic }}</div>
             </a>
             {% endfor %}
         </div>
+
+        <footer class="site-footer flow-box" style="margin-top: 3rem;">
+            <div class="footer-links">
+                <a href="/" class="footer-link">Home</a>
+                <span class="separator">•</span>
+                <a href="/bible" class="footer-link">Read the Bible</a>
+                <span class="separator">•</span>
+                <a href="/devotional" class="footer-link">Daily Devotional</a>
+                <span class="separator">•</span>
+                <a href="/plans" class="footer-link">Study Plans</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 What Would AI Jesus Do
+            </div>
+        </footer>
     </div>
 </body>
 </html>

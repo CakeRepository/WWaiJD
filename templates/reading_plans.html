@@ -9,34 +9,18 @@
     <link rel="canonical" href="https://wwaijd.org/plans">
 
     <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/script.js"></script>
     <style>
         .plans-container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
-            padding: 3rem 1.5rem;
-            color: var(--text-color);
-        }
-        .plans-header {
-            text-align: center;
-            margin-bottom: 3.5rem;
-        }
-        .plans-header h1 {
-            font-size: 2.6rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-        }
-        .plans-header p {
-            font-size: 1.15rem;
-            opacity: 0.8;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.5;
+            padding: 2rem 1rem;
+            color: var(--text-main);
         }
         .plans-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 2rem;
+            gap: 1.5rem;
         }
         @media (min-width: 768px) {
             .plans-grid {
@@ -44,35 +28,35 @@
             }
         }
         .plan-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 2rem;
+            padding: 1.8rem;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
             text-decoration: none;
-            color: var(--text-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            color: var(--text-main);
             position: relative;
             overflow: hidden;
         }
         .plan-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-soft);
             border-color: var(--accent);
+            text-decoration: none;
         }
         .plan-title {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
             color: var(--accent);
-            margin-bottom: 0.8rem;
+            margin-bottom: 0.6rem;
         }
         .plan-desc {
-            font-size: 1rem;
+            font-size: 0.98rem;
             line-height: 1.6;
-            opacity: 0.85;
+            color: var(--text-muted);
             margin-bottom: 1.5rem;
         }
         .plan-meta {
@@ -82,14 +66,14 @@
             font-size: 0.88rem;
             font-weight: 600;
             margin-top: auto;
-            border-top: 1px solid var(--border-color);
-            padding-top: 1.2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
         }
         .plan-length {
             color: var(--accent);
         }
         .plan-progress {
-            opacity: 0.8;
+            color: var(--text-muted);
             font-style: italic;
         }
         .progress-bar-container {
@@ -97,8 +81,8 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 5px;
-            background: rgba(139, 90, 60, 0.08);
+            height: 4px;
+            background: var(--border);
         }
         .progress-bar-fill {
             height: 100%;
@@ -110,15 +94,35 @@
 </head>
 <body>
     <div class="plans-container">
-        <header class="plans-header">
-            <a href="/" style="color: var(--accent); text-decoration: none; margin-bottom: 1.5rem; display: inline-block; font-weight: 600;">← Back to WWAIJD</a>
-            <h1>Spiritual Growth Plans</h1>
-            <p>Commit to a multi-day journey of study and reflection. Deepen your understanding on crucial life topics.</p>
+        <!-- Site Header Navigation Box -->
+        <header class="site-header flow-box">
+            <a href="/" class="header-brand">
+                <span class="header-brand-icon">✝️</span>
+                <span>What Would AI Jesus Do?</span>
+            </a>
+
+            <nav class="header-nav">
+                <a href="/" class="nav-item is-primary">💬 Ask AI</a>
+                <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
+                <a href="/devotional" class="nav-item">🔥 Devotional</a>
+                <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
+                <a href="/plans" class="nav-item is-primary is-active">📚 Plans</a>
+                <a href="/topics" class="nav-item">🏷️ Topics</a>
+            </nav>
+
+            <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
+                📖 Paperwhite
+            </button>
         </header>
+
+        <div class="flow-box" style="text-align: center; margin-bottom: 2rem;">
+            <h1>Spiritual Growth Plans</h1>
+            <p style="color: var(--text-muted); max-width: 600px; margin: 0.5rem auto 0;">Commit to a multi-day journey of study and reflection to deepen your faith.</p>
+        </div>
 
         <div class="plans-grid">
             {% for slug, plan in plans.items() %}
-            <a href="/plans/{{ slug }}" class="plan-card" data-slug="{{ slug }}">
+            <a href="/plans/{{ slug }}" class="plan-card flow-box" data-slug="{{ slug }}">
                 <div>
                     <h2 class="plan-title">{{ plan.title }}</h2>
                     <p class="plan-desc">{{ plan.description }}</p>
@@ -133,6 +137,21 @@
             </a>
             {% endfor %}
         </div>
+
+        <footer class="site-footer flow-box" style="margin-top: 3rem;">
+            <div class="footer-links">
+                <a href="/" class="footer-link">Home</a>
+                <span class="separator">•</span>
+                <a href="/bible" class="footer-link">Read the Bible</a>
+                <span class="separator">•</span>
+                <a href="/devotional" class="footer-link">Daily Devotional</a>
+                <span class="separator">•</span>
+                <a href="/topics" class="footer-link">Browse Topics</a>
+            </div>
+            <div class="copyright">
+                &copy; 2025 What Would AI Jesus Do
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -142,15 +161,13 @@
                 const slug = card.dataset.slug;
                 const completedStr = localStorage.getItem('wwaijd-plan-' + slug + '-completed') || '';
                 const completedDays = completedStr ? completedStr.split(',') : [];
-                
-                // Get plan total length
-                const totalDays = slug === 'anxiety' || slug === 'relationships' || slug === 'grief' || slug === 'purpose' ? 5 : 5;
+                const totalDays = 5;
                 const count = completedDays.length;
                 
                 const progressText = document.getElementById('progress-text-' + slug);
                 const progressFill = document.getElementById('progress-fill-' + slug);
                 
-                if (count > 0) {
+                if (count > 0 && progressFill && progressText) {
                     const percent = Math.min(100, Math.round((count / totalDays) * 100));
                     progressFill.style.width = percent + '%';
                     if (percent === 100) {
