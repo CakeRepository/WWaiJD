@@ -132,7 +132,7 @@
             </a>
 
             <nav class="header-nav">
-                <a href="/" class="nav-item is-primary is-active">💬 Ask AI</a>
+                <a href="/" class="nav-item is-primary is-active">💬 Ask AI Jesus</a>
                 <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
                 <a href="/devotional" class="nav-item">🔥 Devotional</a>
                 <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
@@ -150,16 +150,69 @@
             <!-- MAIN FEATURE: Interactive AI Companion Chat Workspace -->
             <section class="search-focus minimal-search flow-box chat-workspace" id="study-cta" aria-label="Ask AI Jesus Interactive Chat">
                 <div class="search-card minimal-card chat-card-wrapper">
-                    <h2 id="searchHeading" class="visually-hidden">Ask your question</h2>
-                    
+                    <!-- Top Chat Workspace Header Bar -->
+                    <div class="chat-header-bar">
+                        <div class="chat-header-brand">
+                            <div class="chat-avatar-badge">
+                                <span class="live-status-dot" title="Active AI Connection"></span>
+                                <span class="avatar-sparkle">✨</span>
+                                <span class="avatar-title">AI Jesus</span>
+                            </div>
+                        </div>
+
+                        <div class="chat-header-controls">
+                            <!-- Tone Focus Selector -->
+                            <div class="chat-tone-pills" role="toolbar" aria-label="Guidance Tone">
+                                <button type="button" class="tone-pill mode-button is-active" data-mode="balanced" title="Balanced guidance">Balanced</button>
+                                <button type="button" class="tone-pill mode-button" data-mode="comfort" title="Softer, comforting encouragement">Comfort</button>
+                                <button type="button" class="tone-pill mode-button" data-mode="clarity" title="Direct, practical next steps">Clarity</button>
+                                <button type="button" class="tone-pill mode-button" data-mode="challenge" title="Loving conviction for action">Challenge</button>
+                            </div>
+
+                            <!-- Scripture Translation Selector -->
+                            <div class="version-select-wrapper">
+                                <select id="versionSelector" class="chat-version-select" title="Select Scripture Version">
+                                    <option value="kjv" selected>KJV (King James)</option>
+                                    <option value="web">WEB (World English)</option>
+                                </select>
+                            </div>
+
+                            <!-- Clear Chat Button -->
+                            <button type="button" id="clearChatBtn" class="chat-header-action-btn" title="Clear conversation thread">
+                                <span>🗑️ Clear</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Interactive Conversation Thread Container -->
                     <div id="chatMessages" class="chat-messages-container" aria-live="polite">
                         <!-- Minimal Welcome State -->
                         <div id="chatWelcomeCard" class="chat-welcome-card pure-minimal-welcome">
-                            <h2 class="welcome-title">Ask Your Question</h2>
-                            <p class="welcome-text">Type your question below to receive biblical guidance grounded in Holy Scripture.</p>
+                            <div class="welcome-badge">Peace & Scripture Guidance</div>
+                            <h2 class="welcome-title">Ask AI Jesus</h2>
+                            <p class="welcome-text">Ask AI Jesus any question to receive biblical wisdom grounded in Holy Scripture.</p>
+                            
+                            <div class="chat-starter-prompts">
+                                <button type="button" class="starter-pill" data-question="What does Jesus say about handling anxiety and worry?">
+                                    <span>🕊️</span> Finding Peace
+                                </button>
+                                <button type="button" class="starter-pill" data-question="How do I truly forgive someone who deeply hurt me?">
+                                    <span>❤️</span> True Forgiveness
+                                </button>
+                                <button type="button" class="starter-pill" data-question="What is the deeper meaning of faith in difficult times?">
+                                    <span>💡</span> Understanding Faith
+                                </button>
+                                <button type="button" class="starter-pill" data-question="Explain the Parable of the Prodigal Son for modern life.">
+                                    <span>📖</span> Prodigal Son Parable
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Floating Scroll To Bottom Button -->
+                    <button type="button" id="scrollToBottomBtn" class="scroll-bottom-btn" style="display: none;" title="Scroll to latest message">
+                        <span>↓ New messages</span>
+                    </button>
 
                     <div class="search-section chat-input-area">
                         <form id="questionForm">
@@ -167,7 +220,8 @@
                                 <div class="search-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 </div>
-                                <textarea id="questionInput" placeholder="Ask your question..." required rows="1"></textarea>
+                                <textarea id="questionInput" placeholder="Ask AI Jesus a question..." required rows="1">{% if initial_query %}{{ initial_query }}{% endif %}</textarea>
+                                <button type="button" id="clearInputBtn" class="icon-button clear-input-btn" style="display: none;" title="Clear text">✕</button>
                                 <button type="button" id="voiceButton" class="icon-button voice-button" title="Speak your question">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
@@ -196,9 +250,8 @@
 
             <!-- Hidden Legacy Containers for JavaScript compatibility -->
             <div style="display: none !important;">
-                <button type="button" id="clearChatBtn"></button>
                 <div class="tool-switcher">
-                    <button type="button" class="tool-button is-active" data-tool="ask">Ask Question</button>
+                    <button type="button" class="tool-button is-active" data-tool="ask">Ask AI Jesus</button>
                     <button type="button" class="tool-button" data-tool="study">Bible Study</button>
                     <button type="button" class="tool-button" data-tool="prayer">Prayer Request</button>
                     <button type="button" class="tool-button" data-tool="parable">Parable</button>
