@@ -1,4 +1,62 @@
 // Main application logic
+
+// Footer site-share (runs on all pages that include this script)
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-share-site]').forEach((shareBtn) => {
+        shareBtn.addEventListener('click', async () => {
+            const shareUrl = 'https://wwaijd.org/';
+            const shareData = {
+                title: 'Athelstan',
+                text: 'Ask Athelstan for clear, scripture-grounded Bible answers.',
+                url: shareUrl
+            };
+            const originalLabel = shareBtn.textContent;
+
+            const copyLink = async () => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                    return;
+                }
+                const ta = document.createElement('textarea');
+                ta.value = shareUrl;
+                ta.setAttribute('readonly', '');
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            };
+
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    shareBtn.textContent = 'Thanks!';
+                    shareBtn.classList.add('is-shared');
+                } else {
+                    await copyLink();
+                    shareBtn.textContent = 'Link copied!';
+                    shareBtn.classList.add('is-copied');
+                }
+            } catch (err) {
+                if (err && err.name === 'AbortError') return;
+                try {
+                    await copyLink();
+                    shareBtn.textContent = 'Link copied!';
+                    shareBtn.classList.add('is-copied');
+                } catch (copyErr) {
+                    shareBtn.textContent = 'Could not share';
+                }
+            }
+
+            setTimeout(() => {
+                shareBtn.textContent = originalLabel;
+                shareBtn.classList.remove('is-copied', 'is-shared');
+            }, 2000);
+        });
+    });
+});
+
 document.addEventListener('DOMContentLoaded', function () {
     // Paperwhite Theme Switcher + lower-left ambient dock
     function ensureAmbientDock() {

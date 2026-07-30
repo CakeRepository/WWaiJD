@@ -1975,6 +1975,22 @@ h1, h2, h3, h4 {
     transform: translateY(-1px);
 }
 
+.footer-share-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+    appearance: none;
+}
+
+.footer-share-btn.is-copied,
+.footer-share-btn.is-shared {
+    color: var(--accent);
+    opacity: 1;
+}
+
 .separator {
     color: var(--border);
     font-size: 0.8rem;
