@@ -27,9 +27,89 @@
     <link rel="shortcut icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 
-    <!-- Preconnect for performance -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="What Would AI Jesus Do?">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://wwaijd.org/">
+    <meta property="og:title" content="What Would AI Jesus Do? | AI Bible Assistant & Scripture Search">
+    <meta property="og:description" content="Ask spiritual questions and receive AI-powered answers grounded in Holy Bible scripture, or read the entire Bible online for free.">
+    <meta property="og:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    <meta property="og:image:secure_url" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="What Would AI Jesus Do Logo and Open Graph Banner">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://wwaijd.org/">
+    <meta name="twitter:title" content="What Would AI Jesus Do? | AI Bible Assistant & Scripture Search">
+    <meta name="twitter:description" content="Ask spiritual questions and receive AI-powered answers grounded in Holy Bible scripture, or read the entire Bible online for free.">
+    <meta name="twitter:image" content="https://wwaijd.org/img/wwaijd-metaimage.png">
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://wwaijd.org/#website",
+          "url": "https://wwaijd.org/",
+          "name": "What Would AI Jesus Do?",
+          "description": "AI-powered Bible study assistant grounding answers directly in Holy Scripture.",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://wwaijd.org/?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://wwaijd.org/#organization",
+          "name": "What Would AI Jesus Do?",
+          "url": "https://wwaijd.org/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://wwaijd.org/static/favicon.svg"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://wwaijd.org/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What does the Bible say about forgiveness?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Scripture emphasizes forgiving others as God forgave us in Christ (Ephesians 4:32, Matthew 6:14-15), offering mercy and letting go of bitterness."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How should I handle difficult relationships?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Bible encourages peace, patience, love, and speaking truth in grace (Romans 12:18, Proverbs 15:1)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How can I find peace during hard times?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Peace comes from entrusting concerns to God through prayer, resting in His sovereign promises (Philippians 4:6-7, John 14:27)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
 
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/tool_switcher.css">
@@ -37,14 +117,14 @@
     <link rel="stylesheet" href="/static/hope_experience.css">
 </head>
 
-<body>
-    <!-- Living 3D WebGL Background Canvas -->
+<body class="chat-app-body">
+    <!-- Sacred Visual Canvas -->
     <div id="bg3dCanvasContainer" class="bg-3d-container">
         <canvas id="hopeCanvas"></canvas>
     </div>
 
     <div class="container page-shell centered-layout">
-        <!-- Site Header Navigation Box (FlowRMM Style) -->
+        <!-- Site Header Navigation Box -->
         <header class="site-header flow-box">
             <a href="/" class="header-brand">
                 <img src="/static/favicon.svg" alt="WWAIJD Cross Logo" class="header-brand-svg-logo" style="height: 28px; width: 28px; filter: drop-shadow(0 2px 8px rgba(247, 211, 105, 0.4)); vertical-align: middle; transition: transform 0.3s ease, filter 0.3s ease;">
@@ -52,69 +132,45 @@
             </a>
 
             <nav class="header-nav">
-                <!-- Two Primary Core Features -->
-                <a href="#study-cta" class="nav-item is-primary is-active">💬 Ask AI</a>
+                <a href="/" class="nav-item is-primary is-active">💬 Ask AI</a>
                 <a href="/bible" class="nav-item is-primary">📖 Read Bible</a>
-
-                <!-- Tertiary Navigation -->
                 <a href="/devotional" class="nav-item">🔥 Devotional</a>
                 <a href="/prayers" class="nav-item">🙏 Prayer Wall</a>
                 <a href="/plans" class="nav-item">📚 Plans</a>
                 <a href="/topics" class="nav-item">🏷️ Topics</a>
             </nav>
 
-            <!-- Site Theme Switcher (UI vs Paperwhite Kindle Mode) -->
+            <!-- Site Theme Switcher -->
             <button type="button" id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" title="Toggle Kindle Paperwhite mode">
                 📖 Paperwhite
             </button>
         </header>
 
         <main class="main-content centered-content">
-            
-            <!-- MAIN FEATURE 1: Ask AI (RAG Bible Assistant Box) -->
-            <section class="search-focus minimal-search flow-box" id="study-cta" aria-label="Ask AI Jesus">
-                <div class="search-card minimal-card">
-                    <div class="tool-switcher" role="tablist" aria-label="Select a tool">
-                        <button type="button" class="tool-button is-active" role="tab" aria-selected="true" data-tool="ask">Ask Question</button>
-                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="study">Bible Study</button>
-                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="prayer">Prayer Request</button>
-                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="parable">Parable</button>
-                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="quiz">Quiz</button>
-                        <button type="button" class="tool-button" role="tab" aria-selected="false" data-tool="search">Search</button>
-                        
-                        <div class="version-selector-wrapper">
-                            <div class="version-dropdown" id="versionDropdown">
-                                <button class="version-btn" type="button" id="versionBtn" aria-haspopup="true" aria-expanded="false" aria-label="Select Bible Version">
-                                    <span class="current-version" id="currentVersionDisplay">KJV</span>
-                                    <span class="dropdown-arrow">▼</span>
-                                </button>
-                                <div class="version-menu" id="versionMenu" role="menu">
-                                    <!-- Versions loaded dynamically -->
-                                </div>
-                                <input type="hidden" id="versionSelector" value="kjv">
-                            </div>
+            <!-- MAIN FEATURE: Interactive AI Companion Chat Workspace -->
+            <section class="search-focus minimal-search flow-box chat-workspace" id="study-cta" aria-label="Ask AI Jesus Interactive Chat">
+                <div class="search-card minimal-card chat-card-wrapper">
+                    <h2 id="searchHeading" class="visually-hidden">Ask your question</h2>
+                    
+                    <!-- Interactive Conversation Thread Container -->
+                    <div id="chatMessages" class="chat-messages-container" aria-live="polite">
+                        <!-- Minimal Welcome State -->
+                        <div id="chatWelcomeCard" class="chat-welcome-card pure-minimal-welcome">
+                            <h2 class="welcome-title">Ask Your Question</h2>
+                            <p class="welcome-text">Type your question below to receive biblical guidance grounded in Holy Scripture.</p>
                         </div>
                     </div>
 
-                    <h2 id="searchHeading" class="visually-hidden">Ask your Bible question</h2>
-                    
-                    <div class="stream-meter" id="streamMeter" style="display:none;">
-                         <div class="stream-dot"></div>
-                         <div class="stream-copy">
-                             <small id="streamStatusText">Grounded in Scripture...</small>
-                         </div>
-                    </div>
-
-                    <div class="search-section">
+                    <div class="search-section chat-input-area">
                         <form id="questionForm">
                             <div class="search-box large-search-box">
                                 <div class="search-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 </div>
-                                <textarea id="questionInput" placeholder="Ask your spiritual question..." required rows="1"></textarea>
+                                <textarea id="questionInput" placeholder="Ask your question..." required rows="1"></textarea>
                                 <button type="button" id="voiceButton" class="icon-button voice-button" title="Speak your question">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                         <line x1="12" y1="19" x2="12" y2="23"></line>
                                         <line x1="8" y1="23" x2="16" y2="23"></line>
@@ -133,161 +189,62 @@
                                     </span>
                                 </button>
                             </div>
-                            
-                            <div class="prayer-public-container" id="prayerPublicContainer" style="display: none; align-items: center; gap: 8px; margin-top: 15px; justify-content: flex-start; padding-left: 5px;">
-                                <input type="checkbox" id="prayerPublicCheck" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
-                                <label for="prayerPublicCheck" style="cursor: pointer; font-size: 0.95rem; opacity: 0.85; user-select: none;">Share this prayer request anonymously on the Public Community Prayer Wall</label>
-                            </div>
                         </form>
                     </div>
-
-                    <div id="quizContainer" class="quiz-container" style="display: none;">
-                        <div id="quizQuestionArea"></div>
-                        <div id="quizFeedback" class="quiz-feedback" style="display: none;"></div>
-                        <button type="button" id="nextQuizBtn" class="primary-button" style="display: none; margin-top: 1rem;">Next Question</button>
-                    </div>
-
-                    <div class="question-pills minimal-pills">
-                        <button type="button" class="question-pill" data-question="What does the Bible say about forgiveness?">Forgiveness</button>
-                        <button type="button" class="question-pill" data-question="How should I handle difficult relationships?">Relationships</button>
-                        <button type="button" class="question-pill" data-question="What is God's plan for my life?">God's Plan</button>
-                        <button type="button" class="question-pill" data-question="How can I find peace during hard times?">Finding Peace</button>
-                    </div>
                 </div>
             </section>
 
-            <!-- MAIN FEATURE 2: Read Bible Direct Access Box -->
-            <section class="flow-box" aria-label="Read the Bible">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
-                    <div>
-                        <h2 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 4px;">📖 Read the Holy Bible</h2>
-                        <p style="color: var(--text-muted); font-size: 0.95rem;">Browse books, chapters, and compare translations instantly.</p>
-                    </div>
-                    <a href="/bible" class="nav-item is-primary" style="font-size: 0.9rem;">Browse All Books &rarr;</a>
+            <!-- Hidden Legacy Containers for JavaScript compatibility -->
+            <div style="display: none !important;">
+                <button type="button" id="clearChatBtn"></button>
+                <div class="tool-switcher">
+                    <button type="button" class="tool-button is-active" data-tool="ask">Ask Question</button>
+                    <button type="button" class="tool-button" data-tool="study">Bible Study</button>
+                    <button type="button" class="tool-button" data-tool="prayer">Prayer Request</button>
+                    <button type="button" class="tool-button" data-tool="parable">Parable</button>
+                    <button type="button" class="tool-button" data-tool="quiz">Quiz</button>
+                    <button type="button" class="tool-button" data-tool="search">Search</button>
                 </div>
-
-                <!-- Random Verse Highlight -->
-                <div id="verseOfTheDay" class="verse-of-day" style="display: none; background: var(--panel-soft); padding: 16px; border-radius: 14px; border: 1px solid var(--border);">
-                    <div class="verse-of-day-label">✨ Inspired Scripture</div>
-                    <blockquote id="vodText" class="verse-of-day-text"></blockquote>
-                    <cite id="vodRef" class="verse-of-day-ref"></cite>
-                    <button type="button" id="vodCompare" class="ghost-button verse-compare-btn" title="Compare across translations">Compare translations</button>
+                <div class="mode-buttons">
+                    <button type="button" class="mode-button is-active" data-mode="balanced">Balanced</button>
                 </div>
-            </section>
-
-            <!-- Response Section -->
-            <section class="answer-lab" aria-live="polite">
-                <div class="response-wrapper">
-                    <div id="responseSection" class="response-section is-hidden">
-                        <div id="queueDisplay" class="queue-display is-hidden">
-                            <div class="queue-status">
-                                Consulting Scripture references...
-                            </div>
-                        </div>
-
-                        <div class="response-card flow-box">
-                            <div class="response-heading">
-                                <h2>Biblical Guidance</h2>
-                                <span class="mode-pill" id="activeModePill" aria-live="polite">Gentle guidance</span>
-                            </div>
-                            <div id="answerText" class="answer-text"></div>
-                            <div class="answer-actions">
-                                <button type="button" id="copyAnswerButton" class="ghost-button">Copy answer</button>
-                                <button type="button" id="shareAnswerButton" class="ghost-button">Share</button>
-                                <button type="button" id="listenButton" class="ghost-button">Listen 🔊</button>
-                            </div>
-                        </div>
-                        <div class="passages-card flow-box">
-                            <h3 id="passagesHeading">Scripture References</h3>
-                            <div id="passagesContainer" class="passages-container"></div>
-                        </div>
-                    </div>
-                    <div id="loadingSection" class="loading-section" style="display: none;">
-                        <div class="ai-thinking-container">
-                            <div class="spinner"></div>
-                            <p>Searching Scripture...</p>
-                        </div>
-                    </div>
-                    <div id="errorSection" class="error-section" style="display: none;">
-                        <div class="error-card flow-box">
-                            <p id="errorText"></p>
-                        </div>
-                    </div>
+                <input type="hidden" id="versionSelector" value="kjv">
+                <div class="stream-meter" id="streamMeter"><small id="streamStatusText"></small></div>
+                <div id="prayerPublicContainer"><input type="checkbox" id="prayerPublicCheck"></div>
+                <div id="quizContainer"><div id="quizQuestionArea"></div><div id="quizFeedback"></div><button type="button" id="nextQuizBtn"></button></div>
+                <div id="responseSection">
+                    <div id="queueDisplay"><span id="queuePeople"></span><span id="queuePosNum"></span></div>
+                    <div id="answerText"></div>
+                    <button type="button" id="copyAnswerButton"></button>
+                    <button type="button" id="shareAnswerButton"></button>
+                    <button type="button" id="listenButton"></button>
+                    <span id="activeModePill"></span>
+                    <div id="passagesHeading"></div>
+                    <div id="passagesContainer"></div>
                 </div>
-            </section>
-
-            <!-- Tone Guidance Controls Box -->
-            <section class="focus-row minimal-footer flow-box" aria-label="Customize answer tone">
-                 <div class="mode-buttons small-modes" role="group" aria-label="Answer tone options">
-                        <span style="font-size: 0.9rem; color: var(--text-muted); align-self: center; margin-right: 8px;">Response Tone:</span>
-                        <button type="button" class="mode-button is-active" data-mode="balanced">Balanced</button>
-                        <button type="button" class="mode-button" data-mode="comfort">Comfort</button>
-                        <button type="button" class="mode-button" data-mode="clarity">Clarity</button>
-                        <button type="button" class="mode-button" data-mode="challenge">Challenge</button>
-                        <button type="button" class="mode-button" data-mode="blessing">Blessing</button>
-                 </div>
-                 <div class="status-card minimal-status" id="healthCard" style="border: none; padding: 0; background: transparent; box-shadow: none;">
-                    <div class="status-value is-healthy" id="healthBadge" style="font-size: 0.85rem;">Ready</div>
-                    <p class="status-note" id="healthDetail" style="display:none;"></p>
-                </div>
-            </section>
-
-            <!-- Community Questions Box -->
-            <div id="communityQuestions" class="community-questions flow-box" style="{% if not recent_shares %}display: none;{% endif %}">
-                <div class="verse-of-day-label" style="margin-bottom: 0.75rem;">👥 Community Questions</div>
-                <div id="communityQuestionsList" class="question-pills minimal-pills">
-                    {% for share in recent_shares %}
-                    <a href="/q/{{ share.id }}" class="question-pill" title="{{ share.question }}">
-                        {{ share.question[:50] + '...' if share.question|length > 50 else share.question }}
-                    </a>
-                    {% endfor %}
-                </div>
+                <div id="loadingSection"></div>
+                <div id="errorSection"><p id="errorText"></p></div>
+                <div id="healthCard"><span id="healthBadge"></span><p id="healthDetail"></p></div>
+                <div id="recentQuestions"></div>
+                <button type="button" id="clearRecentsButton"></button>
+                <textarea id="sessionNotes"></textarea>
+                <button type="button" id="saveNotesButton"></button>
+                <span id="notesStatus"></span>
+                <span id="modeDescription"></span>
             </div>
-
-            <!-- TERTIARY: Optional Vision of Hope Story Box (Drawer/Card) -->
-            <details class="flow-box" style="cursor: pointer;">
-                <summary style="font-weight: 700; font-family: var(--font-serif); font-size: 1.1rem; color: var(--text-main); outline: none;">
-                    ✨ The Vision of Hope (Interactive Visual Story)
-                </summary>
-                <div class="hope-hero-card" style="margin-top: 16px; border: none; box-shadow: none; padding: 0; background: transparent;">
-                    <div class="hope-hero-header">
-                        <div class="hope-phase-selector">
-                            <button type="button" class="hope-phase-btn" data-phase="0">
-                                <span class="hope-phase-icon">🌑</span> Blindness
-                            </button>
-                            <button type="button" class="hope-phase-btn is-active" data-phase="1">
-                                <span class="hope-phase-icon">✨</span> Sight & Pathways
-                            </button>
-                            <button type="button" class="hope-phase-btn" data-phase="2">
-                                <span class="hope-phase-icon">✝️</span> First Vision (Cross)
-                            </button>
-                            <button type="button" class="hope-phase-btn" data-phase="3">
-                                <span class="hope-phase-icon">🌌</span> Triune Hope
-                            </button>
-                        </div>
-                    </div>
-                    <p style="margin-top: 12px;">Hope requires three components: <strong>Goals</strong> to aim for, <strong>Pathways</strong> to reach them, and <strong>Agency</strong> to act. When Jesus touched the blind men's eyes, he restored their sight—allowing them to see their goals, build pathways, and exercise agency.</p>
-                    <div id="hopeStoryText" class="hope-story-box" style="margin-top: 12px;">
-                        <strong>Sight Restored (Goals, Pathways & Agency):</strong> Christ touches the eyes. Glowing golden stars represent your <em>Goals</em>, moving your cursor releases <em>Agency</em> stardust, and blue light beams trace <em>Pathways</em> across the page.
-                    </div>
-                </div>
-            </details>
-
         </main>
 
         <footer class="site-footer flow-box">
             <div class="footer-links">
-                <a href="/devotional" class="footer-link" style="font-weight: 700; color: var(--accent);">🔥 Daily Devotional</a>
+                <a href="/bible" class="footer-link" style="font-weight: 700; color: var(--accent);">📖 Read the Bible</a>
                 <span class="separator">•</span>
-                <a href="/bible" class="footer-link">Read the Bible</a>
+                <a href="/devotional" class="footer-link">Daily Devotional</a>
                 <span class="separator">•</span>
                 <a href="/plans" class="footer-link">Study Plans</a>
                 <span class="separator">•</span>
                 <a href="/prayers" class="footer-link">Prayer Wall</a>
                 <span class="separator">•</span>
                 <a href="/topics" class="footer-link">Browse Topics</a>
-                <span class="separator">•</span>
-                <a href="/questions" class="footer-link">Community Questions</a>
             </div>
             <div class="copyright">
                 &copy; 2025 What Would AI Jesus Do
@@ -303,3 +260,4 @@
 </body>
 
 </html>
+
