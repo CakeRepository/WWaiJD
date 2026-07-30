@@ -2491,5 +2491,480 @@ body.paperwhite-mode .ai-followups {
     border-top-color: #e2ddd3 !important;
 }
 
+/* ==========================================================================
+   NEW ENHANCED CHAT INTERFACE COMPONENTS
+   ========================================================================== */
 
+/* Chat Tone Pills & Control Bar */
+.chat-tone-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
+.tone-pill {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tone-pill:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.tone-pill.is-active {
+    background: linear-gradient(135deg, rgba(243, 200, 102, 0.25), rgba(242, 157, 66, 0.2));
+    color: #ffffff;
+    border: 1px solid rgba(243, 200, 102, 0.4);
+    box-shadow: 0 2px 8px rgba(243, 200, 102, 0.15);
+}
+
+/* Scripture Version Dropdown */
+.version-select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.chat-version-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 28px 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chat-version-select:hover {
+    background: rgba(243, 200, 102, 0.15);
+    border-color: rgba(243, 200, 102, 0.4);
+}
+
+.chat-version-select option {
+    background: #0d1930;
+    color: #ffffff;
+}
+
+.version-select-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 10px;
+    pointer-events: none;
+    color: var(--accent);
+    font-size: 0.75rem;
+}
+
+/* Clear Chat Button */
+.chat-header-action-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-header-action-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    transform: translateY(-1px);
+}
+
+/* Clear Draft Input Button */
+.clear-input-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.9rem !important;
+    padding: 0 6px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    border-radius: 50% !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-input-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Floating Scroll to Bottom Button */
+.scroll-bottom-btn {
+    position: absolute;
+    bottom: 85px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 25, 48, 0.9);
+    border: 1px solid rgba(243, 200, 102, 0.4);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    z-index: 20;
+    animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s ease;
+}
+
+.scroll-bottom-btn:hover {
+    background: rgba(243, 200, 102, 0.2);
+    border-color: var(--accent);
+    color: #ffffff;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+@keyframes bounceIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Typing Indicator (3 Dots Pulsing) */
+.typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+}
+
+.typing-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: typingPulse 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Voice Recognition Active State */
+.voice-button.is-listening {
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    color: #ef4444 !important;
+    animation: pulseRing 1.5s infinite;
+}
+
+@keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Additional Paperwhite Theme Overrides */
+body.paperwhite-mode .chat-tone-pills {
+    background: #f3eee3 !important;
+    border-color: #dcd6c8 !important;
+}
+
+body.paperwhite-mode .tone-pill {
+    color: #6b645c !important;
+}
+
+body.paperwhite-mode .tone-pill.is-active {
+    background: #ffffff !important;
+    color: #b86e00 !important;
+    border-color: #b86e00 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.paperwhite-mode .chat-version-select {
+    background: #f7f4ed !important;
+    border-color: #dcd6c8 !important;
+    color: #b86e00 !important;
+}
+
+body.paperwhite-mode .chat-version-select option {
+    background: #ffffff !important;
+    color: #231f1b !important;
+}
+
+body.paperwhite-mode .chat-header-action-btn {
+    background: #f7f4ed !important;
+    border-color: #dcd6c8 !important;
+    color: #6b645c !important;
+}
+
+body.paperwhite-mode .chat-header-action-btn:hover {
+    background: #fee2e2 !important;
+    border-color: #ef4444 !important;
+    color: #991b1b !important;
+}
+
+body.paperwhite-mode .scroll-bottom-btn {
+    background: #ffffff !important;
+    border-color: #b86e00 !important;
+    color: #b86e00 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+.chat-version-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    color: var(--accent);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 28px 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chat-version-select:hover {
+    background: rgba(243, 200, 102, 0.15);
+    border-color: rgba(243, 200, 102, 0.4);
+}
+
+.chat-version-select option {
+    background: #0d1930;
+    color: #ffffff;
+}
+
+.version-select-wrapper::after {
+    content: '▾';
+    position: absolute;
+    right: 10px;
+    pointer-events: none;
+    color: var(--accent);
+    font-size: 0.75rem;
+}
+
+/* Clear Chat Button */
+.chat-header-action-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.chat-header-action-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    transform: translateY(-1px);
+}
+
+/* Clear Draft Input Button */
+.clear-input-btn {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    font-size: 0.9rem !important;
+    padding: 0 6px !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    border-radius: 50% !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clear-input-btn:hover {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Floating Scroll to Bottom Button */
+.scroll-bottom-btn {
+    position: absolute;
+    bottom: 85px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 25, 48, 0.9);
+    border: 1px solid rgba(243, 200, 102, 0.4);
+    color: var(--accent);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px);
+    z-index: 20;
+    animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.2s ease;
+}
+
+.scroll-bottom-btn:hover {
+    background: rgba(243, 200, 102, 0.2);
+    border-color: var(--accent);
+    color: #ffffff;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+@keyframes bounceIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Typing Indicator (3 Dots Pulsing) */
+.typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+}
+
+.typing-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: typingPulse 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: 0s; }
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.2); opacity: 1; }
+}
+
+/* Voice Recognition Active State */
+.voice-button.is-listening {
+    background: rgba(239, 68, 68, 0.25) !important;
+    border-color: rgba(239, 68, 68, 0.6) !important;
+    color: #ef4444 !important;
+    animation: pulseRing 1.5s infinite;
+}
+
+@keyframes pulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* Additional Paperwhite Theme Overrides */
+body.paperwhite-mode .chat-tone-pills {
+    background: #f3eee3 !important;
+    border-color: #dcd6c8 !important;
+}
+
+body.paperwhite-mode .tone-pill {
+    color: #6b645c !important;
+}
+
+body.paperwhite-mode .tone-pill.is-active {
+    background: #ffffff !important;
+    color: #b86e00 !important;
+    border-color: #b86e00 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.paperwhite-mode .chat-version-select {
+    background: #f7f4ed !important;
+    border-color: #dcd6c8 !important;
+    color: #b86e00 !important;
+}
+
+body.paperwhite-mode .chat-version-select option {
+    background: #ffffff !important;
+    color: #231f1b !important;
+}
+
+body.paperwhite-mode .chat-header-action-btn {
+    background: #f7f4ed !important;
+    border-color: #dcd6c8 !important;
+    color: #6b645c !important;
+}
+
+body.paperwhite-mode .chat-header-action-btn:hover {
+    background: #fee2e2 !important;
+    border-color: #ef4444 !important;
+    color: #991b1b !important;
+}
+
+body.paperwhite-mode .scroll-bottom-btn {
+    background: #ffffff !important;
+    border-color: #b86e00 !important;
+    color: #b86e00 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.paperwhite-mode .clear-input-btn {
+    color: #6b645c !important;
+}
+
+body.paperwhite-mode .clear-input-btn:hover {
+    color: #231f1b !important;
+    background: #e2ddd3 !important;
+}
+
+/* Remove sound controls & click animations/popping in Paperwhite reader mode */
+body.paperwhite-mode .listen-msg-btn,
+body.paperwhite-mode #listenButton {
+    display: none !important;
+}
+
+body.paperwhite-mode button,
+body.paperwhite-mode a,
+body.paperwhite-mode .starter-pill,
+body.paperwhite-mode .followup-chip-btn,
+body.paperwhite-mode .tool-button,
+body.paperwhite-mode .ghost-button,
+body.paperwhite-mode .question-pill,
+body.paperwhite-mode .tone-pill,
+body.paperwhite-mode .icon-button,
+body.paperwhite-mode .chat-bubble {
+    transform: none !important;
+    animation: none !important;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease !important;
+}
+
+body.paperwhite-mode button:active,
+body.paperwhite-mode a:active,
+body.paperwhite-mode .starter-pill:active,
+body.paperwhite-mode .followup-chip-btn:active,
+body.paperwhite-mode .tool-button:active,
+body.paperwhite-mode .ghost-button:active,
+body.paperwhite-mode .question-pill:active,
+body.paperwhite-mode .tone-pill:active,
+body.paperwhite-mode .icon-button:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
